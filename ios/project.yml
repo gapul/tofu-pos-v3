@@ -24,7 +24,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.gapul.tofupos.v3
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: '0.4.0'
-        CURRENT_PROJECT_VERSION: '11'
+        CURRENT_PROJECT_VERSION: '13'
         INFOPLIST_KEY_CFBundleShortVersionString: '$(MARKETING_VERSION)'
         INFOPLIST_KEY_CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
         INFOPLIST_KEY_CFBundleDisplayName: TOS
@@ -33,6 +33,15 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: '1,2'
+        # iPad multitasking: all four orientations, no UIRequiresFullScreen. iPhone keeps the generated default.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        # Mac Catalyst with the same bundle ID as iOS (one App Store Connect app); not "Designed for iPad".
+        SUPPORTS_MACCATALYST: YES
+        DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.business
+        # Sandbox, outgoing network and user-selected files (CSV export, settings import) on the Mac only.
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Support/TofuPOS-macCatalyst.entitlements
         CODE_SIGN_STYLE: Automatic
     dependencies:
       - sdk: libsqlite3.tbd

@@ -15,7 +15,9 @@ data class Sale(
   val cancelledAt: String?, val cancellationReason: String?, val lines: List<Line>,
   val deviceID: String? = null, val customerAge: String? = null, val customerGender: String? = null,
   /** Local only: the cancellation (refund) was recorded on this device. */
-  val cancelledHere: Boolean = false
+  val cancelledHere: Boolean = false,
+  val customerGroup: String? = null,
+  val ticketNo: String? = null
 )
 data class DrawerSession(
   val id: String, val openedAt: String, val closedAt: String?, val float: Map<String, Int>, val floatTotal: Long,
@@ -43,7 +45,9 @@ object Money {
 
 object SalesCSV {
   fun make(sales: List<Sale>): String {
-    val rows = mutableListOf("order_id,created_at_utc,status,cancelled_at_utc,cancellation_reason,order_total_yen,received_yen,change_yen,line_no,product_id,product_name,quantity,unit_price_yen,line_total_yen,net_line_sales_yen")
+    // ticket_no is appended only when some sale has one, so exports of 0.3.0-era data keep the shared golden layout.
+    val tickets = sales.any { it.ticketNo != null }
+    val rows = mutableListOf("order_id,created_at_utc,status,cancelled_at_utc,cancellation_reason,order_total_yen,received_yen,change_yen,line_no,product_id,product_name,quantity,unit_price_yen,line_total_yen,net_line_sales_yen" + if (tickets) ",ticket_no" else "")
     sales.forEach { sale ->
       sale.lines.forEachIndexed { index, line ->
         val amount = line.price * line.quantity
@@ -54,7 +58,7 @@ object SalesCSV {
           if (index == 0) sale.change.toString() else "", (index + 1).toString(), line.productID,
           line.name, line.quantity.toString(), line.price.toString(), amount.toString(),
           if (sale.cancelledAt == null) amount.toString() else "0"
-        ).joinToString(",") { cell(it) }
+        ).let { if (tickets) it + sale.ticketNo.orEmpty() else it }.joinToString(",") { cell(it) }
       }
     }
     return "\uFEFF" + rows.joinToString("\r\n") + "\r\n"

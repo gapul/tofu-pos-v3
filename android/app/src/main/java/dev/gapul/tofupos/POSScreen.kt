@@ -52,6 +52,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.HorizontalPager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.NumberFormat
@@ -121,8 +131,10 @@ private fun jst(value: String): String = runCatching {
 data class ScreenExtras(
   val stocks: Map<String, Long?> = emptyMap(), val age: String? = null, val gender: String? = null,
   val drawer: DrawerSession? = null, val summary: SessionSummary? = null, val lastFeedAt: String? = null, val deviceLabel: String = "",
-  val held: Held = Held(), val deviceID: String = "", val lastSentAt: String? = null, val syncFailed: Boolean = false, val imageGeneration: Int = 0
-)
+  val held: Held = Held(), val deviceID: String = "", val lastSentAt: String? = null, val syncFailed: Boolean = false, val imageGeneration: Int = 0,
+  val environment: AppEnvironment = AppEnvironment.PRODUCTION,
+  val group: String? = null, val customerEpoch: Int = 0, val ticketPrefix: String = ""
+) { val test get() = environment == AppEnvironment.TEST }
 /** Items left out of automatic sync: refused by the cloud (HTTP 400) and conflicting orders. */
 data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0, val conflicts: Int = 0, val images: Int = 0) {
   val any get() = products + stock + sessions + conflicts + images > 0
@@ -138,21 +150,31 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   onSettings: () -> Unit, onImport: () -> Unit, canContinue: Boolean,
   onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit,
   advanced: Boolean, onAdvanced: (Boolean) -> Unit,
-  single: SingleState, onSingle: (SingleState) -> Unit, onSingleConfirm: () -> Unit, snackbar: SnackbarHostState
+  single: SingleState, onSingle: (SingleState) -> Unit, onSingleConfirm: () -> Unit, snackbar: SnackbarHostState,
+  onEnvironment: (AppEnvironment) -> Unit, onGroup: (String) -> Unit, onTicketPrefix: (String) -> Unit
 ) {
   val focus = LocalFocusManager.current
   val enabled = ready && !busy
   var sheet by rememberSaveable { mutableStateOf(false) }
   if (advanced) {
     BackHandler { onAdvanced(false) }
-    Advanced(extras, enabled && !syncing, canContinue, { onAdvanced(false) }, onSettings, onImport, onBackup, onRestore, onContinue)
+    Advanced(extras, enabled && !syncing, canContinue, { onAdvanced(false) }, onSettings, onImport, onBackup, onRestore, onContinue, onEnvironment, onTicketPrefix)
     return
   }
   val labels = listOf("レジ", "商品", "履歴", "締め")
   val icons = listOf(Icons.Default.ShoppingCart, Icons.Default.Add, Icons.AutoMirrored.Filled.List, Icons.Default.Lock)
   val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
   // Lifted above the single-product "確定して次へ" button so the next sale is never blocked by the notice.
-  Scaffold(snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = 88.dp)) }, bottomBar = {
+  Scaffold(snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = 88.dp)) { data ->
+    Snackbar(action = { data.visuals.actionLabel?.let { label -> TextButton(data::performAction) { Text(label) } } }) {
+      Column {
+        data.visuals.message.lines().filter { it.isNotBlank() }.forEach { line ->
+          if (line.startsWith("整理番号")) Text(line, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+          else Text(line, fontWeight = if (line.startsWith("【テスト】")) FontWeight.Bold else null)
+        }
+      }
+    }
+  } }, bottomBar = {
     if (!keyboardVisible) NavigationBar { labels.forEachIndexed { index, title ->
       NavigationBarItem(selected = tab == index, onClick = { focus.clearFocus(); onTab(index) },
         icon = { Icon(icons[index], null) }, label = { Text(title) })
@@ -162,9 +184,14 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       val compact = maxHeight < 520.dp || LocalDensity.current.fontScale > 1.4f
       Column(Modifier.fillMaxSize()) {
         // The bar stays on small/landscape screens; only the title shrinks so the icons remain reachable.
-        Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 8.dp, top = if (compact) 4.dp else 12.dp, bottom = if (compact) 0.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
-          Text(labels[tab.coerceIn(0, 3)], Modifier.weight(1f), style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // Test environment: the bar turns errorContainer and carries a badge so test sales are never mistaken for real ones.
+        Row(Modifier.fillMaxWidth().background(if (extras.test) MaterialTheme.colorScheme.errorContainer else Color.Transparent)
+          .padding(start = 24.dp, end = 8.dp, top = if (compact) 4.dp else 12.dp, bottom = if (compact) 0.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
+          Text(labels[tab.coerceIn(0, 3)], Modifier.weight(1f, fill = false), style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            color = if (extras.test) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface)
+          if (extras.test) TestBadge(Modifier.padding(start = 10.dp))
+          Spacer(Modifier.weight(1f))
           if (tab == 2) IconButton(onExport, enabled = enabled && sales.isNotEmpty(), modifier = Modifier.size(48.dp)) {
             Icon(painterResource(R.drawable.ic_download), "CSVに書き出す")
           }
@@ -176,8 +203,8 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         } else when (tab) {
           // Exactly one product on sale switches the register to the single-product screen.
           0 -> products.filter { it.active }.let { onSale ->
-            if (onSale.size == 1) SingleRegister(onSale.single(), extras.stocks[onSale.single().id], single, extras, enabled, onSingle, onAge, onGender, onSingleConfirm)
-            else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onCheckout)
+            if (onSale.size == 1) SingleRegister(onSale.single(), extras.stocks[onSale.single().id], single, extras, enabled, onSingle, onAge, onGender, onGroup, onSingleConfirm)
+            else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onGroup, onCheckout)
           }
           1 -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Action("商品を追加", { onEdit(null) }, Modifier.fillMaxWidth(), enabled) }
@@ -230,6 +257,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   dismiss: () -> Unit, send: () -> Unit, advanced: () -> Unit) {
   ModalBottomSheet(onDismissRequest = dismiss) {
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      if (extras.test) TestBadge()
       Text("未同期の会計", style = MaterialTheme.typography.titleMedium)
       Text("${pending}件", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
       Text("会計は端末に保存し、自動でクラウドへ送信します。他の端末の売上・商品・在庫は表示中に1分ごとに取り込みます。", style = MaterialTheme.typography.bodyMedium)
@@ -247,8 +275,21 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   }
 }
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun TestBadge(modifier: Modifier = Modifier) {
+  Surface(modifier, color = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError, shape = RoundedCornerShape(8.dp)) {
+    Text("テスト", Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+  }
+}
 @Composable private fun Advanced(extras: ScreenExtras, enabled: Boolean, canContinue: Boolean, back: () -> Unit,
-  onSettings: () -> Unit, onImport: () -> Unit, onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit) {
+  onSettings: () -> Unit, onImport: () -> Unit, onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit,
+  onEnvironment: (AppEnvironment) -> Unit, onTicketPrefix: (String) -> Unit) {
+  var confirm by rememberSaveable { mutableStateOf(false) }
+  var prefix by rememberSaveable(extras.ticketPrefix) { mutableStateOf(extras.ticketPrefix) }
+  val target = if (extras.test) AppEnvironment.PRODUCTION else AppEnvironment.TEST
+  if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text(if (extras.test) "本番環境に戻します" else "テスト環境に切り替えます") },
+    text = { Text((if (extras.test) "本番の売上・商品・接続に戻ります。" else "テストの売上は本番に入りません。") + "カートなど今の画面の入力は破棄されます。") },
+    confirmButton = { TextButton({ confirm = false; onEnvironment(target) }, enabled = enabled) { Text("切り替える") } },
+    dismissButton = { TextButton({ confirm = false }) { Text("戻る") } })
   Scaffold(topBar = { TopAppBar(title = { Text("詳細設定") }, navigationIcon = { IconButton(back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "戻る") } }) }) { insets ->
     LazyColumn(Modifier.fillMaxSize().padding(insets), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       item { Info("通常は操作不要です", "同期は自動で行います。接続先の変更や復元が必要なときだけ使ってください。") }
@@ -259,6 +300,73 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       if (canContinue) item { Action("売上の続きを復元", onContinue, Modifier.fillMaxWidth(), enabled) }
       item { Text("復元は最大50会計ずつ取り込み、端末の内容が異なる場合は保持します。", style = MaterialTheme.typography.bodySmall) }
       item { Info("この端末", "端末名: ${extras.deviceLabel}\n端末ID: ${extras.deviceID}") }
+      item { Card(shape = RoundedCornerShape(24.dp)) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+          Text("整理番号の接頭辞", style = MaterialTheme.typography.titleMedium)
+          Text("端末ごとに英大文字1〜2文字（例: A → 「A-12」）。空欄なら番号だけ。番号は毎日1から始まります。", style = MaterialTheme.typography.bodySmall)
+          val clean = prefix.trim().uppercase(Locale.ROOT)
+          Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(prefix, { prefix = it.take(2) }, Modifier.weight(1f), singleLine = true, enabled = enabled, label = { Text("接頭辞") },
+              isError = !Tickets.validPrefix(clean), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters))
+            Button({ onTicketPrefix(clean) }, enabled = enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix) { Text("保存") }
+          }
+        }
+      } }
+      item { Card(shape = RoundedCornerShape(24.dp)) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("環境: ${extras.environment.label}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            if (extras.test) TestBadge()
+          }
+          Text("本番とテストは端末のデータ・写真・接続先が完全に分かれています。同期中は切り替えできません。", style = MaterialTheme.typography.bodySmall)
+          OutlinedButton({ confirm = true }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える") }
+        }
+      } }
+    }
+  }
+}
+/** True when system animations are off; scrolling then jumps instead of animating. */
+@Composable private fun reducedMotion(): Boolean {
+  val context = LocalContext.current
+  return remember { android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
+}
+/**
+ * Customer segment as three swipeable pages (年齢 → 性別 → 集団). Choosing a chip moves to the next page; after 集団
+ * [onDone] scrolls the register. Tapping the chosen chip only clears it. Every axis is optional.
+ */
+@Composable private fun CustomerPager(extras: ScreenExtras, enabled: Boolean, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onDone: () -> Unit) {
+  val pager = rememberPagerState { 3 }
+  val scope = rememberCoroutineScope(); val still = reducedMotion()
+  fun go(page: Int) { scope.launch { if (still) pager.scrollToPage(page) else pager.animateScrollToPage(page) } }
+  LaunchedEffect(extras.customerEpoch) { if (pager.currentPage != 0) pager.scrollToPage(0) }
+  val axes = listOf(Triple("年齢", Customer.AGES, extras.age), Triple("性別", Customer.GENDERS, extras.gender), Triple("集団", Customer.GROUPS, extras.group))
+  val selects = listOf(onAge, onGender, onGroup)
+  Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(Modifier.padding(horizontal = 20.dp)) {
+      Text("客層", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+      Text("任意", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+      axes.forEachIndexed { index, (title, options, value) ->
+        val current = pager.currentPage == index
+        Surface({ go(index) }, Modifier.weight(1f).heightIn(min = 48.dp), shape = MaterialTheme.shapes.small,
+          color = if (current) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+          border = if (current) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+          Column(Modifier.padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = if (current) FontWeight.Bold else null, maxLines = 1)
+            Text(options.firstOrNull { it.first == value }?.second ?: "—", style = MaterialTheme.typography.labelSmall, maxLines = 1,
+              color = if (value != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+          }
+        }
+      }
+    }
+    HorizontalPager(pager, Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 20.dp), pageSpacing = 20.dp) { page ->
+      val (_, options, value) = axes[page]
+      Choices(options, value, enabled) { key ->
+        val choosing = value != key
+        selects[page](key)
+        if (choosing) { if (page < 2) go(page + 1) else onDone() }
+      }
     }
   }
 }
@@ -273,7 +381,9 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         contentColor = if (on) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface,
         border = if (on) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
         Box(Modifier.padding(horizontal = 2.dp), contentAlignment = Alignment.Center) {
-          Text(label, maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+          // Shrinks on narrow screens so カップル / グループ stay on one line.
+          Text(label, maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center,
+            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize))
         }
       }
     }
@@ -281,16 +391,20 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
 }
 @Composable private fun SingleRegister(
   product: Product, stock: Long?, state: SingleState, extras: ScreenExtras, enabled: Boolean,
-  onState: (SingleState) -> Unit, onAge: (String) -> Unit, onGender: (String) -> Unit, onConfirm: () -> Unit
+  onState: (SingleState) -> Unit, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onConfirm: () -> Unit
 ) {
   val focus = LocalFocusManager.current
+  val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
+  val manualFocus = remember { FocusRequester() }; val keyboard = LocalSoftwareKeyboardController.current
+  // "手入力" opens an empty field with the numeric keyboard right away.
+  LaunchedEffect(state.tender) { if (state.tender == SingleState.MANUAL) runCatching { manualFocus.requestFocus(); keyboard?.show() } }
   val total = state.total(product.price)
   val received = total?.let(state::received)
   val change = if (total != null && received != null && received >= total) received - total else null
   val max = SingleState.maxQuantity(product.stopAtZero, stock)
   val canConfirm = enabled && state.canConfirm(product.price, product.stopAtZero, stock)
   Column(Modifier.fillMaxSize()) {
-    LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       item { Card(shape = RoundedCornerShape(24.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -317,10 +431,12 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         }
       } }
       item { Card(shape = RoundedCornerShape(24.dp)) {
+        CustomerPager(extras, enabled, onAge, onGender, onGroup) {
+          focus.clearFocus(); scope.launch { if (still) list.scrollToItem(2) else list.animateScrollToItem(2) } // show 受け取った額
+        }
+      } }
+      item { Card(shape = RoundedCornerShape(24.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-          Row { Text("客層", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall); Text("任意", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-          Choices(Customer.AGES, extras.age, enabled) { focus.clearFocus(); onAge(it) }
-          Choices(Customer.GENDERS, extras.gender, enabled) { focus.clearFocus(); onGender(it) }
           Text("受け取った額", style = MaterialTheme.typography.titleSmall)
           val options = listOf(SingleState.EXACT to "ちょうど") + SingleState.NOTES.map { it.toString() to NumberFormat.getIntegerInstance(Locale.JAPAN).format(it) } + (SingleState.MANUAL to "手入力")
           options.chunked(3).forEach { row ->
@@ -331,12 +447,15 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
                 val allowed = enabled && (amount == null || SingleState.enabled(amount, total))
                 val colors = if (on) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary)
                   else ButtonDefaults.filledTonalButtonColors()
-                Button({ focus.clearFocus(); onState(state.select(key)) }, Modifier.weight(1f).heightIn(min = 52.dp), enabled = allowed, colors = colors,
+                Button({
+                  if (key == SingleState.MANUAL) { onState(state.select(key).copy(manual = "")); if (state.tender == key) runCatching { manualFocus.requestFocus(); keyboard?.show() } }
+                  else { focus.clearFocus(); onState(state.select(key)) }
+                }, Modifier.weight(1f).heightIn(min = 52.dp), enabled = allowed, colors = colors,
                   contentPadding = PaddingValues(horizontal = 4.dp)) { Text(label, maxLines = 1, style = MaterialTheme.typography.titleMedium) }
               }
             }
           }
-          if (state.tender == SingleState.MANUAL) OutlinedTextField(state.manual, { onState(state.copy(manual = it)) }, Modifier.fillMaxWidth(), label = { Text("預り金（円）") },
+          if (state.tender == SingleState.MANUAL) OutlinedTextField(state.manual, { onState(state.copy(manual = it)) }, Modifier.fillMaxWidth().focusRequester(manualFocus), label = { Text("預り金（円）") },
             enabled = enabled, singleLine = true, shape = RoundedCornerShape(16.dp), isError = state.manual.isNotEmpty() && (received == null || total == null || received < total),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
         }
@@ -348,7 +467,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             Text(change?.let(::yen) ?: "—", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
           }
           Row {
-            Text(change?.let { if (it == 0L) "お釣りなし" else Cash.label(it) } ?: "預り金が足りません", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            Text(change?.let { if (it == 0L) "お釣りなし" else "" } ?: "預り金が足りません", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             if (received != null) Text("預り ${yen(received)}", style = MaterialTheme.typography.bodyMedium)
           }
         }
@@ -362,9 +481,10 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
 @Composable private fun Register(
   products: List<Product>, cart: List<Line>, cash: String, extras: ScreenExtras, enabled: Boolean, compact: Boolean,
   onCash: (String) -> Unit, onQuantity: (String, Int) -> Unit, onExact: () -> Unit, onCashSet: (Long) -> Unit, onCashAdd: (Long) -> Unit,
-  onAge: (String) -> Unit, onGender: (String) -> Unit, onCheckout: () -> Unit
+  onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onCheckout: () -> Unit
 ) {
   val focus = LocalFocusManager.current
+  val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
   val total = runCatching { Money.total(cart) }.getOrNull()
   val received = Money.parse(cash)
   val canPay = enabled && total != null && received != null && received >= total
@@ -420,10 +540,15 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       }
       if (cart.isNotEmpty()) item {
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+          CustomerPager(extras, enabled, onAge, onGender, onGroup) {
+            // After 集団: bring the cash card / total and 会計を確定 into view.
+            focus.clearFocus(); scope.launch { val last = list.layoutInfo.totalItemsCount - 1; if (last >= 0) { if (still) list.scrollToItem(last) else list.animateScrollToItem(last) } }
+          }
+        }
+      }
+      if (cart.isNotEmpty()) item {
+        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
           Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("客層（任意・もう一度押すと解除）", style = MaterialTheme.typography.titleSmall)
-            Choices(Customer.AGES, extras.age, enabled) { focus.clearFocus(); onAge(it) }
-            Choices(Customer.GENDERS, extras.gender, enabled) { focus.clearFocus(); onGender(it) }
             OutlinedTextField(cash, onCash, Modifier.fillMaxWidth(), label = { Text("預り金（円）") }, enabled = enabled,
               singleLine = true, shape = RoundedCornerShape(16.dp), isError = cash.isNotEmpty() && (received == null || total == null || received < total),
               keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
@@ -444,7 +569,6 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
               val change = if (total != null && received != null && received >= total) received - total else null
               Text("お釣り", style = MaterialTheme.typography.labelLarge)
               Text(change?.let(::yen) ?: "—", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-              if (change != null) Text(Cash.label(change), style = MaterialTheme.typography.bodyMedium)
             }
           }
         }
@@ -520,6 +644,10 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
           Text("客層別の件数（取消を除く）", style = MaterialTheme.typography.titleMedium)
           if (summary.segments.isEmpty()) Text("まだ会計はありません")
           summary.segments.entries.sortedByDescending { it.value }.forEach { (key, count) -> Text("${Customer.age(key.first)} · ${Customer.gender(key.second)}　${count}件") }
+          if (summary.groups.isNotEmpty()) {
+            Text("集団別", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall)
+            (Customer.GROUPS.map { it.first } + listOf<String?>(null)).forEach { key -> summary.groups[key]?.let { Text("${Customer.group(key)}　${it}件") } }
+          }
         }
       } }
       item { Text("レジ締め：実際の枚数を数えて入力", Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium) }
@@ -559,7 +687,11 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
           Text(jst(sale.createdAt), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
           Text(if (sale.cancelledAt == null) "会計済み" else "取消済み", color = if (sale.cancelledAt == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
         }
-        Text(yen(sale.total), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Text(yen(sale.total), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+          sale.ticketNo?.let { Text("整理番号 $it", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+        }
+        Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodySmall) }
         sale.lines.forEach { Text("${it.name} × ${it.quantity}　${yen(it.price * it.quantity)}") }
         Text("預り ${yen(sale.received)} · 釣銭 ${yen(sale.change)}", style = MaterialTheme.typography.bodySmall)
         sale.cancellationReason?.let { Text("取消理由: $it") }
@@ -629,15 +761,16 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
 @Composable fun CheckoutDialog(checkout: Checkout, busy: Boolean, onDismiss: () -> Unit, confirm: () -> Unit) {
   val change = checkout.received - checkout.total
   AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("${yen(checkout.total)} の会計を確定しますか？") },
-    text = { Text("預り金 ${yen(checkout.received)}\nお釣り ${yen(change)}\n内訳 ${Cash.label(change)}\n客層 ${Customer.age(checkout.age)} · ${Customer.gender(checkout.gender)}") },
+    text = { Text("預り金 ${yen(checkout.received)}\nお釣り ${yen(change)}\n客層 ${Customer.describe(checkout.age, checkout.gender, checkout.group) ?: "未設定"}") },
     confirmButton = { TextButton(confirm, enabled = !busy) { Text("確定する") } }, dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
 }
 @Composable fun ReceiptDialog(sale: Sale, next: () -> Unit) {
   AlertDialog(onDismissRequest = {}, icon = { Icon(Icons.Default.Check, null) }, title = { Text("会計を保存しました") }, text = {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      sale.ticketNo?.let { Text("整理番号 $it", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold) }
       Text("合計 ${yen(sale.total)}\n預り金 ${yen(sale.received)}")
       Text("お釣り ${yen(sale.change)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-      Text(Cash.label(sale.change), style = MaterialTheme.typography.titleMedium)
+      Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodyMedium) }
     }
   }, confirmButton = { Action("次のお客様", next) })
 }

@@ -1,14 +1,18 @@
 package dev.gapul.tofupos
 
-import java.text.NumberFormat
 import java.time.Instant
-import java.util.Locale
 
 object Customer {
   val AGES = listOf("child" to "子ども", "student" to "学生", "adult" to "大人", "senior" to "シニア")
   val GENDERS = listOf("male" to "男性", "female" to "女性", "other" to "その他")
   fun age(key: String?) = AGES.firstOrNull { it.first == key }?.second ?: "未設定"
+  val GROUPS = listOf("solo" to "一人", "friends" to "友人", "family" to "家族", "couple" to "カップル", "group" to "グループ")
   fun gender(key: String?) = GENDERS.firstOrNull { it.first == key }?.second ?: "未設定"
+  fun group(key: String?) = GROUPS.firstOrNull { it.first == key }?.second ?: "未設定"
+  fun validGroup(key: String?) = key == null || GROUPS.any { it.first == key }
+  /** "大人・女性・家族"; only the axes that were chosen, null when none. */
+  fun describe(age: String?, gender: String?, group: String?): String? =
+    listOfNotNull(age?.let(::age), gender?.let(::gender), group?.let(::group)).takeIf { it.isNotEmpty() }?.joinToString("・")
   fun validAge(key: String?) = key == null || AGES.any { it.first == key }
   fun validGender(key: String?) = key == null || GENDERS.any { it.first == key }
 }
@@ -20,21 +24,22 @@ object CodePoints {
   fun deviceLabel(model: String?): String = take(model.orEmpty().trim().ifEmpty { "Android" }, 64)
 }
 
+/** Ticket numbers: optional device prefix plus a per-device counter that restarts at 1 every JST day. */
+object Tickets {
+  private val JST = java.time.ZoneId.of("Asia/Tokyo")
+  private val PREFIX = Regex("[A-Z]{0,2}")
+  private val TICKET = Regex("[A-Z]{1,2}-[0-9]{1,4}|[0-9]{1,4}")
+  fun date(now: Instant): String = now.atZone(JST).toLocalDate().toString()
+  /** Next counter value; a new day starts at 1 and 9999 wraps to 1 to stay within four digits. */
+  fun next(lastDate: String?, lastSeq: Int, today: String): Int = if (lastDate != today || lastSeq !in 1..9998) 1 else lastSeq + 1
+  fun format(prefix: String, seq: Int) = if (prefix.isEmpty()) "$seq" else "$prefix-$seq"
+  fun validPrefix(prefix: String) = PREFIX.matches(prefix)
+  fun valid(ticket: String) = TICKET.matches(ticket)
+}
+
 object Cash {
-  /** Drawer denominations, largest first. Counts are 0..9999 per denomination. */
+  /** Drawer denominations, largest first. Counts are 0..9999 per denomination. Change itself is shown as an amount only. */
   val DENOMINATIONS = listOf(10000, 5000, 2000, 1000, 500, 100, 50, 10, 5, 1)
-  // 2000-yen notes are rarely kept for change.
-  private val CHANGE = DENOMINATIONS - 2000
-
-  fun breakdown(amount: Long): List<Pair<Int, Long>> {
-    require(amount >= 0)
-    var rest = amount
-    return CHANGE.mapNotNull { unit -> (rest / unit).takeIf { it > 0 }?.let { count -> rest -= count * unit; unit to count } }
-  }
-  fun label(amount: Long): String = breakdown(amount).takeIf { it.isNotEmpty() }?.joinToString("・") { (unit, count) ->
-    "${NumberFormat.getIntegerInstance(Locale.JAPAN).format(unit)}円${if (unit >= 1000) "札" else "玉"}×$count"
-  } ?: "なし"
-
   fun total(counts: Map<String, Int>): Long {
     require(counts.keys.all { key -> DENOMINATIONS.any { it.toString() == key } } && counts.values.all { it in 0..9999 }) { "金種の枚数（0〜9999）を確認してください" }
     return counts.entries.sumOf { it.key.toLong() * it.value }
@@ -54,12 +59,13 @@ object Cash {
     fun inside(value: String?) = value != null && Instant.parse(value).let { !it.isBefore(open) && (close == null || it.isBefore(close)) }
     val created = sales.filter { it.deviceID == deviceID && inside(it.createdAt) }
     val segments = created.filter { it.cancelledAt == null }.groupingBy { it.customerAge to it.customerGender }.eachCount()
-    return SessionSummary(created.sumOf { it.total }, sales.filter { it.cancelledHere && inside(it.cancelledAt) }.sumOf { it.total }, created.size, segments)
+    val groups = created.filter { it.cancelledAt == null }.groupingBy { it.customerGroup }.eachCount()
+    return SessionSummary(created.sumOf { it.total }, sales.filter { it.cancelledHere && inside(it.cancelledAt) }.sumOf { it.total }, created.size, segments, groups)
   }
   fun expected(floatTotal: Long, summary: SessionSummary) = floatTotal + summary.sales - summary.cancels
 }
 
-data class SessionSummary(val sales: Long, val cancels: Long, val orders: Int, val segments: Map<Pair<String?, String?>, Int>)
+data class SessionSummary(val sales: Long, val cancels: Long, val orders: Int, val segments: Map<Pair<String?, String?>, Int>, val groups: Map<String?, Int> = emptyMap())
 
 /** Single-product register: quantity and the tender choice. Changing the quantity always re-selects "exact". */
 data class SingleState(val quantity: Int = 1, val tender: String = EXACT, val manual: String = "") {

@@ -18,6 +18,8 @@ final class RegisterModel: ObservableObject {
     @Published var error: String?
     @Published var ready = false
     @Published var sync: CloudSyncController?
+    @Published private(set) var environment: AppEnvironment
+    private var sceneActive = false
     private var store: SQLiteStore?
     private(set) var images: ProductImages?
     var deviceID: String { store?.deviceID ?? "" }
@@ -27,19 +29,37 @@ final class RegisterModel: ObservableObject {
         return onSale.count == 1 ? onSale[0] : nil
     }
     init() {
+        environment = AppEnvironment.stored(UserDefaults.standard.string(forKey: AppEnvironment.defaultsKey))
+        open()
+    }
+    /// Opens the current environment's own DB, photo folder and sync controller.
+    private func open() {
         do {
             let directory = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            store = try SQLiteStore(path: directory.appendingPathComponent("tofu-pos.sqlite").path)
+            let store = try SQLiteStore(path: directory.appendingPathComponent(environment.databaseFile).path)
+            self.store = store
             // Photos are optional: a failure here never blocks the register.
-            images = try? ProductImages(directory: directory.appendingPathComponent("product-images", isDirectory: true))
-            if let store {
-                if let images, let keep = try? store.imageHashesInUse() { images.cleanup(keep: keep) }
-                sync = CloudSyncController(store: store, images: images)
-                sync?.didChange = { [weak self] in self?.refresh() }
-            }
+            images = try? ProductImages(directory: directory.appendingPathComponent(environment.imageFolder, isDirectory: true))
+            if let images, let keep = try? store.imageHashesInUse() { images.cleanup(keep: keep) }
+            let controller = CloudSyncController(store: store, images: images, environment: environment)
+            controller.didChange = { [weak self] in self?.refresh() }
+            controller.onSwitchEnvironment = { [weak self] in self?.switchEnvironment(to: $0) }
+            sync = controller
             try reload(); ready = true
+            controller.active = sceneActive
         } catch { self.error = "保存データを開けません。アプリを削除せず確認してください。\n\(error.localizedDescription)" }
+    }
+    func setActive(_ active: Bool) { sceneActive = active; sync?.active = active }
+    /// Stops the current controller's timers, drops screen state and reopens with the other environment.
+    func switchEnvironment(to target: AppEnvironment) {
+        guard target != environment else { return }
+        guard sync?.isSyncing != true else { error = "同期中は切り替えできません。少し待ってからやり直してください"; return }
+        sync?.shutdown(); sync = nil; store = nil; images = nil; ready = false
+        products = []; sales = []; stock = [:]; session = nil; sessionSummary = nil; lastClosed = nil; error = nil
+        environment = target
+        UserDefaults.standard.set(target.rawValue, forKey: AppEnvironment.defaultsKey)
+        open()
     }
     func reload() throws {
         guard let store else { throw POSFailure.invalid("データベースが利用できません") }
@@ -98,13 +118,19 @@ struct RootView: View {
                     .toolbarBackground(Color.tofuCard, for: .tabBar)
                     .toolbarBackground(.visible, for: .tabBar)
                 }
+                // A new identity per environment discards carts, sheets and other screen state.
+                .id(model.environment)
             } else {
-                VStack(spacing: 20) { Text("データを開けません").font(.title); Text(model.error ?? "起動に失敗しました") }
+                VStack(spacing: 20) {
+                    Text("データを開けません").font(.title); Text(model.error ?? "起動に失敗しました")
+                    if model.environment == .test { Button("本番環境に戻す") { model.switchEnvironment(to: .production) } }
+                }
                     .padding().frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.tofuBackground)
             }
         }
-        .onAppear { model.sync?.active = scenePhase == .active }
-        .onChange(of: scenePhase) { phase in model.sync?.active = phase == .active }
+        .environment(\.isTestEnvironment, model.environment == .test)
+        .onAppear { model.setActive(scenePhase == .active); MacWindow.configure() }
+        .onChange(of: scenePhase) { phase in model.setActive(phase == .active) }
         .alert("確認してください", isPresented: Binding(get: { model.ready && model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("閉じる", role: .cancel) { model.error = nil }
         } message: { Text(model.error ?? "") }
@@ -120,6 +146,10 @@ struct RegisterView: View {
     @State private var confirming = false
     @State private var age: CustomerAge?
     @State private var gender: CustomerGender?
+    @State private var group: CustomerGroup?
+    @State private var customerPage = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isTestEnvironment) private var isTest
     @FocusState private var receivedFocused: Bool
     private var total: Int64? { try? Money.total(cart) }
     private var cash: Int64? { Money.parse(received) }
@@ -138,75 +168,35 @@ struct RegisterView: View {
               let stock = model.stock[product.id] else { return 999 }
         return max(line.quantity, Int(min(999, max(0, stock))))
     }
+    @Environment(\.horizontalSizeClass) private var sizeClass
     var body: some View {
         NavigationStack {
-            List {
-                Group {
-                    Section("商品を選択") {
-                        let visible = model.products.filter(\.active)
-                        if visible.isEmpty { Text("「商品」タブで商品を登録してください") }
-                        ForEach(visible) { product in
-                            let left = remaining(product)
-                            Button { add(product) } label: {
-                                HStack {
-                                    ProductPhoto(images: model.images, hash: product.imageHash, size: 36, corner: 8)
-                                    Text(product.name); Spacer()
-                                    if let left {
-                                        if StockMath.soldOut(product, displayed: left) {
-                                            Text("売り切れ").font(.caption).foregroundColor(.red)
-                                        } else {
-                                            Text(product.stopAtZero ? "残り\(left)" : StockMath.label(left)).font(.caption).foregroundColor(left > 0 ? .secondary : .red)
-                                        }
-                                    }
-                                    Text("¥\(Yen.format(product.price))")
-                                }.frame(minHeight: 48)
-                            }.disabled(StockMath.soldOut(product, displayed: left))
+            ScrollViewReader { proxy in
+                if WideLayout.isWide(sizeClass) {
+                    // iPad/Mac: product grid on the left, cart and payment on the right.
+                    HStack(spacing: 0) {
+                        ScrollView {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
+                                ForEach(model.products.filter(\.active)) { productTile($0) }
+                            }.padding(16)
+                            if !model.products.contains(where: \.active) { Text("「商品」タブで商品を登録してください").padding() }
                         }
+                        Divider()
+                        List { Group { checkoutSections(proxy) }.tofuRows() }
+                            .frame(width: 420)
                     }
-                    Section("カート") {
-                        ForEach(cart) { line in
-                            VStack(alignment: .leading) {
-                                Text("\(line.name)　¥\(Yen.format(line.price))")
-                                Stepper("数量 \(line.quantity)", value: Binding(get: { line.quantity }, set: { setQuantity(line.id, $0) }), in: 0...maxQuantity(line))
-                            }.frame(minHeight: 56)
-                        }
-                        if cart.isEmpty { Text("商品を選ぶとここに表示されます") }
-                        Text("合計　¥\(Yen.format(total ?? 0))").font(.title2.bold())
+                } else {
+                    List {
+                        Group {
+                            productSection
+                            checkoutSections(proxy)
+                        }.tofuRows()
                     }
-                    Section("客層（任意）") { CustomerChips(age: $age, gender: $gender) }
-                    Section("預り金") {
-                        TextField("預り金（円）", text: $received)
-                            .keyboardType(.numberPad)
-                            .focused($receivedFocused)
-                        HStack {
-                            Button("ちょうど") { setReceived(total ?? 0) }.disabled(cart.isEmpty)
-                            Button("1,000円") { setReceived(1000) }
-                            Button("5,000円") { setReceived(5000) }
-                            Button("10,000円") { setReceived(10000) }
-                        }.buttonStyle(.bordered)
-                        HStack {
-                            Button("+100") { addReceived(100) }
-                            Button("+500") { addReceived(500) }
-                            Button("+1,000") { addReceived(1000) }
-                            Button("クリア") { receivedFocused = false; received = "" }
-                        }.buttonStyle(.bordered)
-                        if let total, let cash, cash >= total {
-                            Text("お釣り　¥\(Yen.format(cash - total))").font(.title2.bold())
-                            Text(Cash.changeText(cash - total)).font(.footnote)
-                        }
-                        Button("会計を確定") {
-                            receivedFocused = false
-                            confirming = true
-                        }
-                            .frame(minHeight: 56)
-                            .disabled(!canCheckout)
-                    }
-                    Section { Text("会計は端末内に保存し、通信を待ちません。CSVは分析用で、完全な復元用バックアップではありません。").font(.footnote) }
-                }.tofuRows()
+                }
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("TOS")
-            .tofuSurface()
+            .tofuSurface(fullWidth: true)
             .syncToolbar(model)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -221,19 +211,111 @@ struct RegisterView: View {
             } message: { Text(confirmMessage) }
             .sheet(item: $receipt) { sale in
                 VStack(spacing: 24) {
+                    if isTest { Text("テスト環境").font(.headline).foregroundColor(.red) }
+                    if let ticket = sale.ticketNo { Text("整理番号 \(ticket)").font(.system(size: 56, weight: .bold, design: .rounded)) }
                     Text("会計を保存しました").font(.title)
                     Text("合計 ¥\(Yen.format(sale.total))").font(.title2)
                     Text("預り金 ¥\(Yen.format(sale.received))")
+                    if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil {
+                        Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup))").foregroundColor(.tofuMuted)
+                    }
                     Text("お釣り ¥\(Yen.format(sale.change))").font(.largeTitle.bold())
-                    Text(Cash.changeText(sale.change)).font(.title3).multilineTextAlignment(.center)
                     Button { receipt = nil } label: { Text("次のお客様").foregroundColor(.tofuOnAccent) }.buttonStyle(.borderedProminent)
                 }.padding().interactiveDismissDisabled()
             }
         }
     }
+    @ViewBuilder private var productSection: some View {
+        Section("商品を選択") {
+            let visible = model.products.filter(\.active)
+            if visible.isEmpty { Text("「商品」タブで商品を登録してください") }
+            ForEach(visible) { product in
+                let left = remaining(product)
+                Button { add(product) } label: {
+                    HStack {
+                        ProductPhoto(images: model.images, hash: product.imageHash, size: 36, corner: 8)
+                        Text(product.name); Spacer()
+                        if let left {
+                            if StockMath.soldOut(product, displayed: left) {
+                                Text("売り切れ").font(.caption).foregroundColor(.red)
+                            } else {
+                                Text(product.stopAtZero ? "残り\(left)" : StockMath.label(left)).font(.caption).foregroundColor(left > 0 ? .secondary : .red)
+                            }
+                        }
+                        Text("¥\(Yen.format(product.price))")
+                    }.frame(minHeight: 48)
+                }.disabled(StockMath.soldOut(product, displayed: left))
+            }
+        }
+    }
+    @ViewBuilder private func checkoutSections(_ proxy: ScrollViewProxy) -> some View {
+        Section("カート") {
+            ForEach(cart) { line in
+                VStack(alignment: .leading) {
+                    Text("\(line.name)　¥\(Yen.format(line.price))")
+                    Stepper("数量 \(line.quantity)", value: Binding(get: { line.quantity }, set: { setQuantity(line.id, $0) }), in: 0...maxQuantity(line))
+                }.frame(minHeight: 56)
+            }
+            if cart.isEmpty { Text("商品を選ぶとここに表示されます") }
+            Text("合計　¥\(Yen.format(total ?? 0))").font(.title2.bold())
+        }
+        Section("客層（任意）") {
+            CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
+                if reduceMotion { proxy.scrollTo("cash", anchor: .center) } else { withAnimation { proxy.scrollTo("cash", anchor: .center) } }
+            }
+        }
+        Section("預り金") {
+            TextField("預り金（円）", text: $received).id("cash")
+                .keyboardType(.numberPad)
+                .focused($receivedFocused)
+                // Hardware keyboards (iPad/Mac): Return opens the confirmation; the iPhone number pad has no Return.
+                .onSubmit { if canCheckout { receivedFocused = false; confirming = true } }
+            HStack {
+                Button("ちょうど") { setReceived(total ?? 0) }.disabled(cart.isEmpty)
+                Button("1,000円") { setReceived(1000) }
+                Button("5,000円") { setReceived(5000) }
+                Button("10,000円") { setReceived(10000) }
+            }.buttonStyle(.bordered)
+            HStack {
+                Button("+100") { addReceived(100) }
+                Button("+500") { addReceived(500) }
+                Button("+1,000") { addReceived(1000) }
+                Button("クリア") { receivedFocused = false; received = "" }
+            }.buttonStyle(.bordered)
+            if let total, let cash, cash >= total {
+                Text("お釣り　¥\(Yen.format(cash - total))").font(.title2.bold())
+            }
+            Button("会計を確定") {
+                receivedFocused = false
+                confirming = true
+            }
+                .frame(minHeight: 56)
+                .disabled(!canCheckout)
+        }
+        Section { Text("会計は端末内に保存し、通信を待ちません。CSVは分析用で、完全な復元用バックアップではありません。").font(.footnote) }
+    }
+    private func productTile(_ product: Product) -> some View {
+        let left = remaining(product)
+        let soldOut = StockMath.soldOut(product, displayed: left)
+        return Button { add(product) } label: {
+            VStack(spacing: 6) {
+                ProductPhoto(images: model.images, hash: product.imageHash, size: 72, corner: 12)
+                Text(product.name).font(.headline).lineLimit(2).multilineTextAlignment(.center)
+                Text("¥\(Yen.format(product.price))")
+                if let left {
+                    Text(soldOut ? "売り切れ" : (product.stopAtZero ? "残り\(left)" : StockMath.label(left))).font(.caption)
+                        .foregroundColor(soldOut || left <= 0 ? .red : .secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 150).padding(8)
+            .background(RoundedRectangle(cornerRadius: 14).fill(Color.tofuCard))
+            .opacity(soldOut ? 0.5 : 1)
+        }
+        .buttonStyle(.plain).disabled(soldOut)
+    }
     private var confirmMessage: String {
         guard let total, let cash, cash >= total else { return "" }
-        return "預り金 ¥\(Yen.format(cash))　お釣り ¥\(Yen.format(cash - total))\n\(Cash.changeText(cash - total))\n客層: \(age?.label ?? "未選択")・\(gender?.label ?? "未選択")"
+        return "預り金 ¥\(Yen.format(cash))　お釣り ¥\(Yen.format(cash - total))\n客層: \(Customer.text(age: age?.rawValue, gender: gender?.rawValue, group: group?.rawValue))"
     }
     private func setReceived(_ value: Int64) { receivedFocused = false; received = String(min(max(0, value), Money.maximum)) }
     private func addReceived(_ value: Int64) { setReceived((cash ?? 0) + value) }
@@ -254,9 +336,9 @@ struct RegisterView: View {
         receivedFocused = false
         do {
             guard let cash = Money.parse(received) else { throw POSFailure.invalid("預り金を確認してください") }
-            let sale = try model.checkout(id: commandID, lines: cart, received: cash, customer: age == nil && gender == nil ? nil : Customer(age: age, gender: gender))
+            let sale = try model.checkout(id: commandID, lines: cart, received: cash, customer: Customer(age: age, gender: gender, group: group))
             cart = []; received = ""; commandID = UUID().uuidString; receipt = sale
-            self.age = nil; self.gender = nil
+            self.age = nil; self.gender = nil; group = nil; customerPage = 0
             model.refresh()
         } catch { model.error = error.localizedDescription }
     }
@@ -427,6 +509,12 @@ struct DrawerView: View {
                                     Text(CustomerGender.allCases.map { "\($0.label)\(summary?.segments["\(age.rawValue)/\($0.rawValue)"] ?? 0)" }.joined(separator: "　")).font(.footnote)
                                 }
                             }
+                            HStack {
+                                Text("集団")
+                                Spacer()
+                                Text(CustomerGroup.allCases.map { "\($0.label)\(summary?.groups[$0.rawValue] ?? 0)" }.joined(separator: "　")).font(.footnote)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
                         }
                     } else {
                         Section("レジ開け（釣銭準備金の枚数）") {
@@ -508,7 +596,14 @@ struct HistoryView: View {
                     }
                     ForEach(model.sales) { sale in
                         Section {
-                            Text(jstTime(sale.createdAt) + (sale.deviceID != nil && sale.deviceID != model.deviceID ? "　他の端末" : "")).font(.caption)
+                            HStack {
+                                Text(jstTime(sale.createdAt) + (sale.deviceID != nil && sale.deviceID != model.deviceID ? "　他の端末" : "")).font(.caption)
+                                Spacer()
+                                if let ticket = sale.ticketNo { Text("整理番号 \(ticket)").font(.headline) }
+                            }
+                            if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil {
+                                Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup))").font(.caption)
+                            }
                             Text("¥\(sale.total)　\(sale.cancelledAt == nil ? "会計済み" : "取消済み")").font(.headline)
                             ForEach(sale.lines) { line in Text("\(line.name) × \(line.quantity)　¥\(line.price * Int64(line.quantity))") }
                             Text("預り ¥\(sale.received) ／ 釣銭 ¥\(sale.change)")
@@ -522,7 +617,7 @@ struct HistoryView: View {
                 .syncToolbar(model)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        Button { document = CSVDocument(text: SalesCSV.make(model.sales)); exporting = true } label: { Image(systemName: "square.and.arrow.up") }
+                        Button { document = CSVDocument(text: SalesCSV.make(model.sales, ticket: true)); exporting = true } label: { Image(systemName: "square.and.arrow.up") }
                             .disabled(model.sales.isEmpty).accessibilityLabel("全件をCSVに書き出す")
                     }
                 }

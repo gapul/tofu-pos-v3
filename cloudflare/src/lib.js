@@ -3,6 +3,9 @@ export const MAX_BYTES = 256 * 1024;
 export const MAX_MONEY = 1_000_000_000;
 export const AGES = ["child", "student", "adult", "senior"];
 export const GENDERS = ["male", "female", "other"];
+export const GROUPS = ["solo", "friends", "family", "couple", "group"];
+// Ticket number: optional device prefix (1-2 capitals, optional hyphen) + per-device daily sequence, e.g. "12", "A-12".
+export const TICKET = /^(?:[A-Z]{1,2}-?)?[0-9]{1,4}$/;
 export const DENOMINATIONS = ["10000", "5000", "2000", "1000", "500", "100", "50", "10", "5", "1"];
 export const json = (body, status = 200, headers = {}) => Response.json(body, {
   status, headers: { "Cache-Control": "no-store", ...headers }
@@ -29,6 +32,8 @@ export function normalize(order) {
   requireValue(order.device_id == null || text(order.device_id, 64), "invalid device_id");
   requireValue(order.customer_age == null || AGES.includes(order.customer_age), "invalid customer_age");
   requireValue(order.customer_gender == null || GENDERS.includes(order.customer_gender), "invalid customer_gender");
+  requireValue(order.customer_group == null || GROUPS.includes(order.customer_group), "invalid customer_group");
+  requireValue(order.ticket_no == null || (typeof order.ticket_no === "string" && order.ticket_no.length <= 8 && TICKET.test(order.ticket_no)), "invalid ticket_no");
   const ids = new Set();
   const lines = order.lines.map(line => {
     requireValue(line && text(line.product_id, 128) && text(line.name, MAX_BYTES) && line.name.trim(), "invalid product");
@@ -47,7 +52,9 @@ export function normalize(order) {
     cancellation_reason: cancelled ? order.cancellation_reason : null, lines,
     ...(order.device_id != null && { device_id: order.device_id }),
     ...(order.customer_age != null && { customer_age: order.customer_age }),
-    ...(order.customer_gender != null && { customer_gender: order.customer_gender })
+    ...(order.customer_gender != null && { customer_gender: order.customer_gender }),
+    ...(order.customer_group != null && { customer_group: order.customer_group }),
+    ...(order.ticket_no != null && { ticket_no: order.ticket_no })
   };
 }
 export async function readBody(request) {

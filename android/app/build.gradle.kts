@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
@@ -10,14 +12,28 @@ android {
     applicationId = "dev.gapul.tofupos.v3"
     minSdk = 26
     targetSdk = 35
-    versionCode = 7
+    versionCode = 8
     versionName = "0.4.0"
     testInstrumentationRunner = "android.test.InstrumentationTestRunner"
     // The legacy runner otherwise scans every Compose dependency for JUnit 3 tests.
     testInstrumentationRunnerArguments["class"] = "dev.gapul.tofupos.StoreTest"
     manifestPlaceholders["appLabel"] = "TOS"
   }
+  // Play upload key lives outside the repo (~/.config/tos-release/signing.properties). Without it,
+  // release builds are left unsigned instead of failing, so CI and other machines still build.
+  val uploadSigning = File(System.getProperty("user.home"), ".config/tos-release/signing.properties")
+  signingConfigs {
+    if (uploadSigning.isFile) create("upload") {
+      val props = Properties().apply { uploadSigning.inputStream().use { load(it) } }
+      storeFile = File(props.getProperty("storeFile")); storePassword = props.getProperty("storePassword")
+      keyAlias = props.getProperty("keyAlias"); keyPassword = props.getProperty("keyPassword")
+    }
+  }
   buildTypes {
+    getByName("release") {
+      isMinifyEnabled = false
+      signingConfigs.findByName("upload")?.let { signingConfig = it }
+    }
     // Side-by-side app for sync tests on a phone that holds real sales. Separate package, data and label.
     create("synctest") {
       initWith(getByName("debug"))

@@ -60,6 +60,8 @@ public struct DrawerSummary: Equatable {
     public let expected: Int64
     /// "age/gender" → paid orders in the session; legacy orders without a segment are not counted.
     public let segments: [String: Int]
+    /// customer_group → paid orders in the session.
+    public var groups: [String: Int] = [:]
 }
 
 public enum DrawerMath {
@@ -73,15 +75,16 @@ public enum DrawerMath {
             return date >= start && (end.map { date < $0 } ?? true)
         }
         var salesTotal: Int64 = 0, cancelTotal: Int64 = 0, count = 0
-        var segments: [String: Int] = [:]
+        var segments: [String: Int] = [:], groups: [String: Int] = [:]
         for sale in sales {
             if sale.deviceID == deviceID && inside(sale.createdAt) {
                 salesTotal += sale.total; count += 1
                 if sale.cancelledAt == nil, let age = sale.customerAge, let gender = sale.customerGender { segments["\(age)/\(gender)", default: 0] += 1 }
+                if sale.cancelledAt == nil, let group = sale.customerGroup { groups[group, default: 0] += 1 }
             }
             if sale.cancelledHere && inside(sale.cancelledAt) { cancelTotal += sale.total }
         }
-        return DrawerSummary(salesTotal: salesTotal, cancelTotal: cancelTotal, orderCount: count, expected: floatTotal + salesTotal - cancelTotal, segments: segments)
+        return DrawerSummary(salesTotal: salesTotal, cancelTotal: cancelTotal, orderCount: count, expected: floatTotal + salesTotal - cancelTotal, segments: segments, groups: groups)
     }
 }
 
@@ -118,4 +121,27 @@ public enum QuickSale {
         return "¥\(Yen.format(sale.total))（\(count)本）を保存しました・お釣り ¥\(Yen.format(sale.change))"
     }
     public static func changeNote(_ amount: Int64) -> String { amount == 0 ? "お釣りなし" : Cash.changeText(amount) }
+}
+
+/// Ticket numbers: optional device prefix (1–2 uppercase letters) + that device's daily sequence in JST.
+public enum Ticket {
+    public static func validPrefix(_ value: String) -> Bool { value.utf8.count <= 2 && value.utf8.allSatisfy { (65...90).contains($0) } }
+    public static func format(prefix: String, seq: Int) -> String { prefix.isEmpty ? String(seq) : "\(prefix)-\(seq)" }
+    /// 1…9999, wrapping back to 1 so the number always fits the payload format.
+    public static func next(_ previous: Int) -> Int { previous >= 9999 ? 1 : previous + 1 }
+    public static func day(_ date: Date) -> String {
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!)
+    }
+    /// Payload rule: [A-Z]{0,2}-?[0-9]{1,4}, 1–8 characters.
+    public static func valid(_ value: String) -> Bool {
+        let bytes = Array(value.utf8)
+        guard (1...8).contains(bytes.count) else { return false }
+        var i = 0
+        while i < bytes.count, i < 2, (65...90).contains(bytes[i]) { i += 1 }
+        if i < bytes.count, bytes[i] == 45 { i += 1 }
+        let digits = bytes[i...]
+        return (1...4).contains(digits.count) && digits.allSatisfy { (48...57).contains($0) }
+    }
 }

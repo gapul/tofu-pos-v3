@@ -1,5 +1,6 @@
-import { MAX_BYTES, AGES, GENDERS, DENOMINATIONS, json, digest, requireValue, chars, text, money, integer, date, normalize, readBody, readBytes } from "./lib.js";
+import { MAX_BYTES, AGES, GENDERS, GROUPS, DENOMINATIONS, json, digest, requireValue, chars, text, money, integer, date, normalize, readBody, readBytes } from "./lib.js";
 import { DASHBOARD_HTML } from "./dashboard.js";
+import { PRIVACY_HTML } from "./privacy.js";
 
 const MAX_ORDERS = 50;
 const FEED_BYTES = 512 * 1024;
@@ -46,13 +47,13 @@ async function sync(request, env) {
     const existing = current.get(order.id);
     // A lost response causes a read only: identical retries never rewrite D1.
     if (existing && (existing.payload_hash === hash || existing.revision >= order.revision || existing.base_hash !== baseHash)) continue;
-    writes.push(env.DB.prepare(`INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at,seq,device_id,customer_age,customer_gender,created_at)
-      VALUES(?,?,?,?,?,?,?,?,?,${SEQ},?,?,?,?) ON CONFLICT(shop_id,id) DO UPDATE SET revision=excluded.revision,payload_hash=excluded.payload_hash,
+    writes.push(env.DB.prepare(`INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at,seq,device_id,customer_age,customer_gender,customer_group,ticket_no,created_at)
+      VALUES(?,?,?,?,?,?,?,?,?,${SEQ},?,?,?,?,?,?) ON CONFLICT(shop_id,id) DO UPDATE SET revision=excluded.revision,payload_hash=excluded.payload_hash,
       payload=excluded.payload,total_yen=excluded.total_yen,cancelled=excluded.cancelled,received_at=excluded.received_at,seq=excluded.seq,
-      device_id=excluded.device_id,customer_age=excluded.customer_age,customer_gender=excluded.customer_gender,created_at=excluded.created_at
+      device_id=excluded.device_id,customer_age=excluded.customer_age,customer_gender=excluded.customer_gender,customer_group=excluded.customer_group,ticket_no=excluded.ticket_no,created_at=excluded.created_at
       WHERE excluded.revision>cloud_orders.revision AND excluded.base_hash=cloud_orders.base_hash`)
       .bind(shop, order.id, order.revision, baseHash, hash, payload, order.total, order.revision === 2 ? 1 : 0, now, shop, shop,
-        order.device_id ?? null, order.customer_age ?? null, order.customer_gender ?? null, order.created_at));
+        order.device_id ?? null, order.customer_age ?? null, order.customer_gender ?? null, order.customer_group ?? null, order.ticket_no ?? null, order.created_at));
     won.push([order.id, hash]);
   }
   if (writes.length) {
@@ -296,7 +297,7 @@ async function dashboard(request, env) {
   if (value != null && !range) return json({ error: "invalid date" }, 400);
   const shop = env.SHOP_ID, where = range ? " AND o.created_at>=? AND o.created_at<?" : "", args = range ? [shop, ...range] : [shop];
   const q = (sql, ...values) => env.DB.prepare(sql).bind(...values);
-  const [totals, hours, byProduct, segments, stockRows, devices, sessionRows] = (await env.DB.batch([
+  const [totals, hours, byProduct, segments, groups, stockRows, devices, sessionRows, recent] = (await env.DB.batch([
     q(`SELECT COALESCE(SUM(CASE WHEN o.cancelled=0 THEN o.total_yen END),0) AS net_sales,COALESCE(SUM(o.cancelled=0),0) AS orders,
       COALESCE(SUM(o.cancelled=1),0) AS cancelled_orders,COALESCE(SUM(CASE WHEN o.cancelled=1 THEN o.total_yen END),0) AS cancelled_amount
       FROM cloud_orders o WHERE o.shop_id=?${where}`, ...args),
@@ -310,6 +311,8 @@ async function dashboard(request, env) {
         WHERE l.shop_id=? AND l.cancelled=0${where} GROUP BY l.product_id) g ORDER BY g.sales DESC,g.id LIMIT 500`, shop, shop, shop, ...args),
     q(`SELECT o.customer_age AS age,o.customer_gender AS gender,COUNT(*) AS orders,SUM(o.total_yen) AS sales
       FROM cloud_orders o WHERE o.shop_id=? AND o.cancelled=0${where} GROUP BY o.customer_age,o.customer_gender`, ...args),
+    q(`SELECT o.customer_group AS grp,COUNT(*) AS orders,SUM(o.total_yen) AS sales
+      FROM cloud_orders o WHERE o.shop_id=? AND o.cancelled=0${where} GROUP BY o.customer_group`, ...args),
     q(`SELECT p.id,substr(p.name,1,100) AS name,p.active,p.stop_at_zero,p.image_hash,${STOCK} AS stock,(SELECT COALESCE(SUM(l.quantity),0) FROM cloud_order_lines l
         JOIN cloud_orders o ON o.shop_id=l.shop_id AND o.id=l.order_id WHERE l.shop_id=p.shop_id AND l.product_id=p.id AND l.cancelled=0${where}) AS sold
       FROM cloud_products p WHERE p.shop_id=? ORDER BY stock,p.id LIMIT 500`, ...(range ?? []), shop),
@@ -317,7 +320,9 @@ async function dashboard(request, env) {
       COALESCE(SUM(o.cancelled=0),0) AS orders,COALESCE(SUM(CASE WHEN o.cancelled=0 THEN o.total_yen END),0) AS sales,MAX(o.received_at) AS last_received_at
       FROM cloud_orders o WHERE o.shop_id=?${where} GROUP BY o.device_id ORDER BY sales DESC LIMIT 100`, ...args),
     q(`SELECT id,device_label,payload FROM cloud_sessions WHERE shop_id=?${range ? " AND opened_at>=? AND opened_at<?" : ""}
-      ORDER BY opened_at DESC LIMIT 100`, ...args)
+      ORDER BY opened_at DESC LIMIT 100`, ...args),
+    q(`SELECT o.id,o.ticket_no,o.created_at,o.total_yen AS total,o.cancelled,o.device_id FROM cloud_orders o WHERE o.shop_id=?${where}
+      ORDER BY o.created_at DESC,o.id DESC LIMIT 20`, ...args)
   ])).map(r => r.results);
   const t = totals[0], hourMap = new Map(hours.map(h => [h.hour, h]));
   return json({ schema_version: 1, date: value,
@@ -325,8 +330,10 @@ async function dashboard(request, env) {
     by_hour: Array.from({ length: 24 }, (_, hour) => ({ hour, sales: hourMap.get(hour)?.sales ?? 0, orders: hourMap.get(hour)?.orders ?? 0 })),
     by_product: byProduct.map(r => ({ id: r.id, name: r.name, image_hash: r.image_hash ?? null, quantity: r.quantity, sales: r.sales })),
     segments: segments.map(r => ({ age: AGES.includes(r.age) ? r.age : null, gender: GENDERS.includes(r.gender) ? r.gender : null, orders: r.orders, sales: r.sales })),
+    groups: groups.map(r => ({ group: GROUPS.includes(r.grp) ? r.grp : null, orders: r.orders, sales: r.sales }))
+      .sort((a, b) => (a.group ? GROUPS.indexOf(a.group) : 99) - (b.group ? GROUPS.indexOf(b.group) : 99)),
     stock: stockRows.map(r => ({ id: r.id, name: r.name, active: r.active === 1, stop_at_zero: r.stop_at_zero === 1, image_hash: r.image_hash ?? null, stock: r.stock, sold: r.sold })),
-    devices, sessions: sessionRows.map(row => {
+    devices, recent: recent.map(r => ({ ...r, cancelled: r.cancelled === 1 })), sessions: sessionRows.map(row => {
       const s = JSON.parse(row.payload);
       return { id: row.id, device_label: row.device_label, opened_at: s.opened_at, closed_at: s.closed_at, float_total: s.float_total,
         expected_total: s.expected_total, counted_total: s.counted_total,
@@ -373,6 +380,7 @@ export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname, key = request.method + " " + path;
     if (key === "GET /dashboard") return new Response(DASHBOARD_HTML, { headers: PAGE_HEADERS });
+    if (key === "GET /privacy") return new Response(PRIVACY_HTML, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
     const image = request.method === "GET" && /^\/v1\/images\/([a-f0-9]{64})$/.exec(path)?.[1];
     const route = DEVICE_ROUTES.get(key);
     if (!route && !image && key !== "GET /v1/dashboard") return json({ error: "not found" }, 404);

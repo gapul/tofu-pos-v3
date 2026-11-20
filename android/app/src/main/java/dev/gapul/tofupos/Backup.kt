@@ -64,7 +64,7 @@ object CloudJSON {
     } }
     val revision = integer(o,"revision"); require(revision in 1..2)
     return PendingSale(Sale(o.getString("id"), o.getString("created_at"), integer(o,"total"), integer(o,"received"), integer(o,"change_yen"),
-      nullable(o,"cancelled_at"), nullable(o,"cancellation_reason"), detail, optional(o, "device_id"), optional(o, "customer_age"), optional(o, "customer_gender")), revision.toInt())
+      nullable(o,"cancelled_at"), nullable(o,"cancellation_reason"), detail, optional(o, "device_id"), optional(o, "customer_age"), optional(o, "customer_gender"), customerGroup = optional(o, "customer_group"), ticketNo = optional(o, "ticket_no")), revision.toInt())
   }
   private fun optional(o: JSONObject, key: String) = if (!o.has(key)) null else nullable(o, key)
   /** Cloud product representation shared by /v1/products, /v1/stock and /v1/feed. */
@@ -82,7 +82,7 @@ object CloudJSON {
     require(Money.total(s.lines) == s.total && s.received in s.total..Money.MAXIMUM && s.change == s.received - s.total)
     require(s.lines.all { CodePoints.length(it.productID) in 1..128 })
     require(row.revision == if (s.cancelledAt == null) 1 else 2)
-    require((s.deviceID == null || CodePoints.length(s.deviceID) in 1..64) && Customer.validAge(s.customerAge) && Customer.validGender(s.customerGender)) { "不正な客層・端末IDです" }
+    require((s.deviceID == null || CodePoints.length(s.deviceID) in 1..64) && Customer.validAge(s.customerAge) && Customer.validGender(s.customerGender) && Customer.validGroup(s.customerGroup) && (s.ticketNo == null || Tickets.valid(s.ticketNo))) { "不正な客層・端末IDです" }
     if (s.cancelledAt != null) { require(s.cancelledAt.endsWith("Z") && !s.cancellationReason.isNullOrBlank()); Instant.parse(s.cancelledAt) }
     else require(s.cancellationReason == null)
   }

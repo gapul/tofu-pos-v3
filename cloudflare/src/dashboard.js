@@ -41,9 +41,11 @@ th{font-size:13px;color:var(--muted);font-weight:600}.warn{color:var(--warn);fon
 <div class="cards" id="cards"></div>
 <section><h2>時間帯別売上（JST）</h2><div id="hours"></div></section>
 <div class="grid2"><section><h2>商品別</h2><div id="products"></div></section>
-<section><h2>客層（年代×性別・件数／売上）</h2><div id="segments"></div></section></div>
+<section><h2>客層（年代×性別・件数／売上）</h2><div id="segments"></div></section>
+<section><h2>グループ別</h2><div id="groups"></div></section></div>
 <div class="grid2"><section><h2>在庫（少ない順・マイナスは赤）</h2><div id="stock"></div></section>
 <section><h2>端末別</h2><div id="devices"></div></section></div>
+<section><h2>最近の会計</h2><div id="recent"></div></section>
 <section><h2>レジ締め</h2><div id="sessions"></div></section>
 </div>
 </main>
@@ -54,6 +56,7 @@ const yen = n => n == null ? "—" : "¥" + Number(n).toLocaleString("ja-JP"), n
 const jst = s => s ? new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(s)) : "—";
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
 const AGE = { child: "子ども", student: "学生", adult: "大人", senior: "シニア" }, GENDER = { male: "男性", female: "女性", other: "その他" };
+const GROUP = { solo: "一人", friends: "友人", family: "家族", couple: "カップル", group: "グループ" };
 function store(action, value) { try { return action === "get" ? sessionStorage.getItem(KEY) : action === "set" ? sessionStorage.setItem(KEY, value) : sessionStorage.removeItem(KEY); } catch { return null; } }
 let memoryToken = null, loading = false;
 const token = () => store("get") || memoryToken;
@@ -104,9 +107,13 @@ function render(d) {
   const usedAges = ages.filter(a => a !== null || d.segments.some(s => s.age === null)), usedGenders = genders.filter(g => g !== null || d.segments.some(s => s.gender === null));
   $("segments").replaceChildren(table(["年代＼性別", ...usedGenders.map(g => g ? GENDER[g] : "未設定")], usedAges.map(a => ({ cells: [a ? AGE[a] : "未設定", ...usedGenders.map(g => cell(a, g))] }))));
   // Negative stock is allowed (sold beyond the count); highlight it, and mark stop-at-zero items that are sold out.
+  $("groups").replaceChildren(table(["グループ", "件数", "売上"], d.groups.map(g => ({ cells: [g.group ? GROUP[g.group] : "未設定", num(g.orders), yen(g.sales)] }))));
   $("stock").replaceChildren(table(["商品", "在庫", "販売数"], d.stock.map(s => ({ warn: s.stock < 0,
     cells: [named(s.image_hash, s.name + (s.active ? "" : "（停止中）") + (s.stop_at_zero && s.stock <= 0 ? "（売り切れ）" : "")), s.stock < 0 ? "−" + num(-s.stock) : num(s.stock), num(s.sold)] }))));
   $("devices").replaceChildren(table(["端末", "会計数", "売上", "最終受信"], d.devices.map(x => ({ cells: [x.device_label || (x.device_id ? x.device_id.slice(0, 8) : "0.3.0以前"), num(x.orders), yen(x.sales), jst(x.last_received_at)] }))));
+  const label = id => { const x = d.devices.find(v => v.device_id === id); return x?.device_label || (id ? id.slice(0, 8) : "—"); };
+  $("recent").replaceChildren(table(["整理番号", "時刻", "金額", "端末"], d.recent.map(o => ({ warn: o.cancelled,
+    cells: [(o.ticket_no ?? "—") + (o.cancelled ? "（取消）" : ""), jst(o.created_at), yen(o.total), label(o.device_id)] }))));
   $("sessions").replaceChildren(table(["端末", "開始", "締め", "準備金", "理論値", "実査", "差額", "売上", "取消", "件数"], d.sessions.map(s => ({
     warn: s.difference != null && s.difference !== 0,
     cells: [s.device_label, jst(s.opened_at), s.closed_at ? jst(s.closed_at) : "営業中", yen(s.float_total), yen(s.expected_total), yen(s.counted_total),

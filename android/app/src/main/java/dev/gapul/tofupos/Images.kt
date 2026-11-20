@@ -44,7 +44,7 @@ object ProductImages {
   /** A product may be sent once its image exists in the cloud (uploaded or downloaded from it). */
   fun sendable(imageHash: String?, uploaded: Set<String>) = imageHash == null || imageHash in uploaded
 
-  fun directory(context: Context) = File(context.filesDir, "product-images")
+  fun directory(context: Context) = File(context.filesDir, ((context.applicationContext as? POSApplication)?.currentEnvironment ?: AppEnvironment.PRODUCTION).imageFolder)
   fun file(directory: File, hash: String) = File(directory, "$hash.jpg")
 
   /**

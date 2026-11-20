@@ -199,6 +199,75 @@ final class V4Tests: XCTestCase {
         XCTAssertThrowsError(try store.registerImage("not-a-hash"))
         XCTAssertThrowsError(try JSONDecoder().decode(FeedPage.self, from: Data(#"{"schema_version":1,"after":1,"next":2,"has_more":false,"orders":[],"products":[{"id":"x","name":"x","price":1,"active":true,"version":1,"stock":0,"seq":2,"image_hash":"ZZ"}]}"#.utf8)).validate(after: 1))
     }
+    func testEnvironmentsAreSeparate() throws {
+        XCTAssertEqual(AppEnvironment.stored(nil), .production); XCTAssertEqual(AppEnvironment.stored("bogus"), .production)
+        XCTAssertEqual(AppEnvironment.stored("test"), .test)
+        XCTAssertEqual(AppEnvironment.production.databaseFile, "tofu-pos.sqlite", "existing data stays production")
+        XCTAssertEqual(AppEnvironment.production.keychainAccount, "connection")
+        for key in [\AppEnvironment.databaseFile, \.imageFolder, \.keychainAccount, \.bundledConnection] {
+            XCTAssertNotEqual(AppEnvironment.production[keyPath: key], AppEnvironment.test[keyPath: key])
+        }
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("tofu-env-\(UUID())")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let production = try SQLiteStore(path: dir.appendingPathComponent(AppEnvironment.production.databaseFile).path)
+        let test = try SQLiteStore(path: dir.appendingPathComponent(AppEnvironment.test.databaseFile).path)
+        _ = try test.checkout(id: "t", lines: [tofu], received: 1000)
+        try test.bindSyncTarget("https://tofu-pos-v3-sync-staging.gapul.workers.dev/v1/sync"); try test.setSyncGate(next: 99, failures: 3)
+        XCTAssertTrue(try production.sales().isEmpty); XCTAssertEqual(try production.syncGate().failures, 0)
+        XCTAssertNoThrow(try production.bindSyncTarget("https://tofu-pos-v3-sync.gapul.workers.dev/v1/sync"))
+        XCTAssertNotEqual(production.deviceID, test.deviceID)
+    }
+    func testTicketNumbers() throws {
+        let store = try SQLiteStore(path: ":memory:")
+        let day = ISO8601DateFormatter().date(from: "2026-11-21T14:59:00Z")!
+        store.clock = { day }
+        XCTAssertEqual(try store.checkout(id: "a", lines: [tofu], received: 1000).ticketNo, "1")
+        XCTAssertEqual(try store.checkout(id: "a", lines: [tofu], received: 1000).ticketNo, "1", "idempotent replay takes no number")
+        XCTAssertEqual(try store.checkout(id: "b", lines: [tofu], received: 1000).ticketNo, "2")
+        try store.cancel(id: "b", reason: "返金")
+        XCTAssertThrowsError(try store.setTicketPrefix("abc")); XCTAssertThrowsError(try store.setTicketPrefix("a"))
+        try store.setTicketPrefix("A")
+        XCTAssertEqual(try store.checkout(id: "c", lines: [tofu], received: 1000).ticketNo, "A-3", "cancellation does not give the number back")
+        store.clock = { day.addingTimeInterval(60) }  // 15:00Z = next day in JST
+        XCTAssertEqual(try store.checkout(id: "d", lines: [tofu], received: 1000).ticketNo, "A-1")
+        try store.setTicketPrefix("")
+        XCTAssertEqual(try store.checkout(id: "e", lines: [tofu], received: 1000).ticketNo, "2")
+        XCTAssertEqual(Ticket.day(day), "2026-11-21"); XCTAssertEqual(Ticket.next(9999), 1)
+        for ok in ["1", "12", "A-12", "AB-9999", "A12"] { XCTAssertTrue(Ticket.valid(ok), ok) }
+        for bad in ["", "abc", "A-", "ABC-1", "12345", "A-12345", "-"] { XCTAssertFalse(Ticket.valid(bad), bad) }
+        let order = try XCTUnwrap(store.pendingSales().first { $0.id == "c" })
+        XCTAssertTrue(String(decoding: try JSONEncoder().encode(order), as: UTF8.self).contains("\"ticket_no\":\"A-3\""))
+        XCTAssertTrue(SalesCSV.make(try store.sales(), ticket: true).contains(",ticket_no\r\n"))
+        XCTAssertTrue(SalesCSV.make(try store.sales(), ticket: true).contains("\"A-3\""))
+    }
+    func testCustomerGroupAndVersionFourMigration() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("tofu-v3-\(UUID()).sqlite").path
+        defer { try? FileManager.default.removeItem(atPath: file) }
+        do {
+            let store = try SQLiteStore(path: file)
+            _ = try store.checkout(id: "v3", lines: [tofu], received: 1000, customer: Customer(age: .adult, gender: .male))
+        }
+        var db: OpaquePointer?
+        XCTAssertEqual(sqlite3_open(file, &db), SQLITE_OK)
+        XCTAssertEqual(sqlite3_exec(db, "ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil), SQLITE_OK)
+        sqlite3_close(db)
+        let store = try SQLiteStore(path: file)
+        XCTAssertEqual(try store.sales().first?.customerAge, "adult"); XCTAssertNil(try store.sales().first?.ticketNo)
+        let sale = try store.checkout(id: "v4", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .family))
+        XCTAssertEqual(sale.customerGroup, "family")
+        XCTAssertThrowsError(try store.checkout(id: "v4", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .solo)))
+        let json = String(decoding: try JSONEncoder().encode(try XCTUnwrap(store.pendingSales().first { $0.id == "v4" })), as: UTF8.self)
+        XCTAssertTrue(json.contains("\"customer_group\":\"family\"")); XCTAssertFalse(json.contains("customer_age"))
+        let legacy = String(decoding: try JSONEncoder().encode(try XCTUnwrap(store.pendingSales().first { $0.id == "v3" })), as: UTF8.self)
+        XCTAssertFalse(legacy.contains("customer_group")); XCTAssertFalse(legacy.contains("ticket_no"))
+        XCTAssertEqual(Customer.text(age: "adult", gender: nil, group: "couple"), "大人・カップル"); XCTAssertEqual(Customer.text(age: nil, gender: nil, group: nil), "未選択")
+        XCTAssertEqual(CustomerGroup.allCases.map(\.label), ["一人", "友人", "家族", "カップル", "グループ"])
+        let open = try store.openSession(float: [:])
+        _ = try store.checkout(id: "g", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .friends))
+        XCTAssertEqual(try store.sessionSummary(open).groups["friends"], 1)
+        XCTAssertThrowsError(try JSONDecoder().decode(CloudOrder.self, from: Data(#"{"id":"x","revision":1,"created_at":"2026-11-21T00:00:00Z","total":0,"received":0,"change_yen":0,"lines":[{"product_id":"p","name":"p","price":0,"quantity":1}],"customer_group":"crowd"}"#.utf8)).validatedSale())
+    }
     func testQuickSale() throws {
         var p = Product(id: "p", name: "田楽豆腐", price: 500)
         XCTAssertEqual(QuickSale.maxQuantity(p, displayed: -3), 999)

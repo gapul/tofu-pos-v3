@@ -12,26 +12,71 @@ struct RegisterTab: View {
     }
 }
 
-/// Optional segment chips (age 4, gender 3); tapping the selected chip clears it.
-struct CustomerChips: View {
+/// Optional segment, one axis per page: 年齢 → 性別 → 集団. Choosing a chip moves to the next axis;
+/// choosing 集団 calls `onComplete` so the screen can scroll to the amount/confirm area. Tapping the
+/// selected chip only clears it. Reduce Motion switches pages without animation.
+struct CustomerPager: View {
     @Binding var age: CustomerAge?
     @Binding var gender: CustomerGender?
+    @Binding var group: CustomerGroup?
+    @Binding var page: Int
+    var onComplete: () -> Void = {}
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let titles = ["年齢", "性別", "集団"]
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) { ForEach(CustomerAge.allCases) { a in chip(a.label, on: age == a) { age = age == a ? nil : a } } }
-            HStack(spacing: 6) { ForEach(CustomerGender.allCases) { g in chip(g.label, on: gender == g) { gender = gender == g ? nil : g } } }
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                ForEach(0..<3, id: \.self) { index in
+                    Button { move(to: index) } label: {
+                        VStack(spacing: 1) {
+                            Text(titles[index]).font(.subheadline.weight(page == index ? .bold : .regular))
+                            Text(selection(index) ?? "－").font(.caption2).lineLimit(1).minimumScaleFactor(0.7)
+                                .foregroundColor(selection(index) == nil ? .tofuMuted : .accentColor)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .overlay(alignment: .bottom) { Rectangle().fill(page == index ? Color.accentColor : Color.clear).frame(height: 2) }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(titles[index]) \(selection(index) ?? "未選択")")
+                }
+            }
+            TabView(selection: $page) {
+                row(CustomerAge.allCases.map { a in (a.label, age == a, { tap(age == a) { age = age == a ? nil : a } }) }).tag(0)
+                row(CustomerGender.allCases.map { g in (g.label, gender == g, { tap(gender == g) { gender = gender == g ? nil : g } }) }).tag(1)
+                row(CustomerGroup.allCases.map { g in (g.label, group == g, { tap(group == g) { group = group == g ? nil : g } }) }).tag(2)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: 52)
         }
     }
-    private func chip(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label).font(.subheadline.weight(on ? .bold : .regular))
-                .lineLimit(1).minimumScaleFactor(0.8)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .foregroundColor(on ? .tofuOnAccent : .primary)
-                .background(RoundedRectangle(cornerRadius: 18).fill(on ? Color.accentColor : Color.tofuSoft.opacity(0.5)))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? .isSelected : [])
+    private func selection(_ index: Int) -> String? {
+        switch index { case 0: return age?.label; case 1: return gender?.label; default: return group?.label }
+    }
+    private func row(_ chips: [(String, Bool, () -> Void)]) -> some View {
+        HStack(spacing: 6) {
+            ForEach(chips.indices, id: \.self) { i in
+                Button(action: chips[i].2) {
+                    // 5 group chips share one row: shrink rather than wrap 「カップル」「グループ」.
+                    Text(chips[i].0).font(.subheadline.weight(chips[i].1 ? .bold : .regular))
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                        .padding(.horizontal, 2)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .foregroundColor(chips[i].1 ? .tofuOnAccent : .primary)
+                        .background(RoundedRectangle(cornerRadius: 18).fill(chips[i].1 ? Color.accentColor : Color.tofuSoft.opacity(0.5)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(chips[i].1 ? .isSelected : [])
+            }
+        }.padding(.horizontal, 1)
+    }
+    /// `wasSelected`: re-tapping clears only; a new choice advances.
+    private func tap(_ wasSelected: Bool, _ change: () -> Void) {
+        change()
+        guard !wasSelected else { return }
+        if page < 2 { move(to: page + 1) } else { onComplete() }
+    }
+    private func move(to index: Int) {
+        if reduceMotion { page = index } else { withAnimation(.easeInOut(duration: 0.25)) { page = index } }
     }
 }
 
@@ -44,11 +89,15 @@ struct SingleProductView: View {
     @State private var manualText = ""
     @State private var age: CustomerAge?
     @State private var gender: CustomerGender?
+    @State private var group: CustomerGroup?
+    @State private var customerPage = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var commandID = UUID().uuidString
     @State private var saving = false
     @State private var toast: Sale?
     @State private var toastTask: Task<Void, Never>?
     @FocusState private var manualFocused: Bool
+    @Environment(\.isTestEnvironment) private var isTest
     private let toastDark = Color(red: 0x2E / 255, green: 0x20 / 255, blue: 0x18 / 255)
 
     private var displayed: Int64? { model.stock[product.id] }
@@ -71,17 +120,21 @@ struct SingleProductView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 12) {
                     productCard
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 6) { Text("客層").font(.headline); Text("任意").font(.caption).foregroundColor(.tofuMuted) }
-                        CustomerChips(age: $age, gender: $gender)
-                        Text("受け取った額").font(.headline).padding(.top, 6)
+                        CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
+                            if reduceMotion { proxy.scrollTo("money", anchor: .top) } else { withAnimation { proxy.scrollTo("money", anchor: .top) } }
+                        }
+                        Text("受け取った額").font(.headline).padding(.top, 6).id("money")
                         moneyGrid
                         if case .manual = choice {
                             TextField("預り金（円）", text: $manualText)
                                 .keyboardType(.numberPad).focused($manualFocused)
+                                .onSubmit { confirm() }
                                 .padding(10).background(RoundedRectangle(cornerRadius: 10).stroke(Color.tofuMuted.opacity(0.5)))
                         }
                     }.card()
@@ -91,15 +144,17 @@ struct SingleProductView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!canConfirm)
+                    .keyboardShortcut(.defaultAction)  // Return on iPad/Mac hardware keyboards
                     Text("会計は端末内に保存し、通信を待ちません。").font(.footnote).foregroundColor(.tofuMuted)
                 }
                 .padding(16)
                 .padding(.bottom, toast == nil ? 0 : 72)
+                .readableWidth()
             }
             .scrollDismissesKeyboard(.interactively)
+            }
             .background(Color.tofuBackground)
-            .toolbarBackground(Color.tofuBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .modifier(TofuBar())
             .navigationTitle("レジ")
             .syncToolbar(model)
             .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("完了") { manualFocused = false } } }
@@ -159,7 +214,9 @@ struct SingleProductView: View {
                             enabled: value >= (total ?? 0)) { choice = .preset(value) }
             }
             moneyButton("手入力", selected: { if case .manual = choice { return true }; return false }(), enabled: true) {
-                choice = .manual; manualFocused = true
+                // Show an empty field and focus it once it exists, which opens the number pad.
+                choice = .manual; manualText = ""
+                DispatchQueue.main.async { manualFocused = true }
             }
         }
     }
@@ -185,7 +242,7 @@ struct SingleProductView: View {
             .padding(16)
             .background(RoundedRectangle(cornerRadius: 14).fill(Color.tofuTop))
             HStack {
-                Text(change.map(QuickSale.changeNote) ?? "預り金が合計に足りません").foregroundColor(change == nil ? .red : .tofuMuted)
+                if change == nil { Text("預り金が合計に足りません").foregroundColor(.red) }
                 Spacer()
                 Text("預り ¥\(Yen.format(received ?? 0))").foregroundColor(.tofuMuted)
             }.font(.footnote).padding(.horizontal, 4)
@@ -194,7 +251,12 @@ struct SingleProductView: View {
 
     private func toastView(_ sale: Sale) -> some View {
         HStack(spacing: 12) {
-            Text(QuickSale.savedText(sale)).font(.subheadline).foregroundColor(.white).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 4) {
+                if let ticket = sale.ticketNo {
+                    Text("整理番号 \(ticket)").font(.system(size: 34, weight: .bold, design: .rounded)).foregroundColor(.tofuTop)
+                }
+                Text((isTest ? "テスト・" : "") + QuickSale.savedText(sale)).font(.subheadline).foregroundColor(.white).fixedSize(horizontal: false, vertical: true)
+            }
             Spacer(minLength: 4)
             Button("取消") { undo(sale) }.font(.subheadline.bold()).foregroundColor(.tofuTop)
         }
@@ -210,10 +272,10 @@ struct SingleProductView: View {
         // Saving stays on for a moment after the write so a double tap cannot start a second sale.
         saving = true
         do {
-            let customer = age == nil && gender == nil ? nil : Customer(age: age, gender: gender)
+            let customer = Customer(age: age, gender: gender, group: group)
             let sale = try model.checkout(id: commandID, lines: [line], received: received, customer: customer)
             commandID = UUID().uuidString
-            quantity = 1; choice = .exact; manualText = ""; age = nil; gender = nil
+            quantity = 1; choice = .exact; manualText = ""; age = nil; gender = nil; group = nil; customerPage = 0
             model.refresh()
             show(sale)
         } catch { model.error = error.localizedDescription }

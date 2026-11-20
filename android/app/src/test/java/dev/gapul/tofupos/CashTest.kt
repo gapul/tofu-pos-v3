@@ -5,17 +5,6 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CashTest {
-  @Test fun changeBreakdownIsGreedyWithoutTwoThousandNotes() {
-    assertEquals(listOf(1000 to 1L, 100 to 3L), Cash.breakdown(1300))
-    assertEquals(listOf(1000 to 4L, 500 to 1L, 100 to 4L, 50 to 1L, 10 to 4L, 5 to 1L, 1 to 4L), Cash.breakdown(4999))
-    assertEquals(listOf(10000 to 2L, 5000 to 1L), Cash.breakdown(25000))
-    assertTrue(Cash.breakdown(0).isEmpty())
-    assertEquals(2000L, Cash.breakdown(2000).sumOf { it.first * it.second })
-    assertEquals("1,000円札×2", Cash.label(2000))
-    assertEquals("1,000円札×1・100円玉×3", Cash.label(1300))
-    assertEquals("なし", Cash.label(0))
-    assertThrows(IllegalArgumentException::class.java) { Cash.breakdown(-1) }
-  }
   @Test fun denominationTotals() {
     assertEquals(17_666L, Cash.total(mapOf("10000" to 1, "5000" to 1, "2000" to 1, "500" to 1, "100" to 1, "50" to 1, "10" to 1, "5" to 1, "1" to 1)))
     assertEquals(0L, Cash.total(emptyMap()))

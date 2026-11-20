@@ -6,31 +6,32 @@ import UIKit
 #endif
 
 private struct SyncConnection: Codable { let url: String; let token: String }
+/// One Keychain item per environment (production keeps the original account "connection").
 private enum ConnectionKeychain {
-    private static var query: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "dev.gapul.tofupos.v3.sync", kSecAttrAccount as String: "connection"]
+    private static func query(_ env: AppEnvironment) -> [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "dev.gapul.tofupos.v3.sync", kSecAttrAccount as String: env.keychainAccount]
     }
-    static func load() throws -> SyncConnection? {
-        var q = query; q[kSecReturnData as String] = true
+    static func load(_ env: AppEnvironment) throws -> SyncConnection? {
+        var q = query(env); q[kSecReturnData as String] = true
         var item: CFTypeRef?
         let status = SecItemCopyMatching(q as CFDictionary, &item)
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess, let data = item as? Data else { throw POSFailure.invalid("接続設定を読み込めません。端末のロックを解除してください") }
         return try JSONDecoder().decode(SyncConnection.self, from: data)
     }
-    /// Saved settings win; otherwise the git-ignored Config/sync-default.json bundled at build time, if any.
-    static func current() throws -> SyncConnection? {
-        if let saved = try load() { return saved }
-        guard let url = Bundle.main.url(forResource: "sync-default", withExtension: "json"),
+    /// Saved settings win; otherwise the git-ignored Config/sync-default(-test).json bundled at build time, if any.
+    static func current(_ env: AppEnvironment) throws -> SyncConnection? {
+        if let saved = try load(env) { return saved }
+        guard let url = Bundle.main.url(forResource: env.bundledConnection, withExtension: "json"),
               let data = try? Data(contentsOf: url), data.count <= 4096 else { return nil }
         return try? JSONDecoder().decode(SyncConnection.self, from: data)
     }
-    static func save(_ value: SyncConnection) throws {
+    static func save(_ value: SyncConnection, _ env: AppEnvironment) throws {
         let data = try JSONEncoder().encode(value)
         let update = [kSecValueData as String: data]
-        let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+        let status = SecItemUpdate(query(env) as CFDictionary, update as CFDictionary)
         if status == errSecItemNotFound {
-            var q = query; q[kSecValueData as String] = data
+            var q = query(env); q[kSecValueData as String] = data
             q[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             guard SecItemAdd(q as CFDictionary, nil) == errSecSuccess else { throw POSFailure.invalid("接続設定を安全に保存できません") }
         } else if status != errSecSuccess { throw POSFailure.invalid("接続設定を安全に保存できません") }
@@ -59,6 +60,8 @@ final class CloudSyncController: ObservableObject {
     @Published var rejectedImages = 0
     @Published var lastSyncAt: String?
     var deviceID: String { store.deviceID }
+    var ticketPrefix: String { (try? store.ticketPrefix()) ?? "" }
+    func setTicketPrefix(_ value: String) throws { try store.setTicketPrefix(value.trimmingCharacters(in: .whitespaces)); objectWillChange.send() }
     @Published var rejected = (products: 0, stock: 0, sessions: 0)
     let deviceLabel: String
     /// Called after a sync cycle or restore changed local products/orders, so the UI reloads once.
@@ -66,16 +69,26 @@ final class CloudSyncController: ObservableObject {
     /// Online-first: automatic cycles (after sales and edits, on activation, every 60s for the feed,
     /// after a retryable failure) run only while the scene is active. One cycle at a time; the persisted
     /// backoff decides the timing.
-    var active = false { didSet { if active { requestAutoSync() } else { autoTask?.cancel(); autoTask = nil } } }
+    var active = false { didSet { if active && !stopped { requestAutoSync() } else { autoTask?.cancel(); autoTask = nil } } }
+    /// Set when the environment is switched away: this controller never starts another cycle.
+    private var stopped = false
+    func shutdown() { stopped = true; active = false }
+    let environment: AppEnvironment
+    /// Asks the model to switch environments (confirmed in the settings screen, refused while syncing).
+    var onSwitchEnvironment: ((AppEnvironment) -> Void)?
     private var autoTask: Task<Void, Never>?
     private var again = false
     /// After 401/403 every automatic trigger stops (persisted) until settings are saved or a manual run.
     private var authBlocked = false { didSet { try? store.setMetadata("auth_blocked", authBlocked ? "1" : nil) } }
     private let store: SQLiteStore
     let images: ProductImages?
-    init(store: SQLiteStore, images: ProductImages?) {
-        self.store = store; self.images = images
-        #if canImport(UIKit)
+    init(store: SQLiteStore, images: ProductImages?, environment: AppEnvironment) {
+        self.store = store; self.images = images; self.environment = environment
+        #if targetEnvironment(macCatalyst)
+        // UIDevice.name is generic on the Mac; the host name ("Gapul-MacBook.local") identifies the machine.
+        let host = ProcessInfo.processInfo.hostName
+        let name = (host.hasSuffix(".local") ? String(host.dropLast(6)) : host).trimmingCharacters(in: .whitespacesAndNewlines)
+        #elseif canImport(UIKit)
         let name = UIDevice.current.name.trimmingCharacters(in: .whitespacesAndNewlines)
         #else
         let name = Host.current().localizedName ?? ""
@@ -84,7 +97,7 @@ final class CloudSyncController: ObservableObject {
         deviceLabel = String(String.UnicodeScalarView((name.isEmpty ? "iOS" : name).unicodeScalars.prefix(64)))
         authBlocked = ((try? store.metadata("auth_blocked")) ?? nil) != nil
         do {
-            if let connection = try ConnectionKeychain.current() { serverURL = connection.url; configured = true; message = "会計後に自動で送信します" }
+            if let connection = try ConnectionKeychain.current(environment) { serverURL = connection.url; configured = true; message = "会計後に自動で送信します" }
             nextAllowedAt = Date(timeIntervalSince1970: try store.syncGate().next)
             try refreshCount()
         } catch { message = error.localizedDescription }
@@ -97,23 +110,23 @@ final class CloudSyncController: ObservableObject {
     func configure(url: String, token: String) throws {
         guard !isSyncing else { throw POSFailure.invalid("同期完了後に設定してください") }
         let endpoint = try SyncPayload.endpoint(url)
-        let old = try ConnectionKeychain.current()
+        let old = try ConnectionKeychain.current(environment)
         let token = token.isEmpty ? old?.token ?? "" : token
         guard (32...256).contains(token.utf8.count), token.utf8.allSatisfy({ (33...126).contains($0) }) else { throw POSFailure.invalid("端末用トークンを入力してください") }
         try store.bindSyncTarget(endpoint.absoluteString)
-        try ConnectionKeychain.save(SyncConnection(url: url.trimmingCharacters(in: .whitespacesAndNewlines), token: token))
+        try ConnectionKeychain.save(SyncConnection(url: url.trimmingCharacters(in: .whitespacesAndNewlines), token: token), environment)
         serverURL = url; configured = true; message = "接続設定を保存しました"; authBlocked = false
         requestAutoSync()
     }
     func requestAutoSync() {
-        guard configured, active, !authBlocked else { return }
+        guard configured, active, !stopped, !authBlocked else { return }
         if isSyncing { again = true; return }
         autoTask?.cancel(); autoTask = nil
         Task { await run(manual: false) }
     }
     private func finished(retryAt: Double?) {
         if again { again = false; requestAutoSync(); return }
-        guard active, configured, !authBlocked else { return }
+        guard active, configured, !stopped, !authBlocked else { return }
         // Without pending work the next cycle runs in 60s to pull other devices' sales and stock.
         let delay = max(1, (retryAt ?? Date().timeIntervalSince1970 + 60) - Date().timeIntervalSince1970)
         autoTask?.cancel()
@@ -178,7 +191,7 @@ final class CloudSyncController: ObservableObject {
         isSyncing = true; defer { isSyncing = false; finished(retryAt: nil) }
         var failures = 0; var reserved = false; var retryAfter: String?
         do {
-            guard let connection = try ConnectionKeychain.current() else { throw POSFailure.invalid("先に同期設定をしてください") }
+            guard let connection = try ConnectionKeychain.current(environment) else { throw POSFailure.invalid("先に同期設定をしてください") }
             let gate = try store.syncGate(); failures = gate.failures
             guard Date().timeIntervalSince1970 >= gate.next else { throw POSFailure.invalid("待機中です。少し待ってから実行してください") }
             let endpoint = try SyncPayload.endpoint(connection.url); try store.bindSyncTarget(endpoint.absoluteString)
@@ -252,7 +265,7 @@ final class CloudSyncController: ObservableObject {
         var previousFailures = 0
         var reserved = false
         do {
-            guard let connection = try ConnectionKeychain.current() else { throw POSFailure.invalid("先に同期設定をしてください") }
+            guard let connection = try ConnectionKeychain.current(environment) else { throw POSFailure.invalid("先に同期設定をしてください") }
             let gate = try store.syncGate(); previousFailures = gate.failures
             guard Date().timeIntervalSince1970 >= gate.next else {
                 message = "待機中です。\(Date(timeIntervalSince1970: gate.next).formatted(date: .omitted, time: .standard)) 以降に再送します"; return gate.next
@@ -393,6 +406,8 @@ struct CloudSyncView: View {
     @State private var selectedCatalog: Catalog?
     @State private var continuing = false
     @State private var confirmRestore = false
+    @State private var switchTarget: AppEnvironment?
+    @State private var prefix = ""
     @FocusState private var focused: Bool
     private func catalogDate(_ value: String) -> String {
         let parser = ISO8601DateFormatter(); parser.formatOptions = [.withInternetDateTime,.withFractionalSeconds]
@@ -402,8 +417,26 @@ struct CloudSyncView: View {
     }
     var body: some View {
         Form {
+            Section("環境") {
+                Picker("環境", selection: Binding(get: { controller.environment }, set: { if $0 != controller.environment { switchTarget = $0 } })) {
+                    ForEach(AppEnvironment.allCases) { Text($0.label).tag($0) }
+                }.pickerStyle(.segmented).disabled(controller.isSyncing)
+                Text("本番とテストは会計・商品・在庫・レジ記録・接続設定がすべて別です。同期中は切り替えできません。").font(.footnote)
+            }
             Section("この端末") {
                 LabeledContent("端末名", value: controller.deviceLabel)
+                HStack {
+                    Text("整理番号の接頭辞")
+                    Spacer()
+                    TextField("なし", text: $prefix).textInputAutocapitalization(.characters).autocorrectionDisabled()
+                        .multilineTextAlignment(.trailing).frame(width: 60).focused($focused)
+                    Button("保存") {
+                        focused = false
+                        do { try controller.setTicketPrefix(prefix.uppercased()); prefix = controller.ticketPrefix; failure = nil }
+                        catch { failure = error.localizedDescription }
+                    }.disabled(prefix.uppercased() == controller.ticketPrefix)
+                }
+                Text("英大文字1〜2文字（例: A → 「A-12」）。番号はこの端末で毎日1から振ります。").font(.footnote)
                 LabeledContent("端末ID") { Text(controller.deviceID).font(.caption.monospaced()).textSelection(.enabled) }
             }
             Section("バックアップ・復元") {
@@ -444,7 +477,14 @@ struct CloudSyncView: View {
                 Button("復元する") { Task { await controller.restore(catalog: selectedCatalog?.id, continuation: continuing) } }
                 Button("戻る", role: .cancel) { }
             } message: { Text("商品と売上を最大50会計ずつ取り込みます。端末の既存データは削除せず、内容の異なる商品・会計は保持します。取消済みの会計を元に戻しません。") }
-            .onAppear { url = controller.serverURL }
+            .alert("環境の切り替え", isPresented: Binding(get: { switchTarget != nil }, set: { if !$0 { switchTarget = nil } })) {
+                Button(switchTarget == .test ? "テストに切り替える" : "本番に戻す", role: .destructive) {
+                    if let target = switchTarget, !controller.isSyncing { controller.onSwitchEnvironment?(target) }
+                    switchTarget = nil
+                }
+                Button("戻る", role: .cancel) { switchTarget = nil }
+            } message: { Text(switchTarget?.switchPrompt ?? "") }
+            .onAppear { url = controller.serverURL; prefix = controller.ticketPrefix }
             .onDisappear { focused = false }
             .scrollDismissesKeyboard(.interactively)
             .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("完了") { focused = false } } }

@@ -30,17 +30,17 @@ data class PendingSale(val sale: Sale, val revision: Int) {
     .put("cancelled_at", sale.cancelledAt ?: JSONObject.NULL).put("cancellation_reason", sale.cancellationReason ?: JSONObject.NULL)
     .put("lines", JSONArray(sale.lines.map { JSONObject().put("product_id", it.productID).put("name", it.name).put("price", it.price).put("quantity", it.quantity) }))
     // Omitted when null so 0.3.0 orders keep their cloud payload and hash.
-    .apply { sale.deviceID?.let { put("device_id", it) }; sale.customerAge?.let { put("customer_age", it) }; sale.customerGender?.let { put("customer_gender", it) } }
+    .apply { sale.deviceID?.let { put("device_id", it) }; sale.customerAge?.let { put("customer_age", it) }; sale.customerGender?.let { put("customer_gender", it) }; sale.customerGroup?.let { put("customer_group", it) }; sale.ticketNo?.let { put("ticket_no", it) } }
 }
 data class SyncReceipt(val id: String, val revision: Int)
 data class SyncOutcome(val message: String, val pending: Int, val changed: Boolean = false, val images: Int = 0)
 private class SyncFailure(message: String, val retryAfter: String? = null, val unauthorized: Boolean = false, val rejected: Boolean = false) : Exception(message)
 data class SyncConnection(val url: String, val token: String)
 
-class SyncCredentials(context: Context) {
+class SyncCredentials(context: Context, private val environment: AppEnvironment = AppEnvironment.PRODUCTION) {
   private val preferences = context.getSharedPreferences("cloud-sync", Context.MODE_PRIVATE)
   private val assets = context.applicationContext.assets
-  private val alias = "dev.gapul.tofupos.sync"
+  private val alias = environment.keyAlias
   private fun key(): SecretKey {
     val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
     (store.getKey(alias, null) as? SecretKey)?.let { return it }
@@ -49,9 +49,9 @@ class SyncCredentials(context: Context) {
         .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
     }.generateKey()
   }
-  /** A saved connection wins; otherwise the per-build-type bundled assets/sync-default.json (never committed), if any. */
+  /** A saved connection wins; otherwise the per-build-type bundled assets/sync-default(-test).json (never committed), if any. */
   fun load(): SyncConnection? {
-    val stored = preferences.getString("connection", null) ?: return bundled()
+    val stored = preferences.getString(environment.connectionKey, null) ?: return bundled()
     val parts = stored.split(":"); require(parts.size == 2) { "接続設定を読み込めません" }
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, Base64.decode(parts[0], Base64.NO_WRAP)))
@@ -59,7 +59,7 @@ class SyncCredentials(context: Context) {
     return SyncConnection(json.getString("url"), json.getString("token"))
   }
   private fun bundled(): SyncConnection? = runCatching {
-    val json = assets.open("sync-default.json").use { JSONObject(String(SyncRules.readLimited(it, 4096), Charsets.UTF_8)) }
+    val json = assets.open(environment.bundledConnection).use { JSONObject(String(SyncRules.readLimited(it, 4096), Charsets.UTF_8)) }
     SyncConnection(json.getString("url"), json.getString("token")).takeIf { c ->
       runCatching { SyncRules.endpoint(c.url) }.isSuccess && c.token.length in 32..256 && c.token.all { it.code in 33..126 }
     }
@@ -68,7 +68,7 @@ class SyncCredentials(context: Context) {
     val cipher = Cipher.getInstance("AES/GCM/NoPadding"); cipher.init(Cipher.ENCRYPT_MODE, key())
     val json = JSONObject().put("url", connection.url).put("token", connection.token).toString()
     val encrypted = cipher.doFinal(json.toByteArray(Charsets.UTF_8))
-    check(preferences.edit().putString("connection", Base64.encodeToString(cipher.iv, Base64.NO_WRAP) + ":" + Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) { "接続設定を保存できません" }
+    check(preferences.edit().putString(environment.connectionKey, Base64.encodeToString(cipher.iv, Base64.NO_WRAP) + ":" + Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) { "接続設定を保存できません" }
   }
 }
 object SyncRules {

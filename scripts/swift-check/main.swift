@@ -125,6 +125,22 @@ func v4Checks() throws {
     try pics.registerImage(rejected); try pics.rejectImage(rejected)
     try pics.saveProduct(Product(id: "q", name: "揚げ", price: 300, imageHash: rejected))
     try check(pics.rejectedImageCount() == 1 && !pics.dirtyProducts().map(\.id).contains("q"), "rejected photo holds product")
+    try check(AppEnvironment.stored(nil) == .production && AppEnvironment.stored("test") == .test && AppEnvironment.production.databaseFile == "tofu-pos.sqlite"
+              && AppEnvironment.production.keychainAccount == "connection" && AppEnvironment.test.databaseFile != AppEnvironment.production.databaseFile
+              && AppEnvironment.test.imageFolder != AppEnvironment.production.imageFolder && AppEnvironment.test.bundledConnection == "sync-default-test", "environment separation")
+    let tickets = try SQLiteStore(path: ":memory:")
+    let ticketDay = ISO8601DateFormatter().date(from: "2026-11-21T14:59:00Z")!
+    tickets.clock = { ticketDay }
+    try check(tickets.checkout(id: "a", lines: [tofu], received: 1000).ticketNo == "1" && tickets.checkout(id: "a", lines: [tofu], received: 1000).ticketNo == "1", "ticket idempotent")
+    try tickets.setTicketPrefix("A")
+    try check(tickets.checkout(id: "b", lines: [tofu], received: 1000).ticketNo == "A-2", "ticket prefix")
+    try rejects("lowercase prefix") { try tickets.setTicketPrefix("a") }
+    tickets.clock = { ticketDay.addingTimeInterval(60) }
+    try check(tickets.checkout(id: "c", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .couple)).ticketNo == "A-1", "ticket resets on JST date change")
+    try check(Ticket.valid("AB-9999") && !Ticket.valid("ABC-1") && !Ticket.valid("12345") && Ticket.next(9999) == 1, "ticket format")
+    let ticketJSON = String(decoding: try JSONEncoder().encode(tickets.pendingSales().first { $0.id == "c" }!), as: UTF8.self)
+    try check(ticketJSON.contains("\"ticket_no\":\"A-1\"") && ticketJSON.contains("\"customer_group\":\"couple\"") && !ticketJSON.contains("customer_age"), "group and ticket in payload")
+    try check(SalesCSV.make(tickets.sales(), ticket: true).contains(",ticket_no\r\n") && Customer.text(age: "adult", gender: nil, group: "couple") == "大人・カップル", "ticket csv, segment text")
     let quick = try SQLiteStore(path: ":memory:")
     let quickSale = try quick.checkout(id: "q", lines: [Line(productID: "p", name: "田楽豆腐", price: 500, quantity: 2)], received: 5000)
     try check(QuickSale.savedText(quickSale) == "¥1,000（2本）を保存しました・お釣り ¥4,000" && quickSale.customerAge == nil, "quick sale notice, optional segment")
@@ -190,4 +206,10 @@ func v4Checks() throws {
     let migrated = try SQLiteStore(path: file)
     try check(migrated.products().first?.dirty == true && migrated.sales().count == 1 && migrated.pendingCount() == 0 && !migrated.deviceID.isEmpty, "v2 to v3 migration")
     try check(SQLiteStore(path: file).deviceID == migrated.deviceID, "device id stable")
+    var v3: OpaquePointer?
+    try check(sqlite3_open(file, &v3) == SQLITE_OK, "open for v3 fixture")
+    try check(sqlite3_exec(v3, "ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil) == SQLITE_OK, "downgrade to v3")
+    sqlite3_close(v3)
+    let fromV3 = try SQLiteStore(path: file)
+    try check(fromV3.sales().count == 1 && fromV3.checkout(id: "after-v4", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .solo)).customerGroup == "solo", "v3 to v4 keeps data")
 }

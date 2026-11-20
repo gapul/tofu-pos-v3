@@ -24,12 +24,23 @@ import java.util.concurrent.Executors
 
 class POSApplication : Application() {
   val worker = Executors.newSingleThreadExecutor()
-  val store by lazy { POSStore(this) }
-  val cloud by lazy { CloudSync(SyncCredentials(this), worker, ProductImages.directory(this)) { store } }
+  // The environment picks the database, photo folder and connection. Store and sync are rebuilt when it changes.
+  @Volatile var currentEnvironment = AppEnvironment.PRODUCTION
+    private set
+  var environment by mutableStateOf(AppEnvironment.PRODUCTION)
+    private set
+  private var currentStore: POSStore? = null
+  private var currentCloud: CloudSync? = null
+  val store: POSStore
+    @Synchronized get() = currentStore ?: POSStore(this, currentEnvironment.database).also { currentStore = it }
+  val cloud: CloudSync
+    @Synchronized get() = currentCloud ?: store.let { s -> CloudSync(SyncCredentials(this, currentEnvironment), worker, ProductImages.directory(this)) { s } }.also { currentCloud = it }
   // Bumped when photo files arrive, so thumbnails decoded earlier (or found missing) are read again.
   var imageGeneration by mutableIntStateOf(0)
   override fun onCreate() {
     super.onCreate()
+    currentEnvironment = AppEnvironment.parse(getSharedPreferences(AppEnvironment.PREFERENCES, MODE_PRIVATE).getString(AppEnvironment.PREFERENCE_KEY, null))
+    environment = currentEnvironment
     worker.execute { runCatching { ProductImages.cleanup(ProductImages.directory(this), store) } }
   }
   var exportCSV: String? = null
@@ -60,6 +71,27 @@ class POSApplication : Application() {
     if (visible) { requestSync(); main.postDelayed(periodic, 60_000) } else main.removeCallbacks(scheduled)
   }
   fun requestSync() = main.post { sync(null) }
+  /**
+   * Switches production/test. Stops scheduled syncs, closes the current database on the worker, then the next access
+   * opens the other environment's store and sync. Refused while a cloud operation runs.
+   */
+  @android.annotation.SuppressLint("UseKtx") // core-ktx is not a dependency
+  fun switchEnvironment(target: AppEnvironment, done: (Result<Unit>) -> Unit) {
+    if (cloud.running.get() || syncRunning) { done(Result.failure(IllegalStateException("同期中は切り替えできません"))); return }
+    main.removeCallbacks(scheduled); main.removeCallbacks(periodic); again = false
+    worker.execute {
+      val result = runCatching {
+        check(getSharedPreferences(AppEnvironment.PREFERENCES, MODE_PRIVATE).edit().putString(AppEnvironment.PREFERENCE_KEY, target.key).commit()) { "環境を保存できません" }
+        synchronized(this) { currentStore?.close(); currentStore = null; currentCloud = null; currentEnvironment = target }
+      }
+      main.post {
+        environment = currentEnvironment
+        pendingSync = 0; syncMessage = ""; syncFailed = false; lastSentAt = null; lastFeedAt = null; imageGeneration++
+        if (foreground) { requestSync(); main.postDelayed(periodic, 60_000) }
+        done(result)
+      }
+    }
+  }
   /** [onError] is set for a manual run; automatic runs only update the status text. */
   fun sync(onError: ((Throwable) -> Unit)?) {
     main.removeCallbacks(scheduled)
@@ -111,6 +143,10 @@ class MainActivity : ComponentActivity() {
   private var held by mutableStateOf(Held())
   private var age by mutableStateOf<String?>(null)
   private var gender by mutableStateOf<String?>(null)
+  private var group by mutableStateOf<String?>(null)
+  // Bumped after each sale (and environment switch) so the customer pager returns to its first page.
+  private var customerEpoch by mutableIntStateOf(0)
+  private var ticketPrefix by mutableStateOf("")
   private var stockEdit by mutableStateOf<StockEdit?>(null)
   private var sales by mutableStateOf(emptyList<Sale>())
   private var pendingSync: Int
@@ -149,7 +185,7 @@ class MainActivity : ComponentActivity() {
       tab = it.getInt("selectedTab", 0).coerceIn(0, 3)
       advanced = it.getBoolean("advanced")
       single = SingleState(it.getInt("singleQuantity", 1).coerceIn(1, 999), it.getString("singleTender") ?: SingleState.EXACT, it.getString("singleManual").orEmpty())
-      age = it.getString("age"); gender = it.getString("gender")
+      age = it.getString("age"); gender = it.getString("gender"); group = it.getString("group")
       val rows = JSONArray(it.getString("cart") ?: "[]")
       for (i in 0 until rows.length()) {
         val row = rows.getJSONObject(i)
@@ -166,13 +202,16 @@ class MainActivity : ComponentActivity() {
         val summary = drawer?.let { session -> Cash.summary(sales, deviceID, session.openedAt, null) }
         POSScreen(
           products, sales, cart, cash, tab, ready, busy, pendingSync, syncRunning, syncMessage,
-          ScreenExtras(stocks, age, gender, drawer, summary, app.lastFeedAt, deviceLabel, held, deviceID, app.lastSentAt, app.syncFailed, app.imageGeneration),
+          ScreenExtras(stocks, age, gender, drawer, summary, app.lastFeedAt, deviceLabel, held, deviceID, app.lastSentAt, app.syncFailed, app.imageGeneration, app.environment,
+            group = group, customerEpoch = customerEpoch, ticketPrefix = ticketPrefix),
           onTab = { tab = it }, onCash = { cash = it }, onQuantity = ::quantity,
           onExact = { runCatching { Money.total(cart) }.getOrNull()?.let { cash = it.toString() } },
           onCashSet = { cash = it.toString() },
           onCashAdd = { add -> cash = ((Money.parse(cash) ?: 0) + add).coerceAtMost(Money.MAXIMUM).toString() },
           // Customer segment is optional; tapping the selected chip clears it.
           onAge = { age = if (age == it) null else it }, onGender = { gender = if (gender == it) null else it },
+          onGroup = { group = if (group == it) null else it },
+          onTicketPrefix = { value -> work({ app.store.setTicketPrefix(value); app.store.ticketPrefix() }) { ticketPrefix = it; Toast.makeText(this, "接頭辞を保存しました", Toast.LENGTH_SHORT).show() } },
           onCheckout = ::confirmCheckout, onEdit = { productEditor = ProductEdit(it) },
           onStock = { product, kind -> stockEdit = StockEdit(product, kind) },
           onOpenDrawer = { counts -> work({ app.store.openSession(counts) }) { load(); app.requestSync() } },
@@ -182,7 +221,8 @@ class MainActivity : ComponentActivity() {
           canContinue = canContinueRestore, onBackup = ::backupProducts, onRestore = { listBackups() },
           onContinue = { restoreChoice = RestoreChoice(null,true) },
           advanced = advanced, onAdvanced = { advanced = it },
-          single = single, onSingle = { single = it }, onSingleConfirm = ::confirmSingle, snackbar = snackbar
+          single = single, onSingle = { single = it }, onSingleConfirm = ::confirmSingle, snackbar = snackbar,
+          onEnvironment = ::switchEnvironment
         )
         productEditor?.let { editor ->
           ProductDialog(editor.product, busy, editor.picked, editor.token, app.imageGeneration, onPick = ::importPhoto, onDismiss = { productEditor = null }) { name, price, active, stop, image ->
@@ -203,7 +243,7 @@ class MainActivity : ComponentActivity() {
         }
         confirmation?.let { checkout ->
           CheckoutDialog(checkout, busy, onDismiss = { confirmation = null }) {
-            if (!busy) work({ app.store.checkout(checkout.id, checkout.lines, checkout.received, checkout.age, checkout.gender) }) { sale ->
+            if (!busy) work({ app.store.checkout(checkout.id, checkout.lines, checkout.received, checkout.age, checkout.gender, checkout.group) }) { sale ->
               confirmation = null; clearCart(); savedSale = sale; load(); app.requestSync()
             }
           }
@@ -232,7 +272,7 @@ class MainActivity : ComponentActivity() {
 
   override fun onSaveInstanceState(out: Bundle) {
     out.putString("commandID", commandID); out.putString("cash", cash); out.putInt("selectedTab", tab)
-    out.putString("age", age); out.putString("gender", gender); out.putBoolean("advanced", advanced)
+    out.putString("age", age); out.putString("gender", gender); out.putString("group", group); out.putBoolean("advanced", advanced)
     out.putInt("singleQuantity", single.quantity); out.putString("singleTender", single.tender); out.putString("singleManual", single.manual)
     out.putString("cart", JSONArray().apply {
       cart.forEach { put(JSONObject().put("id", it.productID).put("name", it.name).put("price", it.price).put("quantity", it.quantity)) }
@@ -246,10 +286,10 @@ class MainActivity : ComponentActivity() {
       val store = app.store
       Loaded(store.products(), store.sales(), store.pendingCount(), store.restoreCursor().second.isNotEmpty(),
         store.pendingQuantities(), store.deviceID(), store.currentSession(), store.lastFeedAt(), store.lastSentAt(),
-        store.rejectedCounts().let { (p, s, d) -> Held(p, s, d, store.conflictCount(), store.rejectedImageCount()) })
+        store.rejectedCounts().let { (p, s, d) -> Held(p, s, d, store.conflictCount(), store.rejectedImageCount()) }, store.ticketPrefix())
     }) { loaded ->
       val (p, s, pending, more) = loaded
-      pendingQuantities = loaded.quantities; deviceID = loaded.deviceID; drawer = loaded.drawer; app.lastFeedAt = loaded.lastFeedAt; app.lastSentAt = loaded.lastSentAt; held = loaded.held
+      pendingQuantities = loaded.quantities; deviceID = loaded.deviceID; drawer = loaded.drawer; app.lastFeedAt = loaded.lastFeedAt; app.lastSentAt = loaded.lastSentAt; held = loaded.held; ticketPrefix = loaded.ticketPrefix
       loadedRestoreGeneration = generation
       canContinueRestore = more
       products = p; sales = s; pendingSync = pending; ready = true
@@ -296,7 +336,7 @@ class MainActivity : ComponentActivity() {
     if (total == null || received == null || received < total) {
       failure(IllegalArgumentException("商品・数量・預り金を確認してください")); return
     }
-    confirmation = Checkout(commandID, cart.toList(), total, received, age, gender)
+    confirmation = Checkout(commandID, cart.toList(), total, received, age, gender, group)
   }
   /** One tap, no dialogs. The command ID plus the busy guard keep a double tap from saving twice. */
   private fun confirmSingle() {
@@ -305,9 +345,9 @@ class MainActivity : ComponentActivity() {
     val state = single
     if (!state.canConfirm(product.price, product.stopAtZero, stockOf(product))) return
     val total = state.total(product.price) ?: return; val received = state.received(total) ?: return
-    val id = commandID; val customerAge = age; val customerGender = gender
-    work({ app.store.checkout(id, listOf(Line(product.id, product.name, product.price, state.quantity)), received, customerAge, customerGender) }) { sale ->
-      single = SingleState(); age = null; gender = null; commandID = UUID.randomUUID().toString()
+    val id = commandID; val customerAge = age; val customerGender = gender; val customerGroup = group
+    work({ app.store.checkout(id, listOf(Line(product.id, product.name, product.price, state.quantity)), received, customerAge, customerGender, customerGroup) }) { sale ->
+      single = SingleState(); age = null; gender = null; group = null; customerEpoch++; commandID = UUID.randomUUID().toString()
       load(); app.requestSync(); offerUndo(sale, state.quantity)
     }
   }
@@ -315,7 +355,7 @@ class MainActivity : ComponentActivity() {
     snackbar.currentSnackbarData?.dismiss()
     scope?.launch {
       val result = withTimeoutOrNull(6000) {
-        snackbar.showSnackbar("${yen(sale.total)}（${quantity}本）を保存しました・お釣り ${yen(sale.change)}", "取消", duration = SnackbarDuration.Indefinite)
+        snackbar.showSnackbar((if (app.environment == AppEnvironment.TEST) "【テスト】" else "") + (sale.ticketNo?.let { "\n整理番号 $it\n" } ?: "\n") + "${yen(sale.total)}（${quantity}本）を保存しました・お釣り ${yen(sale.change)}", "取消", duration = SnackbarDuration.Indefinite)
       }
       if (result != SnackbarResult.ActionPerformed || isDestroyed) return@launch
       if (busy) { failure(IllegalStateException("処理中のため取消できませんでした。履歴から取消してください")); return@launch }
@@ -330,6 +370,24 @@ class MainActivity : ComponentActivity() {
     ProductImages.save(ProductImages.directory(this), hash, bytes)
     app.store.registerImage(hash, uploaded = false); hash
   }) { hash -> productEditor = productEditor?.let { it.copy(picked = hash, token = it.token + 1) } }
+  /** Drops every piece of screen state (cart, dialogs, loaded rows) and reloads from the other environment's database. */
+  private fun switchEnvironment(target: AppEnvironment) {
+    if (busy || syncRunning || app.cloud.running.get()) { failure(IllegalStateException("同期・保存中は切り替えできません")); return }
+    busy = true
+    app.switchEnvironment(target) { result ->
+      if (isDestroyed) return@switchEnvironment
+      busy = false
+      result.onFailure(::failure)
+      snackbar.currentSnackbarData?.dismiss()
+      cart.clear(); cash = ""; age = null; gender = null; group = null; customerEpoch++; ticketPrefix = ""; single = SingleState(); commandID = UUID.randomUUID().toString()
+      productEditor = null; stockEdit = null; cancelSale = null; confirmation = null; savedSale = null; settings = null
+      catalogs = null; catalogNext = null; restoreChoice = null; canContinueRestore = false
+      products = emptyList(); sales = emptyList(); pendingQuantities = emptyMap(); drawer = null; held = Held(); deviceID = ""
+      tab = 0; ready = false; syncMessage = app.syncMessage
+      load()
+      Toast.makeText(this, "${app.environment.label}環境に切り替えました", Toast.LENGTH_SHORT).show()
+    }
+  }
   private fun stockOf(product: Product) = Cash.displayedStock(product.cloudStock, pendingQuantities[product.id] ?: 0)
   private val deviceLabel get() = CodePoints.deviceLabel(android.os.Build.MODEL)
   private fun closeDrawer(counts: Map<String, Int>) {
@@ -340,7 +398,7 @@ class MainActivity : ComponentActivity() {
       Toast.makeText(this, "レジを締めました（差額 ${if (difference > 0) "+" else ""}${difference}円）", Toast.LENGTH_LONG).show()
     }
   }
-  private fun clearCart() { cart.clear(); cash = ""; age = null; gender = null; commandID = UUID.randomUUID().toString() }
+  private fun clearCart() { cart.clear(); cash = ""; age = null; gender = null; group = null; customerEpoch++; commandID = UUID.randomUUID().toString() }
   private fun failure(cause: Throwable) { error = cause.message ?: "処理に失敗しました" }
 
   private fun sync() {
@@ -406,7 +464,7 @@ class MainActivity : ComponentActivity() {
   }
 }
 
-data class Checkout(val id: String, val lines: List<Line>, val total: Long, val received: Long, val age: String? = null, val gender: String? = null)
+data class Checkout(val id: String, val lines: List<Line>, val total: Long, val received: Long, val age: String? = null, val gender: String? = null, val group: String? = null)
 private data class StockEdit(val product: Product, val kind: String)
 private data class ProductEdit(val product: Product?, val picked: String? = null, val token: Int = 0)
 private data class ConnectionEdit(val url: String)
@@ -414,5 +472,5 @@ private data class ConnectionEdit(val url: String)
 private data class RestoreChoice(val catalog: Catalog?, val continuation: Boolean)
 private data class Loaded(
   val products: List<Product>, val sales: List<Sale>, val pending: Int, val more: Boolean,
-  val quantities: Map<String, Long>, val deviceID: String, val drawer: DrawerSession?, val lastFeedAt: String?, val lastSentAt: String?, val held: Held
+  val quantities: Map<String, Long>, val deviceID: String, val drawer: DrawerSession?, val lastFeedAt: String?, val lastSentAt: String?, val held: Held, val ticketPrefix: String
 )

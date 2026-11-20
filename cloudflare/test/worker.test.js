@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import worker from "../src/worker.js";
-import { digest, MAX_BYTES } from "../src/lib.js";
+import { digest, normalize, MAX_BYTES } from "../src/lib.js";
 
 const migrations = readdirSync(new URL("../migrations/", import.meta.url)).filter(f => f.endsWith(".sql")).sort();
 
@@ -421,7 +421,7 @@ test("repair SQL fixes orders the 0.3.0 Worker wrote after migration 0003, idemp
   await productsCall(env, [product("tofu")]); await stockCall(env, [stockEvent(1, "tofu", "add", 10)]);
   await send(env, [order("new-1")]);
   // What the 0.3.0 Worker inserts: the original nine columns only, so seq stays 0.
-  for (const o of [order("old-b"), { ...v4order("old-a"), revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" }]) {
+  for (const o of [order("old-b"), { ...v4order("old-a"), customer_group: "family", ticket_no: "7", revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" }]) {
     const payload = JSON.stringify(o);
     DB.db.prepare("INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at) VALUES(?,?,?,?,?,?,?,?,?)")
       .run("test-shop", o.id, o.revision, "x", await digest(payload), payload, 1000, o.revision === 2 ? 1 : 0, "2026-11-20T02:00:00Z");
@@ -434,6 +434,7 @@ test("repair SQL fixes orders the 0.3.0 Worker wrote after migration 0003, idemp
   const rows = DB.db.prepare("SELECT id,seq,created_at,device_id,customer_age,customer_gender FROM cloud_orders WHERE id LIKE 'old-%' ORDER BY id").all().map(r => ({ ...r }));
   assert.deepEqual(rows, [{ id: "old-a", seq: 5, created_at: "2026-11-20T01:00:00Z", device_id: "device-a", customer_age: "student", customer_gender: "female" },
     { id: "old-b", seq: 6, created_at: "2026-11-20T01:00:00Z", device_id: null, customer_age: null, customer_gender: null }]);
+  assert.deepEqual(DB.db.prepare("SELECT customer_group,ticket_no FROM cloud_orders WHERE id LIKE 'old-%' ORDER BY id").all().map(r => [r.customer_group, r.ticket_no]), [["family", "7"], [null, null]]);
   assert.deepEqual({ ...DB.db.prepare("SELECT * FROM cloud_orders WHERE id='new-1'").get() }, correct);
   assert.deepEqual(DB.db.prepare("SELECT * FROM cloud_order_lines WHERE order_id='new-1'").all().map(r => ({ ...r })), correctLines);
   assert.equal(await stockOf(env, "tofu"), 6); // old-b sold 2, old-a is cancelled
@@ -545,4 +546,73 @@ test("products: image_hash is versioned content, must reference an uploaded imag
   assert.equal(d.by_product[0].image_hash, a); assert.equal(d.stock[0].image_hash, a);
   const html = await (await worker.fetch(new Request("https://test.example/dashboard"), {})).text();
   assert.match(html, /\/v1\/images\//); assert.match(html, /createObjectURL/);
+});
+
+test("customer_group: optional, validated, part of the content hash; existing payload hashes are unchanged", async () => {
+  const env = await v4env();
+  for (const customer_group of ["solo ", "team", 1, ""]) assert.equal((await send(env, [v4order("bad", { customer_group })])).status, 400);
+  assert.equal(env.DB.writes, 0);
+  // Exactly the 0.4.0 (pre-group) normalized payload: its hash must not change.
+  const before = v4order("o40"), legacy = JSON.stringify({ id: before.id, revision: 1, created_at: before.created_at, total: before.total, received: before.received,
+    change_yen: before.change_yen, cancelled_at: null, cancellation_reason: null, lines: before.lines, device_id: "device-a", customer_age: "student", customer_gender: "female" });
+  await send(env, [{ ...before, customer_group: null }, v4order("g", { customer_group: "couple" })]);
+  const row = env.DB.db.prepare("SELECT payload,payload_hash,base_hash,customer_group FROM cloud_orders WHERE id='o40'").get();
+  assert.equal(row.payload, legacy); assert.equal(row.payload_hash, await digest(legacy)); assert.equal(row.base_hash, await digest(legacy)); assert.equal(row.customer_group, null);
+  const g = env.DB.db.prepare("SELECT payload,customer_group FROM cloud_orders WHERE id='g'").get();
+  assert.equal(g.customer_group, "couple"); assert.equal(JSON.parse(g.payload).customer_group, "couple");
+  const writes = env.DB.writes;
+  assert.equal((await (await send(env, [before])).json()).accepted.length, 1); assert.equal(env.DB.writes, writes);
+  // Same revision with a group added or changed is a content conflict (base_hash includes it); cancellation must keep it.
+  assert.equal((await (await send(env, [{ ...before, customer_group: "solo" }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [v4order("g", { customer_group: "family" })])).json()).conflicts.length, 1);
+  const cancel = { ...v4order("g", { customer_group: "couple" }), revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" };
+  assert.equal((await (await send(env, [{ ...cancel, customer_group: null }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [cancel])).json()).accepted.length, 1);
+});
+test("migration 0006 fills customer_group and ticket_no from existing payloads without touching other rows", async () => {
+  const DB = new LocalD1(5), insert = DB.db.prepare("INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at,seq) VALUES(?,?,?,?,?,?,?,?,?,?)");
+  insert.run("s", "with", 1, "b", "h1", JSON.stringify({ ...v4order("with"), customer_group: "friends", ticket_no: "A-1" }), 1000, 0, "t", 1);
+  insert.run("s", "without", 1, "b", "h2", JSON.stringify(order("without")), 1000, 0, "t", 2);
+  const before = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
+  DB.migrate();
+  const after = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
+  assert.deepEqual(after.map(r => [r.customer_group, r.ticket_no]), [["friends", "A-1"], [null, null]]);
+  assert.deepEqual(after.map(({ customer_group, ticket_no, ...rest }) => rest), before);
+});
+test("dashboard groups count orders and sales per group, including unset", async () => {
+  const env = await v4env();
+  await send(env, [v4order("a", { customer_group: "family" }), v4order("b", { customer_group: "solo" }), v4order("c", { customer_group: "family" }), v4order("d"),
+    { ...v4order("e", { customer_group: "group" }), revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" }]);
+  const d = await (await worker.fetch(new Request("https://test.example/v1/dashboard?date=2026-11-20", { headers: { Authorization: "Bearer " + dashboardToken } }), env)).json();
+  assert.deepEqual(d.groups, [{ group: "solo", orders: 1, sales: 1000 }, { group: "family", orders: 2, sales: 2000 }, { group: null, orders: 1, sales: 1000 }]);
+  const html = await (await worker.fetch(new Request("https://test.example/dashboard"), {})).text();
+  assert.match(html, /グループ別/); assert.match(html, /カップル/);
+});
+
+test("ticket_no: optional, validated, stored, part of the content hash; existing hashes unchanged; shown in dashboard", async () => {
+  const env = await v4env();
+  for (const ticket_no of ["", "-12", "a-1", "ABC-1", "A-12345", "A--1", "12 ", 12, "Ａ-1"]) assert.equal((await send(env, [v4order("bad", { ticket_no })])).status, 400, String(ticket_no));
+  assert.equal(env.DB.writes, 0);
+  const accepted = ["1", "9999", "A1", "A-12", "AB-1234"];
+  assert.equal((await (await send(env, accepted.map((ticket_no, i) => v4order("t" + i, { ticket_no })))).json()).accepted.length, 5);
+  assert.deepEqual(env.DB.db.prepare("SELECT ticket_no FROM cloud_orders ORDER BY id").all().map(r => r.ticket_no), accepted);
+  assert.equal(JSON.parse(env.DB.db.prepare("SELECT payload FROM cloud_orders WHERE id='t3'").get().payload).ticket_no, "A-12");
+  // A pre-ticket order keeps its payload/hash and replays read-only.
+  const plain = v4order("plain"), expected = JSON.stringify(normalize(plain));
+  await send(env, [{ ...plain, ticket_no: null }]);
+  const row = env.DB.db.prepare("SELECT payload,payload_hash,ticket_no FROM cloud_orders WHERE id='plain'").get();
+  assert.equal(row.payload, expected); assert.ok(!row.payload.includes("ticket_no")); assert.equal(row.payload_hash, await digest(expected)); assert.equal(row.ticket_no, null);
+  const writes = env.DB.writes;
+  assert.equal((await (await send(env, [plain])).json()).accepted.length, 1); assert.equal(env.DB.writes, writes);
+  // base_hash includes it: adding/changing the number at the same revision, or dropping it on cancellation, conflicts.
+  assert.equal((await (await send(env, [{ ...plain, ticket_no: "5" }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [v4order("t3", { ticket_no: "A-13" })])).json()).conflicts.length, 1);
+  const cancel = { ...v4order("t3", { ticket_no: "A-12" }), revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" };
+  assert.equal((await (await send(env, [{ ...cancel, ticket_no: null }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [cancel])).json()).accepted.length, 1);
+  assert.equal(env.DB.db.prepare("SELECT ticket_no FROM cloud_orders WHERE id='t3'").get().ticket_no, "A-12");
+  const d = await (await worker.fetch(new Request("https://test.example/v1/dashboard", { headers: { Authorization: "Bearer " + dashboardToken } }), env)).json();
+  assert.equal(d.recent.length, 6);
+  assert.deepEqual(d.recent.find(o => o.id === "t3"), { id: "t3", ticket_no: "A-12", created_at: "2026-11-20T01:00:00Z", total: 1000, cancelled: true, device_id: "device-a" });
+  assert.match(await (await worker.fetch(new Request("https://test.example/dashboard"), {})).text(), /整理番号/);
 });

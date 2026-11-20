@@ -21,12 +21,15 @@ public struct CloudOrder: Codable {
     public let device_id: String?
     public let customer_age: String?
     public let customer_gender: String?
+    public let customer_group: String?
+    public let ticket_no: String?
     init(sale: Sale, revision: Int) {
         id = sale.id; self.revision = revision; created_at = sale.createdAt
         total = sale.total; received = sale.received; change_yen = sale.change
         cancelled_at = sale.cancelledAt; cancellation_reason = sale.cancellationReason
         lines = sale.lines.map { CloudLine(product_id: $0.productID, name: $0.name, price: $0.price, quantity: $0.quantity) }
         device_id = sale.deviceID; customer_age = sale.customerAge; customer_gender = sale.customerGender
+        customer_group = sale.customerGroup; ticket_no = sale.ticketNo
     }
 }
 public struct SyncReceipt: Codable, Equatable {

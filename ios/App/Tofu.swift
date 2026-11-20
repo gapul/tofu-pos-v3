@@ -15,18 +15,83 @@ extension Color {
     static let tofuTop = Color("TofuTop")
 }
 
-extension View {
-    /// Paper background behind lists/forms; rows use the card color via `tofuRows()`.
-    func tofuSurface() -> some View {
-        scrollContentBackground(.hidden)
-            .background(Color.tofuBackground)
-            .toolbarBackground(Color.tofuBackground, for: .navigationBar)
+private struct TestEnvironmentKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+    /// True while the app runs against the test environment; every top bar then turns orange.
+    var isTestEnvironment: Bool {
+        get { self[TestEnvironmentKey.self] }
+        set { self[TestEnvironmentKey.self] = newValue }
+    }
+}
+
+/// Navigation bar color: paper normally, orange in the test environment.
+struct TofuBar: ViewModifier {
+    @Environment(\.isTestEnvironment) private var test
+    func body(content: Content) -> some View {
+        content
+            .toolbarBackground(test ? Color.orange.opacity(0.45) : Color.tofuBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
     }
+}
+
+struct TestBadge: View {
+    @Environment(\.isTestEnvironment) private var test
+    var body: some View {
+        if test {
+            Text("テスト").font(.caption.bold()).foregroundColor(.white)
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(Capsule().fill(Color.red))
+                .accessibilityLabel("テスト環境")
+        }
+    }
+}
+
+/// iPad (regular width) and Mac use the wide layouts; iPhone never does, even a Max in landscape.
+struct WideLayout {
+    @MainActor static func isWide(_ sizeClass: UserInterfaceSizeClass?) -> Bool {
+        #if canImport(UIKit)
+        return sizeClass == .regular && UIDevice.current.userInterfaceIdiom != .phone
+        #else
+        return false
+        #endif
+    }
+    static let readableWidth: CGFloat = 640
+}
+
+private struct OptionalReadableWidth: ViewModifier {
+    let enabled: Bool
+    func body(content: Content) -> some View {
+        if enabled { content.modifier(ReadableWidth()) } else { content }
+    }
+}
+
+/// Centers content at a readable width on iPad/Mac; no change on iPhone.
+struct ReadableWidth: ViewModifier {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    func body(content: Content) -> some View {
+        if WideLayout.isWide(sizeClass) {
+            content.frame(maxWidth: WideLayout.readableWidth).frame(maxWidth: .infinity)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// Paper background behind lists/forms; rows use the card color via `tofuRows()`. `fullWidth` skips the
+    /// iPad/Mac readable-width centering (the two-column register).
+    func tofuSurface(fullWidth: Bool = false) -> some View {
+        scrollContentBackground(.hidden)
+            .modifier(OptionalReadableWidth(enabled: !fullWidth))
+            .background(Color.tofuBackground)
+            .modifier(TofuBar())
+    }
+    func readableWidth() -> some View { modifier(ReadableWidth()) }
     func tofuRows() -> some View { listRowBackground(Color.tofuCard) }
-    /// Sync status icon at the top right of every main screen.
+    /// Sync status icon at the top right of every main screen, plus the test badge at the top left.
     func syncToolbar(_ model: RegisterModel) -> some View {
         toolbar {
+            ToolbarItem(placement: .navigationBarLeading) { TestBadge() }
             ToolbarItem(placement: .primaryAction) {
                 if let sync = model.sync { SyncStatusButton(controller: sync) }
             }
@@ -135,6 +200,9 @@ struct SyncSheet: View {
         NavigationStack {
             List {
                 Group {
+                    if controller.environment == .test {
+                        Section { Label("テスト環境です。売上は本番に入りません", systemImage: "exclamationmark.triangle.fill").foregroundColor(.red) }
+                    }
                     Section {
                         HStack {
                             Text(controller.pending == 0 ? "同期済み" : "未同期 \(controller.pending)件").font(.title3.bold())
@@ -219,6 +287,17 @@ enum PhotoProcessing {
         throw POSFailure.invalid("写真が大きすぎます")
         #else
         throw POSFailure.invalid("この環境では写真を扱えません")
+        #endif
+    }
+}
+
+/// Mac Catalyst: a minimum window size so the wide layouts always fit.
+enum MacWindow {
+    @MainActor static func configure() {
+        #if targetEnvironment(macCatalyst)
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+            scene.sizeRestrictions?.minimumSize = CGSize(width: 900, height: 640)
+        }
         #endif
     }
 }

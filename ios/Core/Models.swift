@@ -37,10 +37,22 @@ public enum CustomerGender: String, CaseIterable, Identifiable {
     public var label: String { ["male": "男性", "female": "女性", "other": "その他"][rawValue]! }
 }
 /// Segment chosen at checkout. Optional per axis; an unselected axis is sent as absent (null).
+public enum CustomerGroup: String, CaseIterable, Identifiable {
+    case solo, friends, family, couple, group
+    public var id: String { rawValue }
+    public var label: String { ["solo": "一人", "friends": "友人", "family": "家族", "couple": "カップル", "group": "グループ"][rawValue]! }
+}
 public struct Customer: Equatable {
     public let age: CustomerAge?
     public let gender: CustomerGender?
-    public init(age: CustomerAge?, gender: CustomerGender?) { self.age = age; self.gender = gender }
+    public let group: CustomerGroup?
+    public init(age: CustomerAge?, gender: CustomerGender?, group: CustomerGroup? = nil) { self.age = age; self.gender = gender; self.group = group }
+    public var isEmpty: Bool { age == nil && gender == nil && group == nil }
+    /// "大人・女性・家族"; unselected axes are left out.
+    public static func text(age: String?, gender: String?, group: String?) -> String {
+        let parts = [age.flatMap(CustomerAge.init(rawValue:))?.label, gender.flatMap(CustomerGender.init(rawValue:))?.label, group.flatMap(CustomerGroup.init(rawValue:))?.label].compactMap { $0 }
+        return parts.isEmpty ? "未選択" : parts.joined(separator: "・")
+    }
 }
 
 public struct Line: Identifiable, Equatable {
@@ -66,6 +78,9 @@ public struct Sale: Identifiable {
     public var deviceID: String? = nil
     public var customerAge: String? = nil
     public var customerGender: String? = nil
+    public var customerGroup: String? = nil
+    /// Per-device daily ticket ("12" or "A-12"), issued in the checkout transaction.
+    public var ticketNo: String? = nil
     /// Local only: the cancellation was recorded on this device (drawer cash went out here).
     public var cancelledHere = false
 }
@@ -95,8 +110,10 @@ public enum Money {
 }
 
 public enum SalesCSV {
-    public static func make(_ sales: [Sale]) -> String {
-        let header = "order_id,created_at_utc,status,cancelled_at_utc,cancellation_reason,order_total_yen,received_yen,change_yen,line_no,product_id,product_name,quantity,unit_price_yen,line_total_yen,net_line_sales_yen"
+    /// `ticket` appends a ticket_no column. Off by default so the shared golden CSV (shared/golden-sales.csv,
+    /// also checked by Android) stays byte-identical until it is updated on both platforms.
+    public static func make(_ sales: [Sale], ticket: Bool = false) -> String {
+        let header = "order_id,created_at_utc,status,cancelled_at_utc,cancellation_reason,order_total_yen,received_yen,change_yen,line_no,product_id,product_name,quantity,unit_price_yen,line_total_yen,net_line_sales_yen" + (ticket ? ",ticket_no" : "")
         var rows = [header]
         for sale in sales {
             for (index, line) in sale.lines.enumerated() {
@@ -107,7 +124,7 @@ public enum SalesCSV {
                               index == 0 ? String(sale.total) : "", index == 0 ? String(sale.received) : "",
                               index == 0 ? String(sale.change) : "", String(index + 1), line.productID,
                               line.name, String(line.quantity), String(line.price), String(amount),
-                              sale.cancelledAt == nil ? String(amount) : "0"]
+                              sale.cancelledAt == nil ? String(amount) : "0"] + (ticket ? [index == 0 ? sale.ticketNo ?? "" : ""] : [])
                 rows.append(fields.map(cell).joined(separator: ","))
             }
         }

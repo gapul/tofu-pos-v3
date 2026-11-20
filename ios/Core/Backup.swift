@@ -62,9 +62,12 @@ extension CloudOrder {
         } else if cancellation_reason != nil { throw POSFailure.invalid("不正な取消データです") }
         guard device_id.map({ (1...64).contains($0.unicodeScalars.count) }) ?? true,
               customer_age.map({ CustomerAge(rawValue: $0) != nil }) ?? true,
-              customer_gender.map({ CustomerGender(rawValue: $0) != nil }) ?? true else { throw POSFailure.invalid("不正な会計の端末・客層です") }
+              customer_gender.map({ CustomerGender(rawValue: $0) != nil }) ?? true,
+              customer_group.map({ CustomerGroup(rawValue: $0) != nil }) ?? true,
+              ticket_no.map(Ticket.valid) ?? true else { throw POSFailure.invalid("不正な会計の端末・客層です") }
         return Sale(id: id, createdAt: created_at, total: total, received: received, change: change_yen,
                     cancelledAt: cancelled_at, cancellationReason: cancellation_reason, lines: details,
-                    deviceID: device_id, customerAge: customer_age, customerGender: customer_gender)
+                    deviceID: device_id, customerAge: customer_age, customerGender: customer_gender,
+                    customerGroup: customer_group, ticketNo: ticket_no)
     }
 }

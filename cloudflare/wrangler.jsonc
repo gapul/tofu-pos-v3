@@ -13,5 +13,20 @@
       "database_id": "3d9d40d7-5392-4c7f-ac18-b00ca1293669",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  // Test environment for the apps' テスト mode: separate Worker, D1 and tokens. Never shares data with production.
+  "env": {
+    "staging": {
+      "name": "tofu-pos-v3-sync-staging",
+      "vars": { "SHOP_ID": "tofu-test" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tofu-pos-v3-staging",
+          "database_id": "caffa7dc-160c-4332-b1da-6bd7c86fc971",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
 }
