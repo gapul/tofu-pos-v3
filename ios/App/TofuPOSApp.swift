@@ -148,6 +148,7 @@ struct RegisterView: View {
     @State private var gender: CustomerGender?
     @State private var group: CustomerGroup?
     @State private var customerPage = 0
+    @State private var scrollToTop = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.isTestEnvironment) private var isTest
     @FocusState private var receivedFocused: Bool
@@ -172,6 +173,7 @@ struct RegisterView: View {
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
+                Group {
                 if WideLayout.isWide(sizeClass) {
                     // iPad/Mac: product grid on the left, cart and payment on the right.
                     HStack(spacing: 0) {
@@ -192,6 +194,12 @@ struct RegisterView: View {
                             checkoutSections(proxy)
                         }.tofuRows()
                     }
+                }
+                }
+                // After a purchase, back to the top (products on iPhone, the cart column on iPad/Mac).
+                .onChange(of: scrollToTop) { _ in
+                    let target = WideLayout.isWide(sizeClass) ? "cartTop" : "top"
+                    if reduceMotion { proxy.scrollTo(target, anchor: .top) } else { withAnimation { proxy.scrollTo(target, anchor: .top) } }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -246,7 +254,7 @@ struct RegisterView: View {
                     }.frame(minHeight: 48)
                 }.disabled(StockMath.soldOut(product, displayed: left))
             }
-        }
+        }.id("top")
     }
     @ViewBuilder private func checkoutSections(_ proxy: ScrollViewProxy) -> some View {
         Section("カート") {
@@ -258,7 +266,7 @@ struct RegisterView: View {
             }
             if cart.isEmpty { Text("商品を選ぶとここに表示されます") }
             Text("合計　¥\(Yen.format(total ?? 0))").font(.title2.bold())
-        }
+        }.id("cartTop")
         Section("客層（任意）") {
             CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
                 if reduceMotion { proxy.scrollTo("cash", anchor: .center) } else { withAnimation { proxy.scrollTo("cash", anchor: .center) } }
@@ -285,7 +293,7 @@ struct RegisterView: View {
             if let total, let cash, cash >= total {
                 Text("お釣り　¥\(Yen.format(cash - total))").font(.title2.bold())
             }
-            Button("会計を確定") {
+            Button("購入") {
                 receivedFocused = false
                 confirming = true
             }
@@ -338,7 +346,7 @@ struct RegisterView: View {
             guard let cash = Money.parse(received) else { throw POSFailure.invalid("預り金を確認してください") }
             let sale = try model.checkout(id: commandID, lines: cart, received: cash, customer: Customer(age: age, gender: gender, group: group))
             cart = []; received = ""; commandID = UUID().uuidString; receipt = sale
-            self.age = nil; self.gender = nil; group = nil; customerPage = 0
+            self.age = nil; self.gender = nil; group = nil; customerPage = 0; scrollToTop += 1
             model.refresh()
         } catch { model.error = error.localizedDescription }
     }

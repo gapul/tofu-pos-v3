@@ -164,7 +164,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   val labels = listOf("レジ", "商品", "履歴", "締め")
   val icons = listOf(Icons.Default.ShoppingCart, Icons.Default.Add, Icons.AutoMirrored.Filled.List, Icons.Default.Lock)
   val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-  // Lifted above the single-product "確定して次へ" button so the next sale is never blocked by the notice.
+  // Lifted above the single-product "購入" button so the next sale is never blocked by the notice.
   Scaffold(snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = 88.dp)) { data ->
     Snackbar(action = { data.visuals.actionLabel?.let { label -> TextButton(data::performAction) { Text(label) } } }) {
       Column {
@@ -325,6 +325,15 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
     }
   }
 }
+/** After each saved sale the register returns to the top (product card, quantity). Jumps when animations are off. */
+@Composable private fun ScrollToTopAfterSale(epoch: Int, list: androidx.compose.foundation.lazy.LazyListState, still: Boolean) {
+  var seen by rememberSaveable { mutableIntStateOf(epoch) }
+  LaunchedEffect(epoch) {
+    if (epoch == seen) return@LaunchedEffect
+    seen = epoch
+    if (still) list.scrollToItem(0) else list.animateScrollToItem(0)
+  }
+}
 /** True when system animations are off; scrolling then jumps instead of animating. */
 @Composable private fun reducedMotion(): Boolean {
   val context = LocalContext.current
@@ -396,6 +405,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   val focus = LocalFocusManager.current
   val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
   val manualFocus = remember { FocusRequester() }; val keyboard = LocalSoftwareKeyboardController.current
+  ScrollToTopAfterSale(extras.customerEpoch, list, still)
   // "手入力" opens an empty field with the numeric keyboard right away.
   LaunchedEffect(state.tender) { if (state.tender == SingleState.MANUAL) runCatching { manualFocus.requestFocus(); keyboard?.show() } }
   val total = state.total(product.price)
@@ -474,7 +484,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       } }
     }
     Surface(color = MaterialTheme.colorScheme.background) {
-      Action("確定して次へ", { focus.clearFocus(); onConfirm() }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), canConfirm)
+      Action("購入", { focus.clearFocus(); onConfirm() }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), canConfirm)
     }
   }
 }
@@ -485,13 +495,14 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
 ) {
   val focus = LocalFocusManager.current
   val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
+  ScrollToTopAfterSale(extras.customerEpoch, list, still)
   val total = runCatching { Money.total(cart) }.getOrNull()
   val received = Money.parse(cash)
   val canPay = enabled && total != null && received != null && received >= total
   fun inCart(id: String) = cart.firstOrNull { it.productID == id }?.quantity ?: 0
   fun canAdd(id: String) = products.firstOrNull { it.id == id }?.let { Cash.canAdd(it.stopAtZero, extras.stocks[id], inCart(id)) } ?: true
   Column(Modifier.fillMaxSize()) {
-    LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       item { Text("商品を選択", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.titleMedium) }
       if (products.isEmpty()) item { Info("商品を登録しましょう", "下の「商品」から、商品名と価格を登録できます。") }
       items(products.chunked(2), key = { "products:${it.first().id}" }) { row ->
@@ -541,7 +552,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       if (cart.isNotEmpty()) item {
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
           CustomerPager(extras, enabled, onAge, onGender, onGroup) {
-            // After 集団: bring the cash card / total and 会計を確定 into view.
+            // After 集団: bring the cash card / total and 購入 into view.
             focus.clearFocus(); scope.launch { val last = list.layoutInfo.totalItemsCount - 1; if (last >= 0) { if (still) list.scrollToItem(last) else list.animateScrollToItem(last) } }
           }
         }
@@ -583,7 +594,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("合計", style = MaterialTheme.typography.titleMedium)
       Text(if (cart.isEmpty()) yen(0) else total?.let(::yen) ?: "金額上限を超えています", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-      Action("会計を確定", checkout, Modifier.fillMaxWidth(), enabled)
+      Action("購入", checkout, Modifier.fillMaxWidth(), enabled)
     }
   }
 }
@@ -680,7 +691,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       }
     } }
     item { Text("右上のアイコンで全件をCSVに書き出せます（確認用。復元用バックアップではありません）。", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodySmall) }
-    if (sales.isEmpty()) item { Info("まだ会計はありません", "会計を確定すると、ここに履歴が残ります。") }
+    if (sales.isEmpty()) item { Info("まだ会計はありません", "購入すると、ここに履歴が残ります。") }
     items(sales, key = { it.id }) { sale -> Card(shape = RoundedCornerShape(24.dp)) {
       Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

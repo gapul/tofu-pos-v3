@@ -91,6 +91,7 @@ struct SingleProductView: View {
     @State private var gender: CustomerGender?
     @State private var group: CustomerGroup?
     @State private var customerPage = 0
+    @State private var scrollToTop = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var commandID = UUID().uuidString
     @State private var saving = false
@@ -123,7 +124,7 @@ struct SingleProductView: View {
             ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 12) {
-                    productCard
+                    productCard.id("top")
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 6) { Text("客層").font(.headline); Text("任意").font(.caption).foregroundColor(.tofuMuted) }
                         CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
@@ -140,7 +141,7 @@ struct SingleProductView: View {
                     }.card()
                     changeBox
                     Button { confirm() } label: {
-                        Text("確定して次へ").font(.title3.bold()).foregroundColor(.tofuOnAccent).frame(maxWidth: .infinity, minHeight: 52)
+                        Text("購入").font(.title3.bold()).foregroundColor(.tofuOnAccent).frame(maxWidth: .infinity, minHeight: 52)
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!canConfirm)
@@ -152,6 +153,10 @@ struct SingleProductView: View {
                 .readableWidth()
             }
             .scrollDismissesKeyboard(.interactively)
+            // After a purchase, back to the product card and quantity.
+            .onChange(of: scrollToTop) { _ in
+                if reduceMotion { proxy.scrollTo("top", anchor: .top) } else { withAnimation { proxy.scrollTo("top", anchor: .top) } }
+            }
             }
             .background(Color.tofuBackground)
             .modifier(TofuBar())
@@ -278,6 +283,7 @@ struct SingleProductView: View {
             quantity = 1; choice = .exact; manualText = ""; age = nil; gender = nil; group = nil; customerPage = 0
             model.refresh()
             show(sale)
+            scrollToTop += 1
         } catch { model.error = error.localizedDescription }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 600_000_000)

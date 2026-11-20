@@ -31,6 +31,8 @@ struct TofuBar: ViewModifier {
         content
             .toolbarBackground(test ? Color.orange.opacity(0.45) : Color.tofuBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            // Inline titles keep the top compact; toolbar items (sync, test badge, export) stay.
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

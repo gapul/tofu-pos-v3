@@ -312,3 +312,9 @@ AndroidはMaterial 3のColorSchemeへ、iOSはアクセントカラーと背景�
   - 数字キーボードの代わりに物理キーボードで預り金を入力できること。Return/Enterで「確定して次へ」（単品画面）を実行できるとよい。
   - Catalystで使えないAPI（`UIDevice.current.name`の扱い、`keyboardType`など）は`#if targetEnvironment(macCatalyst)`で分岐。Keychain・SQLite・PhotosPickerはCatalystでも同じ。サンドボックス（App Sandbox）を有効にし、ネットワーク送信（`com.apple.security.network.client`）とユーザーが選んだファイルの読み書き（`com.apple.security.files.user-selected.read-write`、CSV書き出しと設定ファイル読み込み用）の権限を付ける。
   - アプリアイコンはmacOSでも表示される（既存の1024pxから）。
+
+## 購入ボタン・余白 2026-11-21（ユーザー指示）
+
+- 単品画面の「確定して次へ」を**「購入」**に改名（両OS）。複数商品画面の「会計を確定」も「購入」に揃える（確認ダイアログの「確定する」はそのまま）。
+- 「購入」で保存したら、レジ画面を**一番上までスクロール**して戻す（商品カード・本数が見える状態。単品・複数商品とも）。アニメーション無効設定では即時。
+- iOS: 上部の余白が大きすぎる。全タブのナビゲーションタイトルを`.inline`表示にして、上部の空きを詰める（ナビゲーションバー右上の同期アイコン・テストバッジ・エクスポートアイコンは維持）。iPad/Macも同様。
