@@ -1,0 +1,2755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOS — Are you Tofu? レジUIデザイン案（3方向性）</title>
+<style>
+  :root {
+    --paper: #F8F7F6;
+    --sesame: #2E2018;
+    --miso-dark: #503225;
+    --miso-amber: #B66427;
+    --miso-light: #D18C53;
+    --gray-brown: #635954;
+    --tofu-top: #FFE8A9;
+    --canvas-bg: #EBE7E3;
+    --danger: #B93222;
+    --danger-soft: #FDECE9;
+    --ok: #2D6A4F;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--canvas-bg);
+    color: var(--sesame);
+    
+    padding: 28px 20px 56px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ページ上部バー */
+  .page-header {
+    max-width: 1168px;
+    margin: 0 auto 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(46, 32, 24, 0.14);
+  }
+
+  .page-title-group {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--sesame);
+  }
+
+  .page-sub {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-brown);
+  }
+
+  .palette-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(46, 32, 24, 0.12);
+    border-radius: 999px;
+    padding: 3px 8px 3px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sesame);
+  }
+
+  .swatch-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(46, 32, 24, 0.25);
+  }
+
+  /* 3案横並びレイアウト */
+  .showcase {
+    max-width: 1168px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 360px);
+    justify-content: center;
+    gap: 36px;
+    align-items: start;
+  }
+
+  @media (max-width: 1180px) {
+    .showcase {
+      grid-template-columns: repeat(3, 360px);
+      justify-content: start;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+  }
+
+  .concept-col {
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .concept-meta {
+    min-height: 70px;
+  }
+
+  .concept-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--sesame);
+    color: var(--tofu-top);
+    margin-bottom: 6px;
+  }
+
+  .concept-meta h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--sesame);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .concept-meta p {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--gray-brown);
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     共通スマホフレーム（360 x 744）
+     ========================================================= */
+  .phone {
+    width: 360px;
+    height: 744px;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 22px 46px rgba(46, 32, 24, 0.22), 0 0 0 6px #231914;
+    user-select: none;
+  }
+
+  .app-header {
+    height: 52px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .brand-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .app-badge {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 3px 6px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .tofu-o {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 0.5px;
+    transform: translateY(-0.5px);
+  }
+
+  .sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 8px;
+    border-radius: 999px;
+    line-height: 1;
+  }
+
+  .sync-pill svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #40A86F;
+  }
+
+  /* メインビュー領域 */
+  .screen-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-pane {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .tab-pane.active {
+    display: flex;
+  }
+
+  /* 単品レジ内部 */
+  .pos-pane {
+    overflow: hidden;
+    justify-content: space-between;
+  }
+
+  .pos-top-area {
+    padding: 10px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  /* 商品カード */
+  .product-card {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 11px;
+  }
+
+  .product-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .product-thumb svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .product-row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .product-name {
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+  }
+
+  .stock-badge {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .product-row-bottom {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .unit-price {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .subtotal-inline {
+    font-size: 13px;
+    font-weight: 800;
+    opacity: 0.85;
+  }
+
+  /* 本数ステッパー */
+  .qty-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 56px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .qty-btn {
+    height: 50px;
+    font-size: 26px;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.08s ease;
+  }
+
+  .qty-btn:active {
+    transform: scale(0.95);
+  }
+
+  .qty-center {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .qty-label {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0.75;
+  }
+
+  .qty-num {
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .qty-unit {
+    font-size: 13px;
+    font-weight: 800;
+    opacity: 0.8;
+  }
+
+  /* 客層：横送り1項目ずつ */
+  .demo-section {
+    padding: 8px 10px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .demo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .demo-steps {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .demo-step-btn {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  .demo-arrow-sep {
+    font-size: 10px;
+    opacity: 0.45;
+    font-weight: 800;
+  }
+
+  .demo-opt-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .demo-carousel-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .demo-nav-btn {
+    width: 28px;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .demo-nav-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .demo-viewport {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .demo-track {
+    display: flex;
+    width: 300%;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .demo-slide {
+    width: 33.3333%;
+    display: flex;
+    gap: 5px;
+    padding: 0 2px;
+  }
+
+  .demo-chip {
+    flex: 1;
+    height: 40px;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0 2px;
+    white-space: nowrap;
+    transition: transform 0.08s ease;
+  }
+
+  .demo-slide-group .demo-chip {
+    font-size: 11px;
+  }
+
+  .demo-chip:active {
+    transform: scale(0.96);
+  }
+
+  /* 受け取った額 */
+  .cash-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .section-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .section-value-hint {
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .cash-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+
+  .cash-btn {
+    height: 46px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.08s ease;
+    letter-spacing: -0.02em;
+  }
+
+  .cash-btn.text-sm {
+    font-size: 14px;
+    letter-spacing: 0.01em;
+  }
+
+  .cash-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* 手入力インライン */
+  .manual-bar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .manual-bar.open {
+    display: flex;
+  }
+
+  .manual-input {
+    flex: 1;
+    height: 36px;
+    padding: 0 10px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  .manual-apply {
+    height: 36px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* お釣り＋購入エリア */
+  .checkout-zone {
+    padding: 11px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+
+  .change-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 2px 4px;
+  }
+
+  .change-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .change-label {
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+
+  .change-sub {
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.78;
+  }
+
+  .change-amount {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .change-amount.insufficient {
+    font-size: 24px;
+    color: var(--danger) !important;
+  }
+
+  .buy-btn {
+    width: 100%;
+    height: 58px;
+    border: none;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+
+  .buy-btn:active {
+    transform: scale(0.98);
+  }
+
+  .buy-btn.is-unready {
+    opacity: 0.52;
+  }
+
+  .buy-btn-total {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+
+  /* 下部タブバー */
+  .tab-bar {
+    height: 62px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 3;
+  }
+
+  .tab-btn {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 800;
+    position: relative;
+  }
+
+  .tab-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* 購入後の整理番号オーバーレイ */
+  .ticket-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 42px 22px 26px;
+    text-align: center;
+  }
+
+  .ticket-overlay.open {
+    display: flex;
+  }
+
+  .ticket-top-label {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    padding: 6px 16px;
+    border-radius: 999px;
+  }
+
+  .ticket-number-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ticket-caption {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+  }
+
+  .ticket-big-num {
+    font-size: 98px;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+
+  .ticket-summary-card {
+    width: 100%;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .ticket-stat-label {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: 0.72;
+    margin-bottom: 2px;
+  }
+
+  .ticket-stat-val {
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .ticket-next-btn {
+    width: 100%;
+    height: 60px;
+    border: none;
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+
+  /* 締め画面・履歴画面・商品画面（フルタブ内＆ミニ画面共通） */
+  .sub-pane-inner {
+    padding: 12px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pane-head-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .pane-title {
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .pane-sub {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0.75;
+  }
+
+  /* 締めサマリー */
+  .close-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+
+  .close-stat {
+    padding: 9px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .close-stat-label {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: 0.78;
+  }
+
+  .close-stat-val {
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .denom-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .denom-row {
+    display: grid;
+    grid-template-columns: 74px 1fr 74px;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+  }
+
+  .denom-face {
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  .denom-ctrl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .denom-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .denom-count {
+    min-width: 28px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .denom-sub {
+    text-align: right;
+    font-size: 13px;
+    font-weight: 800;
+    opacity: 0.85;
+  }
+
+  .close-confirm-btn {
+    height: 48px;
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+
+  /* 履歴リスト */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .history-card {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .history-card.is-void {
+    opacity: 0.7;
+  }
+
+  .history-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .history-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .history-ticket {
+    font-size: 16px;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  .history-time {
+    font-size: 13px;
+    font-weight: 800;
+    opacity: 0.75;
+  }
+
+  .history-amount {
+    font-size: 19px;
+    font-weight: 900;
+  }
+
+  .history-card.is-void .history-amount {
+    text-decoration: line-through;
+  }
+
+  .history-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .history-tags {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  .void-badge {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--danger);
+    color: #FFFFFF;
+    white-space: nowrap;
+  }
+
+  /* 商品タブ */
+  .item-manage-card {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* =========================================================
+     案A：紙と墨（ポスター直結・ハイコントラスト）
+     ========================================================= */
+  .theme-paper.phone,
+  .theme-paper .mini-inner {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(ellipse 2.2px 1.2px at 14px 18px, rgba(46, 32, 24, 0.22) 98%, transparent),
+      radial-gradient(ellipse 1.4px 2.4px at 56px 42px, rgba(46, 32, 24, 0.16) 98%, transparent),
+      radial-gradient(ellipse 2.4px 1.3px at 94px 14px, rgba(46, 32, 24, 0.18) 98%, transparent),
+      radial-gradient(ellipse 1.5px 2px at 132px 62px, rgba(46, 32, 24, 0.14) 98%, transparent);
+    background-size: 150px 80px;
+    color: var(--sesame);
+  }
+
+  .theme-paper .app-header {
+    background: var(--paper);
+    border-bottom: 2.5px solid var(--sesame);
+  }
+
+  .theme-paper .app-badge {
+    background: var(--sesame);
+    color: var(--paper);
+    border-radius: 2px;
+  }
+
+  .theme-paper .sync-pill {
+    background: var(--paper);
+    border: 1.5px solid var(--sesame);
+    color: var(--sesame);
+    border-radius: 4px;
+  }
+
+  .theme-paper .product-card {
+    background: #FFFFFF;
+    border: 2.5px solid var(--sesame);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--sesame);
+  }
+
+  .theme-paper .product-thumb {
+    border: 2px solid var(--sesame);
+    border-radius: 4px;
+  }
+
+  .theme-paper .stock-badge {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border: 1.5px solid var(--sesame);
+    border-radius: 3px;
+  }
+
+  .theme-paper .qty-btn {
+    background: #FFFFFF;
+    color: var(--sesame);
+    border: 2.5px solid var(--sesame);
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 var(--sesame);
+  }
+
+  .theme-paper .qty-btn.qty-plus {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .theme-paper .qty-center {
+    background: #FFFFFF;
+    border: 2px solid var(--sesame);
+    border-radius: 6px;
+  }
+
+  .theme-paper .demo-section {
+    background: #FFFFFF;
+    border: 2px solid var(--sesame);
+    border-radius: 6px;
+  }
+
+  .theme-paper .demo-step-btn {
+    color: var(--gray-brown);
+    border-radius: 3px;
+  }
+
+  .theme-paper .demo-step-btn.active {
+    background: var(--sesame);
+    color: var(--paper);
+  }
+
+  .theme-paper .demo-step-btn.has-val:not(.active) {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border: 1px solid var(--sesame);
+  }
+
+  .theme-paper .demo-nav-btn {
+    background: var(--paper);
+    color: var(--sesame);
+    border: 1.5px solid var(--sesame);
+    border-radius: 4px;
+  }
+
+  .theme-paper .demo-chip {
+    background: var(--paper);
+    color: var(--sesame);
+    border: 2px solid var(--sesame);
+    border-radius: 4px;
+  }
+
+  .theme-paper .demo-chip.selected {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .theme-paper .section-label {
+    color: var(--sesame);
+  }
+
+  .theme-paper .section-value-hint {
+    color: var(--miso-dark);
+  }
+
+  .theme-paper .cash-btn {
+    background: #FFFFFF;
+    color: var(--sesame);
+    border: 2px solid var(--sesame);
+    border-radius: 5px;
+    box-shadow: 2px 2px 0 var(--sesame);
+  }
+
+  .theme-paper .cash-btn.selected {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    box-shadow: none;
+    transform: translate(1px, 1px);
+  }
+
+  .theme-paper .manual-input {
+    background: #FFFFFF;
+    border: 2px solid var(--sesame);
+    color: var(--sesame);
+  }
+
+  .theme-paper .manual-apply {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  /* ポスターの下半分＝焦げた味噌の表現 */
+  .theme-paper .checkout-zone {
+    background: linear-gradient(180deg, var(--miso-dark) 0%, var(--sesame) 100%);
+    color: var(--paper);
+    border-top: 3px solid var(--sesame);
+  }
+
+  .theme-paper .change-amount {
+    color: var(--tofu-top);
+  }
+
+  .theme-paper .buy-btn {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border: 2.5px solid var(--sesame);
+    border-radius: 6px;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+  }
+
+  .theme-paper .buy-btn-total {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .theme-paper .tab-bar {
+    background: var(--paper);
+    border-top: 2.5px solid var(--sesame);
+  }
+
+  .theme-paper .tab-btn {
+    color: var(--gray-brown);
+  }
+
+  .theme-paper .tab-btn.active {
+    color: var(--sesame);
+    background: var(--tofu-top);
+  }
+
+  .theme-paper .tab-btn.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--sesame);
+  }
+
+  .theme-paper .ticket-overlay {
+    background: var(--sesame);
+    color: var(--paper);
+  }
+
+  .theme-paper .ticket-top-label {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    border: 1.5px solid var(--tofu-top);
+  }
+
+  .theme-paper .ticket-big-num {
+    color: var(--tofu-top);
+  }
+
+  .theme-paper .ticket-summary-card {
+    background: var(--miso-dark);
+    border: 2px solid var(--miso-light);
+    border-radius: 6px;
+  }
+
+  .theme-paper .ticket-next-btn {
+    background: var(--paper);
+    color: var(--sesame);
+    border: 2.5px solid var(--paper);
+    border-radius: 6px;
+  }
+
+  .theme-paper .close-stat,
+  .theme-paper .denom-row,
+  .theme-paper .history-card,
+  .theme-paper .item-manage-card {
+    background: #FFFFFF;
+    border: 2px solid var(--sesame);
+    border-radius: 5px;
+  }
+
+  .theme-paper .close-stat.highlight {
+    background: var(--tofu-top);
+  }
+
+  .theme-paper .denom-btn {
+    background: var(--paper);
+    border: 1.5px solid var(--sesame);
+    color: var(--sesame);
+    border-radius: 4px;
+  }
+
+  .theme-paper .close-confirm-btn {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    border-radius: 5px;
+  }
+
+  .theme-paper .history-ticket {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  /* =========================================================
+     案B：夜の屋台（炭火の暗色・高コントラスト発光）
+     ========================================================= */
+  .theme-night.phone,
+  .theme-night .mini-inner {
+    background: radial-gradient(circle at 80% 8%, rgba(182, 100, 39, 0.24) 0%, rgba(46, 32, 24, 0) 48%),
+                linear-gradient(180deg, #271B14 0%, var(--sesame) 55%, #1F150F 100%);
+    color: var(--paper);
+  }
+
+  .theme-night .app-header {
+    background: rgba(31, 21, 15, 0.72);
+    border-bottom: 1px solid rgba(209, 140, 83, 0.25);
+  }
+
+  .theme-night .app-badge {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-night .sync-pill {
+    background: rgba(80, 50, 37, 0.75);
+    border: 1px solid rgba(209, 140, 83, 0.35);
+    color: var(--tofu-top);
+  }
+
+  .theme-night .product-card {
+    background: linear-gradient(135deg, rgba(80, 50, 37, 0.92), rgba(56, 36, 26, 0.95));
+    border: 1.5px solid rgba(209, 140, 83, 0.35);
+    border-radius: 14px;
+  }
+
+  .theme-night .product-thumb {
+    border: 1.5px solid rgba(255, 232, 169, 0.45);
+    border-radius: 10px;
+  }
+
+  .theme-night .stock-badge {
+    background: rgba(46, 32, 24, 0.85);
+    color: var(--miso-light);
+    border: 1px solid rgba(209, 140, 83, 0.45);
+  }
+
+  .theme-night .unit-price {
+    color: var(--tofu-top);
+  }
+
+  .theme-night .qty-btn {
+    background: var(--miso-dark);
+    color: var(--paper);
+    border: 1.5px solid rgba(209, 140, 83, 0.4);
+    border-radius: 12px;
+  }
+
+  .theme-night .qty-btn.qty-plus {
+    background: var(--miso-amber);
+    border-color: var(--miso-light);
+    color: var(--paper);
+  }
+
+  .theme-night .qty-center {
+    background: rgba(31, 21, 15, 0.65);
+    border: 1.5px solid rgba(99, 89, 84, 0.65);
+    border-radius: 12px;
+  }
+
+  .theme-night .qty-num {
+    color: var(--tofu-top);
+  }
+
+  .theme-night .demo-section {
+    background: rgba(80, 50, 37, 0.48);
+    border: 1px solid rgba(209, 140, 83, 0.25);
+    border-radius: 12px;
+  }
+
+  .theme-night .demo-step-btn {
+    color: rgba(248, 247, 246, 0.62);
+  }
+
+  .theme-night .demo-step-btn.active {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-night .demo-step-btn.has-val:not(.active) {
+    background: rgba(255, 232, 169, 0.16);
+    color: var(--tofu-top);
+  }
+
+  .theme-night .demo-nav-btn {
+    background: rgba(46, 32, 24, 0.8);
+    color: var(--tofu-top);
+    border: 1px solid rgba(209, 140, 83, 0.35);
+    border-radius: 8px;
+  }
+
+  .theme-night .demo-chip {
+    background: rgba(31, 21, 15, 0.72);
+    color: var(--paper);
+    border: 1.5px solid rgba(209, 140, 83, 0.32);
+    border-radius: 9px;
+  }
+
+  .theme-night .demo-chip.selected {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border-color: var(--tofu-top);
+  }
+
+  .theme-night .section-label {
+    color: var(--miso-light);
+  }
+
+  .theme-night .section-value-hint {
+    color: var(--tofu-top);
+  }
+
+  .theme-night .cash-btn {
+    background: rgba(80, 50, 37, 0.78);
+    color: var(--paper);
+    border: 1.5px solid rgba(209, 140, 83, 0.34);
+    border-radius: 11px;
+  }
+
+  .theme-night .cash-btn.selected {
+    background: var(--miso-amber);
+    color: var(--paper);
+    border-color: var(--tofu-top);
+    box-shadow: 0 0 0 2px rgba(255, 232, 169, 0.35);
+  }
+
+  .theme-night .manual-input {
+    background: #1C130E;
+    border: 1.5px solid var(--miso-light);
+    color: var(--tofu-top);
+  }
+
+  .theme-night .manual-apply {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-night .checkout-zone {
+    background: linear-gradient(180deg, rgba(80, 50, 37, 0.55) 0%, #1B120D 100%);
+    border-top: 1.5px solid rgba(209, 140, 83, 0.35);
+  }
+
+  .theme-night .change-label {
+    color: var(--miso-light);
+  }
+
+  .theme-night .change-amount {
+    color: var(--tofu-top);
+    text-shadow: 0 0 18px rgba(255, 232, 169, 0.25);
+  }
+
+  .theme-night .buy-btn {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(182, 100, 39, 0.35);
+  }
+
+  .theme-night .buy-btn-total {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .theme-night .tab-bar {
+    background: #1A110C;
+    border-top: 1px solid rgba(209, 140, 83, 0.28);
+  }
+
+  .theme-night .tab-btn {
+    color: rgba(248, 247, 246, 0.55);
+  }
+
+  .theme-night .tab-btn.active {
+    color: var(--tofu-top);
+  }
+
+  .theme-night .tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    width: 20px;
+    height: 3px;
+    border-radius: 99px;
+    background: var(--miso-amber);
+  }
+
+  .theme-night .ticket-overlay {
+    background: radial-gradient(circle at 50% 35%, rgba(182, 100, 39, 0.38) 0%, #1F150F 65%);
+    color: var(--paper);
+  }
+
+  .theme-night .ticket-top-label {
+    background: rgba(182, 100, 39, 0.28);
+    border: 1px solid var(--miso-light);
+    color: var(--tofu-top);
+  }
+
+  .theme-night .ticket-big-num {
+    color: var(--tofu-top);
+    text-shadow: 0 0 28px rgba(255, 232, 169, 0.32);
+  }
+
+  .theme-night .ticket-summary-card {
+    background: rgba(80, 50, 37, 0.72);
+    border: 1px solid rgba(209, 140, 83, 0.4);
+    border-radius: 14px;
+  }
+
+  .theme-night .ticket-next-btn {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border-radius: 14px;
+  }
+
+  .theme-night .close-stat,
+  .theme-night .denom-row,
+  .theme-night .history-card,
+  .theme-night .item-manage-card {
+    background: rgba(80, 50, 37, 0.65);
+    border: 1px solid rgba(209, 140, 83, 0.28);
+    border-radius: 11px;
+  }
+
+  .theme-night .close-stat.highlight {
+    background: rgba(182, 100, 39, 0.4);
+    border-color: var(--tofu-top);
+  }
+
+  .theme-night .close-stat-val {
+    color: var(--tofu-top);
+  }
+
+  .theme-night .denom-btn {
+    background: #231812;
+    border: 1px solid rgba(209, 140, 83, 0.45);
+    color: var(--tofu-top);
+    border-radius: 8px;
+  }
+
+  .theme-night .close-confirm-btn {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border-radius: 12px;
+  }
+
+  .theme-night .history-ticket {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-night .history-amount {
+    color: var(--tofu-top);
+  }
+
+  /* =========================================================
+     案C：提灯 / のれん（オレンジテント×和モダン）
+     ========================================================= */
+  .theme-noren.phone,
+  .theme-noren .mini-inner {
+    background: var(--paper);
+    color: var(--sesame);
+  }
+
+  /* 暖簾（のれん）ヘッダー */
+  .theme-noren .app-header {
+    background: linear-gradient(180deg, #C76F2B 0%, var(--miso-amber) 100%);
+    color: var(--paper);
+    height: 56px;
+    border-bottom: 4px solid var(--miso-dark);
+    box-shadow: 0 3px 10px rgba(80, 50, 37, 0.16);
+  }
+
+  .theme-noren .app-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 4px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--miso-dark) 0 84px,
+      var(--paper) 84px 90px
+    );
+  }
+
+  .theme-noren .app-badge {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    border-radius: 999px;
+    padding: 4px 8px;
+  }
+
+  .theme-noren .sync-pill {
+    background: rgba(46, 32, 24, 0.3);
+    color: var(--paper);
+    border: 1px solid rgba(255, 232, 169, 0.55);
+  }
+
+  .theme-noren .product-card {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(209, 140, 83, 0.45);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(80, 50, 37, 0.07);
+  }
+
+  .theme-noren .product-thumb {
+    border: 2px solid var(--miso-light);
+    border-radius: 12px;
+  }
+
+  .theme-noren .stock-badge {
+    background: #F3EAE2;
+    color: var(--miso-dark);
+    border: 1px solid rgba(182, 100, 39, 0.3);
+  }
+
+  .theme-noren .unit-price {
+    color: var(--miso-amber);
+  }
+
+  .theme-noren .qty-btn {
+    background: #FFFFFF;
+    color: var(--miso-dark);
+    border: 2px solid var(--miso-light);
+    border-bottom-width: 4px;
+    border-radius: 14px;
+  }
+
+  .theme-noren .qty-btn.qty-plus {
+    background: var(--miso-amber);
+    color: var(--paper);
+    border-color: var(--miso-dark);
+  }
+
+  .theme-noren .qty-center {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(209, 140, 83, 0.4);
+    border-radius: 14px;
+  }
+
+  .theme-noren .demo-section {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(209, 140, 83, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(80, 50, 37, 0.05);
+  }
+
+  .theme-noren .demo-step-btn {
+    color: var(--gray-brown);
+    border-radius: 999px;
+  }
+
+  .theme-noren .demo-step-btn.active {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-noren .demo-step-btn.has-val:not(.active) {
+    background: var(--tofu-top);
+    color: var(--sesame);
+  }
+
+  .theme-noren .demo-nav-btn {
+    background: #F5EFEA;
+    color: var(--miso-dark);
+    border-radius: 999px;
+  }
+
+  .theme-noren .demo-chip {
+    background: #F5EFEA;
+    color: var(--sesame);
+    border: 1.5px solid rgba(182, 100, 39, 0.25);
+    border-radius: 999px;
+  }
+
+  .theme-noren .demo-chip.selected {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    border-color: var(--miso-dark);
+  }
+
+  .theme-noren .section-label {
+    color: var(--miso-dark);
+  }
+
+  .theme-noren .section-value-hint {
+    color: var(--miso-amber);
+  }
+
+  .theme-noren .cash-btn {
+    background: #FFFFFF;
+    color: var(--sesame);
+    border: 1.5px solid rgba(182, 100, 39, 0.35);
+    border-bottom: 3px solid rgba(182, 100, 39, 0.45);
+    border-radius: 13px;
+  }
+
+  .theme-noren .cash-btn.selected {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    border-color: var(--sesame);
+    border-bottom-width: 2px;
+    transform: translateY(1px);
+  }
+
+  .theme-noren .manual-input {
+    background: #FFFFFF;
+    border: 2px solid var(--miso-amber);
+    color: var(--sesame);
+  }
+
+  .theme-noren .manual-apply {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-noren .checkout-zone {
+    background: var(--tofu-top);
+    border-top: 2px solid var(--miso-light);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 14px rgba(80, 50, 37, 0.08);
+  }
+
+  .theme-noren .change-label {
+    color: var(--miso-dark);
+  }
+
+  .theme-noren .change-amount {
+    color: var(--sesame);
+  }
+
+  .theme-noren .buy-btn {
+    background: var(--miso-dark);
+    color: var(--paper);
+    border-bottom: 4px solid var(--sesame);
+    border-radius: 16px;
+  }
+
+  .theme-noren .buy-btn-total {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  .theme-noren .tab-bar {
+    background: #FFFFFF;
+    border-top: 1.5px solid rgba(209, 140, 83, 0.35);
+  }
+
+  .theme-noren .tab-btn {
+    color: var(--gray-brown);
+  }
+
+  .theme-noren .tab-btn.active {
+    color: var(--miso-amber);
+  }
+
+  .theme-noren .tab-btn.active svg {
+    filter: drop-shadow(0 2px 4px rgba(182, 100, 39, 0.25));
+  }
+
+  .theme-noren .ticket-overlay {
+    background: linear-gradient(180deg, var(--miso-amber) 0%, #C76F2B 36%, var(--paper) 36%, var(--paper) 100%);
+    color: var(--sesame);
+  }
+
+  .theme-noren .ticket-top-label {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+  }
+
+  .theme-noren .ticket-caption {
+    color: var(--paper);
+    opacity: 0.95;
+  }
+
+  .theme-noren .ticket-big-num {
+    background: #FFFFFF;
+    color: var(--sesame);
+    padding: 16px 28px;
+    border-radius: 22px;
+    border: 3px solid var(--miso-dark);
+    box-shadow: 0 10px 24px rgba(80, 50, 37, 0.18);
+  }
+
+  .theme-noren .ticket-summary-card {
+    background: var(--tofu-top);
+    border: 2px solid var(--miso-light);
+    border-radius: 16px;
+  }
+
+  .theme-noren .ticket-next-btn {
+    background: var(--miso-dark);
+    color: var(--paper);
+    border-bottom: 4px solid var(--sesame);
+    border-radius: 16px;
+  }
+
+  .theme-noren .close-stat,
+  .theme-noren .denom-row,
+  .theme-noren .history-card,
+  .theme-noren .item-manage-card {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(209, 140, 83, 0.38);
+    border-radius: 13px;
+  }
+
+  .theme-noren .close-stat.highlight {
+    background: var(--tofu-top);
+    border-color: var(--miso-amber);
+  }
+
+  .theme-noren .denom-btn {
+    background: #F5EFEA;
+    color: var(--miso-dark);
+    border-radius: 999px;
+  }
+
+  .theme-noren .close-confirm-btn {
+    background: var(--miso-dark);
+    color: var(--paper);
+    border-radius: 14px;
+  }
+
+  .theme-noren .history-ticket {
+    background: var(--miso-amber);
+    color: var(--paper);
+  }
+
+  /* =========================================================
+     各案下のサブ画面プレビュー（締め・履歴＋整理番号）
+     ========================================================= */
+  .mini-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--gray-brown);
+    margin-top: 4px;
+  }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: 174px 174px;
+    gap: 12px;
+  }
+
+  .mini-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .mini-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--sesame);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mini-label span {
+    font-size: 10px;
+    color: var(--gray-brown);
+    font-weight: 700;
+  }
+
+  .mini-frame {
+    width: 174px;
+    height: 296px;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 22px rgba(46, 32, 24, 0.16), 0 0 0 3px #231914;
+    transition: transform 0.14s ease;
+  }
+
+  .mini-card:hover .mini-frame {
+    transform: translateY(-2px);
+  }
+
+  .mini-inner {
+    width: 348px;
+    height: 592px;
+    transform: scale(0.5);
+    transform-origin: top left;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+  }
+
+  .mini-ticket-strip {
+    width: 360px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(46, 32, 24, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    transition: transform 0.14s ease;
+  }
+
+  .mini-ticket-strip:hover {
+    transform: translateY(-2px);
+  }
+
+  .mini-ticket-strip.theme-paper {
+    background: var(--sesame);
+    color: var(--paper);
+    border: 2px solid var(--sesame);
+  }
+
+  .mini-ticket-strip.theme-night {
+    background: linear-gradient(90deg, #241912 0%, var(--miso-dark) 100%);
+    color: var(--paper);
+    border: 1.5px solid rgba(209, 140, 83, 0.45);
+  }
+
+  .mini-ticket-strip.theme-noren {
+    background: linear-gradient(90deg, var(--miso-amber) 0%, #C76F2B 42%, var(--tofu-top) 42%, var(--tofu-top) 100%);
+    color: var(--sesame);
+    border: 2px solid var(--miso-dark);
+  }
+
+  .mini-ticket-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mini-ticket-kicker {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: 0.85;
+  }
+
+  .mini-ticket-strip.theme-noren .mini-ticket-kicker {
+    color: var(--paper);
+    opacity: 1;
+  }
+
+  .mini-ticket-num {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .mini-ticket-strip.theme-paper .mini-ticket-num,
+  .mini-ticket-strip.theme-night .mini-ticket-num {
+    color: var(--tofu-top);
+  }
+
+  .mini-ticket-strip.theme-noren .mini-ticket-num {
+    color: var(--paper);
+  }
+
+  .mini-ticket-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mini-ticket-change {
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .mini-ticket-hint {
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.78;
+  }
+
+  /* 未選択警告の微振動 */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .shake {
+    animation: shake 0.24s ease-in-out;
+  }
+</style>
+</head>
+<body>
+
+<!-- 共通SVGシンボル（絵文字なし・すべてベクター描画） -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <!-- 立方体の豆腐「o」 -->
+    <symbol id="sym-tofu-o" viewBox="0 0 24 24">
+      <polygon points="12,2 21,7 12,12 3,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="1.6" stroke-linejoin="round"/>
+      <polygon points="3,7 12,12 12,22 3,17" fill="#F8F7F6" stroke="#2E2018" stroke-width="1.6" stroke-linejoin="round"/>
+      <polygon points="21,7 12,12 12,22 21,17" fill="#D18C53" stroke="#2E2018" stroke-width="1.6" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- 炭火焼き田楽豆腐（四角い枠内イラスト） -->
+    <symbol id="sym-dengaku" viewBox="0 0 120 120">
+      <rect width="120" height="120" fill="#2E2018"/>
+      <!-- 炭火の網と赤み -->
+      <radialGradient id="coalGlow" cx="50%" cy="85%" r="65%">
+        <stop offset="0%" stop-color="#B66427" stop-opacity="0.72"/>
+        <stop offset="100%" stop-color="#2E2018" stop-opacity="0"/>
+      </radialGradient>
+      <rect width="120" height="120" fill="url(#coalGlow)"/>
+      <g stroke="#503225" stroke-width="3" opacity="0.65">
+        <line x1="0" y1="24" x2="120" y2="24"/>
+        <line x1="0" y1="48" x2="120" y2="48"/>
+        <line x1="0" y1="72" x2="120" y2="72"/>
+        <line x1="0" y1="96" x2="120" y2="96"/>
+      </g>
+      <!-- 竹串 -->
+      <line x1="20" y1="104" x2="100" y2="20" stroke="#FFE8A9" stroke-width="6" stroke-linecap="round"/>
+      <line x1="20" y1="104" x2="100" y2="20" stroke="#D18C53" stroke-width="2" stroke-linecap="round"/>
+      <!-- 豆腐本体（炭火の焼き目） -->
+      <g transform="rotate(-44 62 58)">
+        <rect x="34" y="34" width="56" height="46" rx="5" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.5"/>
+        <rect x="34" y="34" width="56" height="13" rx="4" fill="#FFE8A9"/>
+        <!-- 焼き目ライン -->
+        <line x1="40" y1="44" x2="84" y2="44" stroke="#B66427" stroke-width="2" opacity="0.45"/>
+        <line x1="40" y1="71" x2="84" y2="71" stroke="#B66427" stroke-width="2" opacity="0.45"/>
+        <!-- 黒味噌 -->
+        <path d="M40,42 C48,37 74,37 82,43 C86,52 84,65 78,70 C68,75 46,74 41,68 C36,61 36,48 40,42 Z" fill="#503225" stroke="#2E2018" stroke-width="1.8"/>
+        <!-- 味噌の照り -->
+        <path d="M47,47 C55,44 68,44 74,47" fill="none" stroke="#B66427" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+        <path d="M50,56 C57,54 66,54 71,56" fill="none" stroke="#D18C53" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+        <!-- 黒ゴマ -->
+        <g fill="#1A110C">
+          <ellipse cx="51" cy="51" rx="2.4" ry="1.3" transform="rotate(20 51 51)"/>
+          <ellipse cx="62" cy="49" rx="2.4" ry="1.3" transform="rotate(-15 62 49)"/>
+          <ellipse cx="72" cy="53" rx="2.2" ry="1.2" transform="rotate(35 72 53)"/>
+          <ellipse cx="56" cy="61" rx="2.5" ry="1.3" transform="rotate(-25 56 61)"/>
+          <ellipse cx="67" cy="63" rx="2.3" ry="1.3" transform="rotate(15 67 63)"/>
+          <ellipse cx="47" cy="63" rx="2.1" ry="1.2" transform="rotate(-10 47 63)"/>
+          <ellipse cx="75" cy="61" rx="2.2" ry="1.2" transform="rotate(40 75 61)"/>
+        </g>
+      </g>
+      <!-- 湯気 -->
+      <path d="M24,36 C21,28 27,23 24,15" fill="none" stroke="#F8F7F6" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+      <path d="M36,28 C33,21 38,16 36,9" fill="none" stroke="#FFE8A9" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+    </symbol>
+
+    <!-- 同期アイコン -->
+    <symbol id="sym-sync" viewBox="0 0 24 24">
+      <path d="M6.5 18h11a4 4 0 0 0 .7-7.94A5.5 5.5 0 0 0 7.4 8.2 4.2 4.2 0 0 0 6.5 18Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M9.5 13.5 11.3 15.3 15 11.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- タブ: レジ -->
+    <symbol id="sym-tab-pos" viewBox="0 0 24 24">
+      <rect x="4" y="3" width="16" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="7" y="6" width="10" height="4" rx="1" fill="currentColor"/>
+      <circle cx="8.5" cy="13.5" r="1.1" fill="currentColor"/>
+      <circle cx="12" cy="13.5" r="1.1" fill="currentColor"/>
+      <circle cx="15.5" cy="13.5" r="1.1" fill="currentColor"/>
+      <circle cx="8.5" cy="17" r="1.1" fill="currentColor"/>
+      <circle cx="12" cy="17" r="1.1" fill="currentColor"/>
+      <circle cx="15.5" cy="17" r="1.1" fill="currentColor"/>
+    </symbol>
+
+    <!-- タブ: 商品 -->
+    <symbol id="sym-tab-item" viewBox="0 0 24 24">
+      <polygon points="12,3 20,7.5 12,12 4,7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M4,7.5v9L12,21l8-4.5v-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="12" y1="12" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+
+    <!-- タブ: 履歴 -->
+    <symbol id="sym-tab-history" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 7.5V12l3.2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- タブ: 締め -->
+    <symbol id="sym-tab-close" viewBox="0 0 24 24">
+      <rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M8 9h8M8 13h5M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M14.5 13.5l1.3 1.3 2.7-2.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- 左右矢印 -->
+    <symbol id="sym-left" viewBox="0 0 24 24">
+      <path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="sym-right" viewBox="0 0 24 24">
+      <path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="page-header">
+  <div class="page-title-group">
+    <h1 class="page-title">TOS — Are you Tofu? モバイルレジUI 3案</h1>
+    <span class="page-sub">駒場祭 豆腐田楽店 スタッフ専用（各案とも操作可能・下のタブやミニ画面クリックで切替可）</span>
+  </div>
+  <div class="palette-strip">
+    <span class="swatch"><span class="swatch-dot" style="background:#F8F7F6"></span>紙 #F8F7F6</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#2E2018"></span>焦げ #2E2018</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#503225"></span>濃味噌 #503225</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#B66427"></span>飴色 #B66427</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#D18C53"></span>明味噌 #D18C53</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#635954"></span>灰茶 #635954</span>
+    <span class="swatch"><span class="swatch-dot" style="background:#FFE8A9"></span>豆腐 #FFE8A9</span>
+  </div>
+</header>
+
+<main class="showcase" id="showcase"></main>
+
+<script>
+(function () {
+  const CONCEPTS = [
+    {
+      id: "paper",
+      themeClass: "theme-paper",
+      tag: "案A / PAPER & INK",
+      title: "紙と墨（ポスター直結・超高視認）",
+      desc: "ポスターの白地×黒ゴマと下半分に焦げ味噌を配した明快な白黒設計。直射日光下の屋外テントでも数字と枠がくっきり読める。"
+    },
+    {
+      id: "night",
+      themeClass: "theme-night",
+      tag: "案B / CHARCOAL NIGHT",
+      title: "夜の屋台（炭火ダーク・発光アクセント）",
+      desc: "炭火の暗色を基調に豆腐の淡黄と飴色味噌が浮かび上がるダークUI。夕暮れや日陰でも眩しくなく、お釣りと購入ボタンへ視線が直結する。"
+    },
+    {
+      id: "noren",
+      themeClass: "theme-noren",
+      tag: "案C / ORANGE NOREN",
+      title: "提灯 / のれん（オレンジテント×和モダン）",
+      desc: "オレンジテントを象徴する暖簾ヘッダーと押し応えのある立体的ボタン。親しみやすい和紙の盤面で、立ったまま片手でテンポよく会計できる。"
+    }
+  ];
+
+  const INITIAL_HISTORY = [
+    { ticket: 47, time: "14:22", qty: 2, amount: 1000, demo: "学生 / 女性 / 友人", voided: false },
+    { ticket: 46, time: "14:19", qty: 1, amount: 500,  demo: "大人 / 男性 / 一人", voided: false },
+    { ticket: 45, time: "14:15", qty: 3, amount: 1500, demo: "大人 / 女性 / 家族", voided: true },
+    { ticket: 44, time: "14:11", qty: 2, amount: 1000, demo: "学生 / 男性 / カップル", voided: false },
+    { ticket: 43, time: "14:06", qty: 4, amount: 2000, demo: "学生 / その他 / グループ", voided: false }
+  ];
+
+  const INITIAL_DENOMS = [
+    { face: 10000, count: 3 },
+    { face: 5000,  count: 4 },
+    { face: 1000,  count: 11 },
+    { face: 500,   count: 6 },
+    { face: 100,   count: 5 },
+    { face: 50,    count: 0 },
+    { face: 10,    count: 0 }
+  ];
+
+  const THEORETICAL_CASH = 64500;
+  const UNIT_PRICE = 500;
+
+  function yen(n) {
+    return "¥" + Number(n).toLocaleString("ja-JP");
+  }
+
+  function padTicket(n) {
+    return "#" + String(n).padStart(3, "0");
+  }
+
+  function brandLogoHTML() {
+    return `
+      <span class="brand-logo" aria-label="Are you Tofu?">
+        Are y<svg class="tofu-o"><use href="#sym-tofu-o"/></svg>u&nbsp;T<svg class="tofu-o"><use href="#sym-tofu-o"/></svg>fu?
+      </span>
+    `;
+  }
+
+  function headerHTML() {
+    return `
+      <div class="app-header">
+        <div class="brand-wrap">
+          <span class="app-badge">TOS</span>
+          ${brandLogoHTML()}
+        </div>
+        <div class="sync-pill" title="クラウド同期済み">
+          <span class="sync-dot"></span>
+          <svg><use href="#sym-sync"/></svg>
+          <span>同期済</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function tabBarHTML(activeTab) {
+    const tabs = [
+      { key: "pos",     label: "レジ", icon: "#sym-tab-pos" },
+      { key: "item",    label: "商品", icon: "#sym-tab-item" },
+      { key: "history", label: "履歴", icon: "#sym-tab-history" },
+      { key: "close",   label: "締め", icon: "#sym-tab-close" }
+    ];
+    return `
+      <nav class="tab-bar">
+        ${tabs.map(t => `
+          <button type="button" class="tab-btn ${t.key === activeTab ? "active" : ""}" data-tab="${t.key}">
+            <svg><use href="${t.icon}"/></svg>
+            <span>${t.label}</span>
+          </button>
+        `).join("")}
+      </nav>
+    `;
+  }
+
+  function closePaneContentHTML(denoms, interactive) {
+    const actual = denoms.reduce((s, d) => s + d.face * d.count, 0);
+    const diff = actual - THEORETICAL_CASH;
+    const diffText = diff === 0 ? "±¥0" : (diff > 0 ? "+" + yen(diff) : "-" + yen(Math.abs(diff)));
+    const diffColor = diff === 0 ? "" : "color:var(--danger);";
+    return `
+      <div class="sub-pane-inner">
+        <div class="pane-head-row">
+          <div class="pane-title">レジ締め</div>
+          <div class="pane-sub">金種別カウント</div>
+        </div>
+        <div class="close-summary">
+          <div class="close-stat">
+            <span class="close-stat-label">理論値</span>
+            <span class="close-stat-val">${yen(THEORETICAL_CASH)}</span>
+          </div>
+          <div class="close-stat">
+            <span class="close-stat-label">実際</span>
+            <span class="close-stat-val" data-role="close-actual">${yen(actual)}</span>
+          </div>
+          <div class="close-stat highlight">
+            <span class="close-stat-label">差額</span>
+            <span class="close-stat-val" data-role="close-diff" style="${diffColor}">${diffText}</span>
+          </div>
+        </div>
+        <div class="denom-list">
+          ${denoms.map((d, idx) => `
+            <div class="denom-row">
+              <div class="denom-face">${yen(d.face)}</div>
+              <div class="denom-ctrl">
+                <button type="button" class="denom-btn" ${interactive ? `data-denom-idx="${idx}" data-delta="-1"` : ""}>−</button>
+                <span class="denom-count" data-denom-count="${idx}">${d.count}</span>
+                <button type="button" class="denom-btn" ${interactive ? `data-denom-idx="${idx}" data-delta="1"` : ""}>＋</button>
+              </div>
+              <div class="denom-sub" data-denom-sub="${idx}">${yen(d.face * d.count)}</div>
+            </div>
+          `).join("")}
+        </div>
+        <button type="button" class="close-confirm-btn">締めを確定</button>
+      </div>
+    `;
+  }
+
+  function historyPaneContentHTML(items) {
+    const validItems = items.filter(i => !i.voided);
+    const totalSales = validItems.reduce((s, i) => s + i.amount, 0);
+    return `
+      <div class="sub-pane-inner">
+        <div class="pane-head-row">
+          <div class="pane-title">会計履歴</div>
+          <div class="pane-sub">${validItems.length}件 / ${yen(totalSales)}</div>
+        </div>
+        <div class="history-list">
+          ${items.map(item => `
+            <div class="history-card ${item.voided ? "is-void" : ""}">
+              <div class="history-top">
+                <div class="history-left">
+                  <span class="history-ticket">${padTicket(item.ticket)}</span>
+                  <span class="history-time">${item.time}</span>
+                </div>
+                <div class="history-amount">${yen(item.amount)}</div>
+              </div>
+              <div class="history-bottom">
+                <span class="history-tags">${item.qty}本・${item.demo || "客層未入力"}</span>
+                ${item.voided ? `<span class="void-badge">取消済</span>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderConcept(concept) {
+    const col = document.createElement("section");
+    col.className = "concept-col";
+    col.dataset.conceptId = concept.id;
+
+    // 状態（案ごとに独立）
+    const state = {
+      qty: 1,
+      stock: 42,
+      nextTicket: 48,
+      demoStep: 0,
+      demo: { age: null, gender: null, group: null },
+      tenderMode: null, // null | 'exact' | 'preset' | 'manual'
+      tenderAmount: null,
+      history: INITIAL_HISTORY.map(x => ({ ...x })),
+      denoms: INITIAL_DENOMS.map(x => ({ ...x }))
+    };
+
+    col.innerHTML = `
+      <div class="concept-meta">
+        <span class="concept-tag">${concept.tag}</span>
+        <h2>${concept.title}</h2>
+        <p>${concept.desc}</p>
+      </div>
+
+      <div class="phone ${concept.themeClass}" data-role="phone">
+        ${headerHTML()}
+
+        <div class="screen-body">
+          <!-- 1) 単品レジ -->
+          <div class="tab-pane pos-pane active" data-pane="pos">
+            <div class="pos-top-area">
+              <div class="product-card">
+                <div class="product-thumb">
+                  <svg><use href="#sym-dengaku"/></svg>
+                </div>
+                <div class="product-info">
+                  <div class="product-row-top">
+                    <div class="product-name">田楽豆腐</div>
+                    <span class="stock-badge">在庫 <span data-role="stock">${state.stock}</span></span>
+                  </div>
+                  <div class="product-row-bottom">
+                    <div class="unit-price">¥500</div>
+                    <div class="subtotal-inline">小計 <span data-role="subtotal">¥500</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qty-row">
+                <button type="button" class="qty-btn qty-minus" data-action="qty-dec" aria-label="本数を減らす">−</button>
+                <div class="qty-center">
+                  <span class="qty-label">本数</span>
+                  <span class="qty-num" data-role="qty">1</span>
+                  <span class="qty-unit">本</span>
+                </div>
+                <button type="button" class="qty-btn qty-plus" data-action="qty-inc" aria-label="本数を増やす">＋</button>
+              </div>
+
+              <div class="demo-section">
+                <div class="demo-header">
+                  <div class="demo-steps">
+                    <button type="button" class="demo-step-btn active" data-step="0">年齢</button>
+                    <span class="demo-arrow-sep">→</span>
+                    <button type="button" class="demo-step-btn" data-step="1">性別</button>
+                    <span class="demo-arrow-sep">→</span>
+                    <button type="button" class="demo-step-btn" data-step="2">集団</button>
+                  </div>
+                  <span class="demo-opt-label">任意</span>
+                </div>
+                <div class="demo-carousel-row">
+                  <button type="button" class="demo-nav-btn" data-action="demo-prev" aria-label="前の項目">
+                    <svg><use href="#sym-left"/></svg>
+                  </button>
+                  <div class="demo-viewport">
+                    <div class="demo-track" data-role="demo-track">
+                      <div class="demo-slide">
+                        <button type="button" class="demo-chip" data-demo-key="age" data-val="子ども">子ども</button>
+                        <button type="button" class="demo-chip" data-demo-key="age" data-val="学生">学生</button>
+                        <button type="button" class="demo-chip" data-demo-key="age" data-val="大人">大人</button>
+                        <button type="button" class="demo-chip" data-demo-key="age" data-val="シニア">シニア</button>
+                      </div>
+                      <div class="demo-slide">
+                        <button type="button" class="demo-chip" data-demo-key="gender" data-val="男性">男性</button>
+                        <button type="button" class="demo-chip" data-demo-key="gender" data-val="女性">女性</button>
+                        <button type="button" class="demo-chip" data-demo-key="gender" data-val="その他">その他</button>
+                      </div>
+                      <div class="demo-slide demo-slide-group">
+                        <button type="button" class="demo-chip" data-demo-key="group" data-val="一人">一人</button>
+                        <button type="button" class="demo-chip" data-demo-key="group" data-val="友人">友人</button>
+                        <button type="button" class="demo-chip" data-demo-key="group" data-val="家族">家族</button>
+                        <button type="button" class="demo-chip" data-demo-key="group" data-val="カップル">カップル</button>
+                        <button type="button" class="demo-chip" data-demo-key="group" data-val="グループ">グループ</button>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="button" class="demo-nav-btn" data-action="demo-next" aria-label="次の項目">
+                    <svg><use href="#sym-right"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="cash-section" data-role="cash-section">
+                <div class="section-bar">
+                  <span class="section-label">受け取った額</span>
+                  <span class="section-value-hint" data-role="tender-hint">未選択</span>
+                </div>
+                <div class="cash-grid">
+                  <button type="button" class="cash-btn text-sm" data-cash="exact">ちょうど</button>
+                  <button type="button" class="cash-btn" data-cash="1000">1,000</button>
+                  <button type="button" class="cash-btn" data-cash="2000">2,000</button>
+                  <button type="button" class="cash-btn" data-cash="5000">5,000</button>
+                  <button type="button" class="cash-btn" data-cash="10000">10,000</button>
+                  <button type="button" class="cash-btn text-sm" data-cash="manual">手入力</button>
+                </div>
+                <div class="manual-bar" data-role="manual-bar">
+                  <input type="number" inputmode="numeric" min="0" step="10" placeholder="金額を入力（例: 1500）" class="manual-input" data-role="manual-input">
+                  <button type="button" class="manual-apply" data-action="manual-apply">反映</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="checkout-zone">
+              <div class="change-row">
+                <div class="change-meta">
+                  <span class="change-label">お釣り</span>
+                  <span class="change-sub" data-role="change-sub">預り額を選択</span>
+                </div>
+                <div class="change-amount" data-role="change-amount">¥ —</div>
+              </div>
+              <button type="button" class="buy-btn is-unready" data-action="buy">
+                <span>購入</span>
+                <span class="buy-btn-total" data-role="buy-total">¥500</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 商品タブ（単品モード状態） -->
+          <div class="tab-pane" data-pane="item">
+            <div class="sub-pane-inner">
+              <div class="pane-head-row">
+                <div class="pane-title">商品（単品レジ稼働中）</div>
+                <div class="pane-sub">1品目</div>
+              </div>
+              <div class="item-manage-card">
+                <div class="product-card" style="padding:0;border:none;box-shadow:none;background:transparent;">
+                  <div class="product-thumb">
+                    <svg><use href="#sym-dengaku"/></svg>
+                  </div>
+                  <div class="product-info">
+                    <div class="product-name">田楽豆腐</div>
+                    <div class="unit-price">¥500</div>
+                  </div>
+                </div>
+                <div class="qty-row">
+                  <button type="button" class="qty-btn" data-action="stock-dec">−</button>
+                  <div class="qty-center">
+                    <span class="qty-label">残在庫</span>
+                    <span class="qty-num" data-role="stock-manage">${state.stock}</span>
+                    <span class="qty-unit">本</span>
+                  </div>
+                  <button type="button" class="qty-btn qty-plus" data-action="stock-inc">＋</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 履歴タブ -->
+          <div class="tab-pane" data-pane="history" data-role="history-pane">
+            ${historyPaneContentHTML(state.history)}
+          </div>
+
+          <!-- 締めタブ -->
+          <div class="tab-pane" data-pane="close" data-role="close-pane">
+            ${closePaneContentHTML(state.denoms, true)}
+          </div>
+        </div>
+
+        ${tabBarHTML("pos")}
+
+        <!-- 購入後：整理番号オーバーレイ -->
+        <div class="ticket-overlay" data-role="ticket-overlay">
+          <div class="ticket-top-label">会計完了</div>
+          <div class="ticket-number-block">
+            <div class="ticket-caption">整理番号</div>
+            <div class="ticket-big-num" data-role="ticket-num">#048</div>
+          </div>
+          <div class="ticket-summary-card">
+            <div>
+              <div class="ticket-stat-label">お釣り</div>
+              <div class="ticket-stat-val" data-role="ticket-change">¥0</div>
+            </div>
+            <div>
+              <div class="ticket-stat-label">田楽豆腐</div>
+              <div class="ticket-stat-val" data-role="ticket-qty">1本 / ¥500</div>
+            </div>
+          </div>
+          <button type="button" class="ticket-next-btn" data-action="next-order">次の会計へ</button>
+        </div>
+      </div>
+
+      <!-- サブ画面プレビュー（締め・履歴・購入後整理番号） -->
+      <div class="mini-section-head">
+        <span>サブ画面プレビュー</span>
+        <span>タップで上の端末に反映</span>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card" data-jump-tab="close">
+          <div class="mini-label">締め（レジ締め）<span>金種・理論/実際/差額</span></div>
+          <div class="mini-frame ${concept.themeClass}">
+            <div class="mini-inner">
+              ${headerHTML()}
+              <div class="screen-body">
+                ${closePaneContentHTML(INITIAL_DENOMS, false)}
+              </div>
+              ${tabBarHTML("close")}
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-card" data-jump-tab="history">
+          <div class="mini-label">履歴<span>時刻・番号・客層・取消</span></div>
+          <div class="mini-frame ${concept.themeClass}">
+            <div class="mini-inner">
+              ${headerHTML()}
+              <div class="screen-body">
+                ${historyPaneContentHTML(INITIAL_HISTORY)}
+              </div>
+              ${tabBarHTML("history")}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-ticket-strip ${concept.themeClass}" data-action="preview-ticket">
+        <div class="mini-ticket-left">
+          <span class="mini-ticket-kicker">購入後：整理番号</span>
+          <span class="mini-ticket-num">#048</span>
+        </div>
+        <div class="mini-ticket-right">
+          <span class="mini-ticket-change">お釣り ¥500</span>
+          <span class="mini-ticket-hint">タップで全画面表示</span>
+        </div>
+      </div>
+    `;
+
+    // DOM参照
+    const phone = col.querySelector('[data-role="phone"]');
+    const qtyEl = col.querySelector('[data-role="qty"]');
+    const subtotalEl = col.querySelector('[data-role="subtotal"]');
+    const stockEl = col.querySelector('[data-role="stock"]');
+    const stockManageEl = col.querySelector('[data-role="stock-manage"]');
+    const buyTotalEl = col.querySelector('[data-role="buy-total"]');
+    const tenderHintEl = col.querySelector('[data-role="tender-hint"]');
+    const changeSubEl = col.querySelector('[data-role="change-sub"]');
+    const changeAmountEl = col.querySelector('[data-role="change-amount"]');
+    const buyBtn = col.querySelector('[data-action="buy"]');
+    const cashSection = col.querySelector('[data-role="cash-section"]');
+    const manualBar = col.querySelector('[data-role="manual-bar"]');
+    const manualInput = col.querySelector('[data-role="manual-input"]');
+    const demoTrack = col.querySelector('[data-role="demo-track"]');
+    const ticketOverlay = col.querySelector('[data-role="ticket-overlay"]');
+    const ticketNumEl = col.querySelector('[data-role="ticket-num"]');
+    const ticketChangeEl = col.querySelector('[data-role="ticket-change"]');
+    const ticketQtyEl = col.querySelector('[data-role="ticket-qty"]');
+    const historyPane = col.querySelector('[data-role="history-pane"]');
+    const closePane = col.querySelector('[data-role="close-pane"]');
+
+    function getTotal() {
+      return state.qty * UNIT_PRICE;
+    }
+
+    function getTender() {
+      if (state.tenderMode === "exact") return getTotal();
+      if (state.tenderMode === "preset" || state.tenderMode === "manual") return state.tenderAmount;
+      return null;
+    }
+
+    function updatePOS() {
+      const total = getTotal();
+      const tender = getTender();
+      qtyEl.textContent = state.qty;
+      subtotalEl.textContent = yen(total);
+      buyTotalEl.textContent = yen(total);
+      stockEl.textContent = state.stock;
+      stockManageEl.textContent = state.stock;
+
+      // 預り額・お釣り
+      changeAmountEl.classList.remove("insufficient");
+      if (tender === null || Number.isNaN(tender)) {
+        tenderHintEl.textContent = "未選択";
+        changeSubEl.textContent = "預り額を選択";
+        changeAmountEl.textContent = "¥ —";
+        buyBtn.classList.add("is-unready");
+      } else {
+        const diff = tender - total;
+        tenderHintEl.textContent = "預り " + yen(tender);
+        if (diff < 0) {
+          changeSubEl.textContent = "不足 " + yen(Math.abs(diff));
+          changeAmountEl.textContent = "-" + yen(Math.abs(diff));
+          changeAmountEl.classList.add("insufficient");
+          buyBtn.classList.add("is-unready");
+        } else {
+          changeSubEl.textContent = "預り " + yen(tender) + " − 合計 " + yen(total);
+          changeAmountEl.textContent = yen(diff);
+          buyBtn.classList.remove("is-unready");
+        }
+      }
+
+      // 客層ステップ表示
+      demoTrack.style.transform = `translateX(-${state.demoStep * 33.3333}%)`;
+      const stepLabels = [
+        state.demo.age ? `年齢:${state.demo.age}` : "年齢",
+        state.demo.gender ? `性別:${state.demo.gender}` : "性別",
+        state.demo.group ? `集団:${state.demo.group}` : "集団"
+      ];
+      const stepHasVal = [!!state.demo.age, !!state.demo.gender, !!state.demo.group];
+      col.querySelectorAll(".demo-step-btn").forEach((btn, i) => {
+        btn.textContent = stepLabels[i];
+        btn.classList.toggle("active", i === state.demoStep);
+        btn.classList.toggle("has-val", stepHasVal[i]);
+      });
+
+      col.querySelectorAll(".demo-chip").forEach(chip => {
+        const k = chip.dataset.demoKey;
+        const v = chip.dataset.val;
+        chip.classList.toggle("selected", state.demo[k] === v);
+      });
+    }
+
+    function switchTab(tabKey) {
+      ticketOverlay.classList.remove("open");
+      phone.querySelectorAll(".tab-pane").forEach(p => {
+        p.classList.toggle("active", p.dataset.pane === tabKey);
+      });
+      phone.querySelectorAll(".tab-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.tab === tabKey);
+      });
+    }
+
+    function bindCloseEvents() {
+      closePane.querySelectorAll("[data-denom-idx]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.denomIdx);
+          const delta = Number(btn.dataset.delta);
+          state.denoms[idx].count = Math.max(0, state.denoms[idx].count + delta);
+          closePane.innerHTML = closePaneContentHTML(state.denoms, true);
+          bindCloseEvents();
+        });
+      });
+    }
+    bindCloseEvents();
+
+    // タブ切替
+    phone.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    // ミニ画面クリックで本体タブへジャンプ
+    col.querySelectorAll("[data-jump-tab]").forEach(card => {
+      card.addEventListener("click", () => switchTab(card.dataset.jumpTab));
+    });
+
+    // 本数±
+    col.querySelector('[data-action="qty-dec"]').addEventListener("click", () => {
+      if (state.qty > 1) {
+        state.qty--;
+        updatePOS();
+      }
+    });
+    col.querySelector('[data-action="qty-inc"]').addEventListener("click", () => {
+      if (state.qty < Math.max(1, state.stock)) {
+        state.qty++;
+        updatePOS();
+      }
+    });
+
+    // 商品在庫±
+    col.querySelector('[data-action="stock-dec"]').addEventListener("click", () => {
+      state.stock = Math.max(0, state.stock - 1);
+      updatePOS();
+    });
+    col.querySelector('[data-action="stock-inc"]').addEventListener("click", () => {
+      state.stock++;
+      updatePOS();
+    });
+
+    // 客層ナビゲーション
+    col.querySelectorAll(".demo-step-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.demoStep = Number(btn.dataset.step);
+        updatePOS();
+      });
+    });
+    col.querySelector('[data-action="demo-prev"]').addEventListener("click", () => {
+      state.demoStep = (state.demoStep + 2) % 3;
+      updatePOS();
+    });
+    col.querySelector('[data-action="demo-next"]').addEventListener("click", () => {
+      state.demoStep = (state.demoStep + 1) % 3;
+      updatePOS();
+    });
+
+    // 客層チップ選択（選ぶと次のステップへ自動横送り）
+    col.querySelectorAll(".demo-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const key = chip.dataset.demoKey;
+        const val = chip.dataset.val;
+        const wasSame = state.demo[key] === val;
+        state.demo[key] = wasSame ? null : val;
+        if (!wasSame && state.demoStep < 2) {
+          state.demoStep++;
+        }
+        updatePOS();
+      });
+    });
+
+    // 受け取った額ボタン
+    const cashBtns = col.querySelectorAll(".cash-btn");
+    cashBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.cash;
+        cashBtns.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+
+        if (mode === "exact") {
+          state.tenderMode = "exact";
+          state.tenderAmount = getTotal();
+          manualBar.classList.remove("open");
+        } else if (mode === "manual") {
+          state.tenderMode = "manual";
+          manualBar.classList.add("open");
+          manualInput.focus();
+          const parsed = parseInt(manualInput.value, 10);
+          state.tenderAmount = Number.isNaN(parsed) ? null : parsed;
+        } else {
+          state.tenderMode = "preset";
+          state.tenderAmount = parseInt(mode, 10);
+          manualBar.classList.remove("open");
+        }
+        updatePOS();
+      });
+    });
+
+    col.querySelector('[data-action="manual-apply"]').addEventListener("click", () => {
+      const val = parseInt(manualInput.value, 10);
+      if (!Number.isNaN(val) && val >= 0) {
+        state.tenderMode = "manual";
+        state.tenderAmount = val;
+        manualBar.classList.remove("open");
+        updatePOS();
+      }
+    });
+
+    manualInput.addEventListener("input", () => {
+      const val = parseInt(manualInput.value, 10);
+      state.tenderAmount = Number.isNaN(val) ? null : val;
+      updatePOS();
+    });
+
+    // 購入ボタン
+    buyBtn.addEventListener("click", () => {
+      const total = getTotal();
+      const tender = getTender();
+      if (tender === null || tender < total) {
+        cashSection.classList.remove("shake");
+        void cashSection.offsetWidth;
+        cashSection.classList.add("shake");
+        return;
+      }
+
+      const change = tender - total;
+      const ticketNo = state.nextTicket++;
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const demoParts = [state.demo.age, state.demo.gender, state.demo.group].filter(Boolean);
+
+      state.stock = Math.max(0, state.stock - state.qty);
+      state.history.unshift({
+        ticket: ticketNo,
+        time: `${hh}:${mm}`,
+        qty: state.qty,
+        amount: total,
+        demo: demoParts.join(" / "),
+        voided: false
+      });
+      historyPane.innerHTML = historyPaneContentHTML(state.history);
+
+      ticketNumEl.textContent = padTicket(ticketNo);
+      ticketChangeEl.textContent = yen(change);
+      ticketQtyEl.textContent = `${state.qty}本 / ${yen(total)}`;
+      ticketOverlay.classList.add("open");
+    });
+
+    // ミニ整理番号プレビュークリック
+    col.querySelector('[data-action="preview-ticket"]').addEventListener("click", () => {
+      switchTab("pos");
+      ticketNumEl.textContent = padTicket(state.nextTicket);
+      ticketChangeEl.textContent = "¥500";
+      ticketQtyEl.textContent = "1本 / ¥500";
+      ticketOverlay.classList.add("open");
+    });
+
+    // 次の会計へ
+    col.querySelector('[data-action="next-order"]').addEventListener("click", () => {
+      state.qty = 1;
+      state.demoStep = 0;
+      state.demo = { age: null, gender: null, group: null };
+      state.tenderMode = null;
+      state.tenderAmount = null;
+      manualInput.value = "";
+      manualBar.classList.remove("open");
+      cashBtns.forEach(b => b.classList.remove("selected"));
+      ticketOverlay.classList.remove("open");
+      updatePOS();
+    });
+
+    updatePOS();
+    return col;
+  }
+
+  const showcase = document.getElementById("showcase");
+  CONCEPTS.forEach(c => showcase.appendChild(renderConcept(c)));
+})();
+</script>
+</body>
+</html>

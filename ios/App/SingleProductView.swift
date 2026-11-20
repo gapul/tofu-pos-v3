@@ -151,7 +151,7 @@ struct SingleProductView: View {
             .modifier(TofuBar())
             .navigationTitle("レジ")
             .syncToolbar(model)
-            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("完了") { manualFocused = false } } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { manualFocused = false } } }
             .overlay(alignment: .bottom) { if let toast { toastView(toast) } }
             .onChange(of: quantity) { _ in choice = .none; manualText = "" }
             .onChange(of: limit) { newLimit in if quantity > max(1, newLimit) { quantity = max(1, newLimit) } }
@@ -192,12 +192,13 @@ struct SingleProductView: View {
 
     private func roundButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button { manualFocused = false; action() } label: {
-            Image(systemName: symbol).font(.title.bold()).frame(width: 64, height: 64)
+            IconImage(icon: .asset(symbol == "plus" ? "IconQtyPlus" : "IconQtyMinus"), size: 32).frame(width: 64, height: 64)
                 .foregroundColor(enabled ? .tofuOnAccent : .tofuMuted)
                 .background(Circle().fill(enabled ? Color.accentColor : Color.tofuSoft.opacity(0.5)))
         }
         .buttonStyle(.plain).disabled(!enabled)
         .accessibilityLabel(symbol == "plus" ? "1本増やす" : "1本減らす")
+        .help(symbol == "plus" ? "1本増やす" : "1本減らす")
     }
 
     private var moneyGrid: some View {
@@ -255,7 +256,7 @@ struct SingleProductView: View {
                 Text((isTest ? "テスト・" : "") + QuickSale.savedText(sale)).font(.subheadline).foregroundColor(.white).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 4)
-            Button("取消") { undo(sale) }.font(.subheadline.bold()).foregroundColor(.tofuTop)
+            IconButton("この会計を取消", .asset("IconCancelSale")) { undo(sale) }.foregroundColor(.tofuTop)
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 12).fill(toastDark.opacity(0.95)))

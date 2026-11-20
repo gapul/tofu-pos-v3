@@ -429,7 +429,7 @@ struct CloudSyncView: View {
                     Spacer()
                     TextField("なし", text: $prefix).textInputAutocapitalization(.characters).autocorrectionDisabled()
                         .multilineTextAlignment(.trailing).frame(width: 60).focused($focused)
-                    Button("保存") {
+                    IconButton("接頭辞を保存", .symbol("checkmark")) {
                         focused = false
                         do { try controller.setTicketPrefix(prefix.uppercased()); prefix = controller.ticketPrefix; failure = nil }
                         catch { failure = error.localizedDescription }
@@ -438,18 +438,24 @@ struct CloudSyncView: View {
                 LabeledContent("端末ID") { Text(controller.deviceID).font(.caption.monospaced()).textSelection(.enabled) }
             }
             Section("バックアップ・復元") {
-                Button("商品をバックアップ") { focused = false; Task { await controller.backupProducts() } }
-                Button("クラウドから復元") { focused = false; Task { if await controller.listBackups() { choosingCatalogs = true } } }
-                if controller.canContinueRestore { Button("売上の続きを復元") { continuing = true; confirmRestore = true } }
+                HStack(spacing: 16) {
+                    IconButton("商品をバックアップ", .symbol("icloud.and.arrow.up")) { focused = false; Task { await controller.backupProducts() } }
+                    IconButton("クラウドから復元", .symbol("icloud.and.arrow.down")) { focused = false; Task { if await controller.listBackups() { choosingCatalogs = true } } }
+                    if controller.canContinueRestore { IconButton("売上の続きを復元", .symbol("arrow.down.to.line.circle")) { continuing = true; confirmRestore = true } }
+                    Spacer()
+                }
             }.disabled(controller.isSyncing || !controller.configured)
             Section("接続設定") {
                 TextField("https://…workers.dev", text: $url).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL).focused($focused)
                 SecureField("端末用トークン（空欄なら変更なし）", text: $token).focused($focused)
-                Button("設定を保存") {
-                    do { focused = false; try controller.configure(url: url, token: token); token = ""; failure = nil }
-                    catch { failure = error.localizedDescription }
+                HStack(spacing: 16) {
+                    IconButton("接続設定を保存", .symbol("checkmark")) {
+                        do { focused = false; try controller.configure(url: url, token: token); token = ""; failure = nil }
+                        catch { failure = error.localizedDescription }
+                    }
+                    IconButton("設定ファイルを読み込む", .symbol("square.and.arrow.down")) { focused = false; importing = true }
+                    Spacer()
                 }
-                Button("設定ファイルを読み込む") { focused = false; importing = true }
                 if let failure { Text(failure).foregroundStyle(.red) }
             }.disabled(controller.isSyncing)
         }.navigationTitle("詳細設定")
@@ -462,10 +468,10 @@ struct CloudSyncView: View {
                             Button("\(catalogDate(catalog.received_at)) · 商品\(catalog.product_count)件") { selectedCatalog = catalog; continuing = false; chosen = true; choosingCatalogs = false }
                         }
                         if let before = controller.catalogNext {
-                            Button("さらに表示") { Task { _ = await controller.listBackups(before: before) } }
+                            IconButton("さらに表示", .symbol("ellipsis.circle")) { Task { _ = await controller.listBackups(before: before) } }
                         }
                     }.disabled(controller.isSyncing).navigationTitle("バックアップを選択")
-                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("戻る") { choosingCatalogs = false } } }
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { IconButton("戻る", .symbol("xmark")) { choosingCatalogs = false } } }
                 }
             }
             .alert("クラウドから復元", isPresented: $confirmRestore) {
@@ -482,7 +488,7 @@ struct CloudSyncView: View {
             .onAppear { url = controller.serverURL; prefix = controller.ticketPrefix }
             .onDisappear { focused = false }
             .scrollDismissesKeyboard(.interactively)
-            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("完了") { focused = false } } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { focused = false } } }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 do { try controller.importConnection(result.get()); url = controller.serverURL; token = ""; failure = nil }
                 catch { failure = error.localizedDescription }

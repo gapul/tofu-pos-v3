@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOS — 焼印 Interface Proposal</title>
+<style>
+:root{--ink:#14100D;--char:#2E2018;--miso:#503225;--ame:#B66427;--ame2:#D18C53;--ash:#635954;--paper:#F8F7F6;--tofu:#FFE8A9;--white:#FFFFFF}
+*{box-sizing:border-box}
+.deck{font-family:var(--font-sans, system-ui, -apple-system, "Hiragino Sans", sans-serif);color:var(--foreground,#14100D);display:flex;flex-direction:column;gap:18px}
+.slide{border-radius:var(--radius,14px);padding:24px 22px;position:relative;overflow:hidden}
+.dark{background:var(--ink);color:#F3EDE6}
+.light{background:var(--paper);color:var(--ink)}
+.kicker{font:700 10px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.32em;text-transform:uppercase;opacity:.65}
+h1{font:900 64px/0.88 var(--font-sans,system-ui);letter-spacing:-.04em;margin:14px 0 8px}
+h2{font:900 30px/1 var(--font-sans,system-ui);letter-spacing:-.02em;margin:10px 0 14px}
+h3{font:800 14px/1.2 var(--font-sans,system-ui);margin:0 0 6px;letter-spacing:.04em}
+p{margin:0;font-size:13px;line-height:1.75}
+.muted{opacity:.7}
+.grillbg{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(243,237,230,.06) 22px 24px);pointer-events:none}
+.cover-sq{position:absolute;right:22px;top:22px;width:120px;height:120px;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.cover-sq b{font:900 46px/1 var(--font-sans,system-ui);color:var(--char);letter-spacing:-.04em;transform:rotate(-4deg);opacity:.9}
+.sesame{position:absolute;width:4px;height:7px;border-radius:50%;background:#F3EDE6;opacity:.55}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.card{border:1.5px solid currentColor;padding:14px;border-radius:2px}
+.num{font:900 40px/1 var(--font-sans,system-ui);letter-spacing:-.04em;margin-bottom:6px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.sw{height:86px;padding:8px;display:flex;flex-direction:column;justify-content:flex-end;font:700 10px/1.3 var(--font-mono,monospace)}
+.type-row{display:flex;align-items:baseline;gap:14px;border-top:1px solid rgba(20,16,13,.15);padding:8px 0}
+.type-row span{font:700 10px var(--font-mono,monospace);width:84px;flex:none;opacity:.6}
+.stage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.notes{flex:1;min-width:220px}
+.notes li{font-size:12.5px;line-height:1.7;margin-bottom:6px}
+/* phone */
+.phone{width:340px;max-width:100%;height:700px;background:var(--ink);color:#F3EDE6;border-radius:34px;padding:0;position:relative;overflow:hidden;border:6px solid #000;flex:none;user-select:none;-webkit-user-select:none;font-family:var(--font-sans,system-ui)}
+.ph-top{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 6px;font:800 11px/1 var(--font-mono,monospace);letter-spacing:.24em}
+.ph-top i{font-style:normal;color:var(--ame2)}
+.bars{position:absolute;left:0;right:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 30px,#1E1814 30px 34px)}
+.qtyzone{position:relative;height:150px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 10px;touch-action:none;cursor:ns-resize}
+.qty{font:900 132px/0.78 var(--font-sans,system-ui);letter-spacing:-.07em;font-variant-numeric:tabular-nums}
+.qty small{font-size:18px;letter-spacing:0;margin-left:4px;color:#B9AFA6}
+.qmeta{text-align:right;font:700 11px/1.5 var(--font-mono,monospace);color:#B9AFA6}
+.qmeta b{display:block;font:900 26px/1 var(--font-sans,system-ui);color:#F3EDE6;letter-spacing:-.02em}
+.qbtns{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
+.qbtns button{width:46px;height:46px;border:1.5px solid #3A2E26;background:transparent;color:#F3EDE6;font:700 22px/1 var(--font-sans,system-ui);border-radius:0}
+.rail{display:flex;border-top:1.5px solid #3A2E26}
+.rail .lab{width:46px;flex:none;font:700 9px/1 var(--font-mono,monospace);letter-spacing:.2em;writing-mode:vertical-rl;display:flex;align-items:center;justify-content:center;color:#7D716A;border-right:1.5px solid #3A2E26}
+.rail .opts{flex:1;display:flex;overflow:hidden}
+.rail button{flex:1;min-width:0;height:44px;background:transparent;border:0;border-right:1px solid #2A211B;color:#B9AFA6;font:700 12px/1 var(--font-sans,system-ui);white-space:nowrap;padding:0 2px}
+.rail button.sm{font-size:10px;letter-spacing:-.02em}
+.rail button.on{background:#F3EDE6;color:var(--ink)}
+.cash{display:grid;grid-template-columns:repeat(3,1fr);border-top:1.5px solid #3A2E26}
+.cash button{height:52px;background:transparent;border:0;border-right:1px solid #2A211B;border-bottom:1px solid #2A211B;color:#F3EDE6;font:800 16px/1 var(--font-sans,system-ui);font-variant-numeric:tabular-nums}
+.cash button:nth-child(3n){border-right:0}
+.cash button.on{background:var(--ame);color:var(--ink)}
+.cash button:disabled{color:#4A3F37}
+.tofuzone{position:absolute;left:18px;right:18px;bottom:16px;height:150px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;justify-content:space-between;padding:12px 14px;touch-action:none;cursor:pointer;overflow:hidden}
+.tofuzone .row{display:flex;justify-content:space-between;align-items:baseline;font:700 10px/1 var(--font-mono,monospace);letter-spacing:.2em;color:var(--ash)}
+.tofuzone .chg{font:900 54px/0.9 var(--font-sans,system-ui);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.tofuzone .hint{font:800 11px/1 var(--font-sans,system-ui);letter-spacing:.3em;color:var(--miso)}
+.tofuzone.off{background:#2A211B;color:#5A4E46;cursor:not-allowed}
+.tofuzone.off .row,.tofuzone.off .hint{color:#5A4E46}
+.burn{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 18px,rgba(46,32,24,.85) 18px 24px);clip-path:inset(0 100% 0 0);pointer-events:none;mix-blend-mode:multiply}
+.brand{position:absolute;inset:0;background:var(--ink);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:5}
+.brand.show{display:flex;animation:fadein .2s}
+.brand .sq{width:220px;height:220px;background:var(--paper);display:flex;align-items:center;justify-content:center;position:relative;transform:scale(.96)}
+.brand .sq::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(46,32,24,.18) 26px 32px)}
+.brand .tk{position:relative;font:900 120px/1 var(--font-sans,system-ui);letter-spacing:-.06em;color:var(--char);transform:rotate(-3deg);filter:blur(.3px);text-shadow:0 0 1px #503225,0 0 6px rgba(80,50,37,.6)}
+.brand .stamp{animation:stamp .45s cubic-bezier(.2,1.6,.4,1)}
+.brand .cap{margin-top:18px;font:700 11px/1 var(--font-mono,monospace);letter-spacing:.3em;color:#B9AFA6}
+.brand .sum{margin-top:8px;font:800 16px/1 var(--font-sans,system-ui)}
+@keyframes stamp{0%{transform:scale(1.6) rotate(-3deg);opacity:0}60%{transform:scale(.94) rotate(-3deg);opacity:1}100%{transform:scale(1) rotate(-3deg)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.mini{width:220px;background:var(--ink);color:#F3EDE6;border:5px solid #000;border-radius:26px;padding:14px 12px;flex:none}
+.mini h4{margin:0 0 8px;font:800 10px/1 var(--font-mono,monospace);letter-spacing:.24em;color:#B9AFA6}
+.field{position:relative;height:150px;background:#1A1411;margin-bottom:8px}
+.field i{position:absolute;width:4px;height:7px;border-radius:50%;background:#F3EDE6}
+.field i.x{background:transparent;border:1px solid #B66427}
+.hours{display:flex;justify-content:space-between;font:700 8px var(--font-mono,monospace);color:#7D716A}
+.dg{display:grid;grid-template-columns:42px 1fr 30px;gap:6px;align-items:center;font:700 10px var(--font-mono,monospace);margin-bottom:4px}
+.dg b{display:block;height:10px;background:#F3EDE6}
+.diff{margin-top:10px;border-top:1.5px solid #3A2E26;padding-top:8px;display:flex;justify-content:space-between;align-items:baseline}
+.diff b{font:900 30px/1 var(--font-sans,system-ui);color:var(--tofu)}
+table.spec{width:100%;border-collapse:collapse;font-size:12px}
+table.spec td{border-top:1px solid rgba(20,16,13,.15);padding:7px 4px;vertical-align:top}
+table.spec td:first-child{font:700 10px var(--font-mono,monospace);letter-spacing:.12em;width:30%;opacity:.7}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="deck">
+
+<section class="slide dark">
+ <div class="grillbg"></div>
+ <div class="cover-sq"><b>A-12</b></div>
+ <div class="kicker">Proposal 2026 ／ Are you Tofu? × TOS</div>
+ <h1>焼印<br>Interface</h1>
+ <p class="muted" style="max-width:420px">会計の最後に、整理番号を豆腐へ「焼印」として押す。炭火の店の動作そのものを、レジの操作体系にする提案です。</p>
+ <div style="margin-top:22px" class="kicker">Concept / System / Screens / Interaction / Build</div>
+</section>
+
+<section class="slide light">
+ <div class="kicker">01 — Concept</div>
+ <h2>網・空白・焼印。</h2>
+ <div class="cols">
+  <div class="card"><div class="num">網</div><h3>Grill Grid</h3><p>焼き網の棒を、そのまま画面の罫線にする。選択肢はすべて網の上に並ぶ横一列の「レール」。迷う余地をなくす。</p></div>
+  <div class="card"><div class="num">□</div><h3>White Void</h3><p>ポスター中央の白い四角＝豆腐。画面で唯一の白い面に「お釣り」だけを置く。会計中に見るべき数字は、いつもここ。</p></div>
+  <div class="card"><div class="num">印</div><h3>Yakiin</h3><p>白い豆腐を長押しで「焼く」。網目の焦げ跡が走り切ったら会計確定、整理番号が焼印として押される。誤タップでは確定しない。</p></div>
+ </div>
+</section>
+
+<section class="slide light">
+ <div class="kicker">02 — Design System</div>
+ <h2>炭・紙・飴。</h2>
+ <div class="swatches">
+  <div class="sw" style="background:#14100D;color:#F3EDE6">CHARCOAL<br>#14100D</div>
+  <div class="sw" style="background:#2E2018;color:#F3EDE6">KOGE<br>#2E2018</div>
+  <div class="sw" style="background:#503225;color:#F3EDE6">MISO<br>#503225</div>
+  <div class="sw" style="background:#B66427;color:#14100D">AME<br>#B66427</div>
+  <div class="sw" style="background:#F8F7F6;color:#14100D;outline:1px solid #ddd">PAPER<br>#F8F7F6</div>
+  <div class="sw" style="background:#FFE8A9;color:#14100D">TOFU<br>#FFE8A9</div>
+ </div>
+ <div style="margin-top:16px">
+  <div class="type-row"><span>DISPLAY 132</span><b style="font:900 64px/0.8 var(--font-sans,system-ui);letter-spacing:-.07em">2</b><p class="muted">本数。画面の主役は数字1文字。</p></div>
+  <div class="type-row"><span>HERO 54</span><b style="font:900 40px/1 var(--font-sans,system-ui);letter-spacing:-.05em">¥4,000</b><p class="muted">お釣り。白い四角の中だけ。</p></div>
+  <div class="type-row"><span>RAIL 12</span><b style="font:700 13px var(--font-sans,system-ui)">子ども　学生　大人</b><p class="muted">選択肢。全部同じ重さ。</p></div>
+  <div class="type-row"><span>MONO 10</span><b style="font:700 11px var(--font-mono,monospace);letter-spacing:.24em">TOS ／ SYNCED</b><p class="muted">状態表示。等幅・字間広め。</p></div>
+ </div>
+ <p class="muted" style="margin-top:10px">角丸ゼロ・影ゼロ・装飾ゼロ。色が付くのは「選んだもの」と「押せるもの」だけ。</p>
+</section>
+
+<section class="slide light">
+ <div class="kicker">03 — Screen / Register（操作できます）</div>
+ <h2>縦に撫でて、白を焼く。</h2>
+ <div class="stage">
+  <div class="phone" id="ph">
+   <div class="ph-top"><span>TOS</span><i>● SYNCED</i></div>
+   <div class="qtyzone" id="qz">
+    <div class="qty" id="q">1<small>本</small></div>
+    <div><div class="qmeta">田楽豆腐 ¥500<b id="tot">¥500</b>在庫 <span id="st">42</span></div>
+     <div class="qbtns"><button id="minus" aria-label="減らす">−</button><button id="plus" aria-label="増やす">＋</button></div></div>
+   </div>
+   <div class="rail"><div class="lab">年齢</div><div class="opts" data-k="age"><button>子ども</button><button>学生</button><button>大人</button><button>シニア</button></div></div>
+   <div class="rail"><div class="lab">性別</div><div class="opts" data-k="gender"><button>男性</button><button>女性</button><button>他</button></div></div>
+   <div class="rail"><div class="lab">集団</div><div class="opts" data-k="group"><button>一人</button><button>友人</button><button>家族</button><button class="sm">カップル</button><button class="sm">グループ</button></div></div>
+   <div class="cash" id="cash"><button data-v="exact">ちょうど</button><button data-v="1000">1,000</button><button data-v="2000">2,000</button><button data-v="5000">5,000</button><button data-v="10000">10,000</button><button data-v="manual">手入力</button></div>
+   <div class="tofuzone off" id="tz">
+    <div class="row"><span>CHANGE</span><span id="rc">—</span></div>
+    <div class="chg" id="chg">—</div>
+    <div class="hint" id="hint">受け取った額を選ぶ</div>
+    <div class="burn" id="burn"></div>
+   </div>
+   <div class="brand" id="brand"><div class="sq"><div class="tk" id="tk">12</div></div><div class="cap">整理番号 ／ TICKET</div><div class="sum" id="bsum"></div></div>
+  </div>
+  <div class="notes"><ul>
+   <li><b>本数</b>：巨大な数字を上下に撫でると増減（＋/−も残す）。</li>
+   <li><b>客層</b>：網の棒＝3本のレール。押すと白く焼ける。任意。</li>
+   <li><b>受け取った額</b>：未選択のあいだ、白い四角は消灯（焦げ色）して押せない。</li>
+   <li><b>購入</b>：白い四角を0.6秒長押し。網目の焦げが左から走り切ったら確定。指を離せば取り消し。</li>
+   <li><b>直後</b>：画面全体が炭色になり、整理番号を焼印で押す。1.6秒で次の客へ。タップで即戻る。</li>
+  </ul></div>
+ </div>
+</section>
+
+<section class="slide light">
+ <div class="kicker">04 — Screens / History &amp; Close</div>
+ <h2>売上は、ゴマで数える。</h2>
+ <div class="stage">
+  <div class="mini"><h4>HISTORY ／ ゴマ・ログ</h4><div class="field" id="field"></div><div class="hours"><span>10</span><span>12</span><span>14</span><span>16</span></div><p style="font-size:11px;margin-top:8px;color:#B9AFA6">1会計＝ゴマ1粒。時間で横に並び、本数で大きくなる。取消は輪郭だけの粒。</p></div>
+  <div class="mini"><h4>CLOSE ／ 網の締め</h4>
+   <div class="dg"><span>¥10,000</span><b style="width:30%"></b><span>3</span></div>
+   <div class="dg"><span>¥5,000</span><b style="width:40%"></b><span>4</span></div>
+   <div class="dg"><span>¥1,000</span><b style="width:100%"></b><span>11</span></div>
+   <div class="dg"><span>¥500</span><b style="width:55%"></b><span>6</span></div>
+   <div class="dg"><span>¥100</span><b style="width:45%"></b><span>5</span></div>
+   <div class="diff"><span style="font:700 10px var(--font-mono,monospace);letter-spacing:.2em;color:#B9AFA6">DIFF</span><b>±¥0</b></div>
+   <p style="font-size:11px;margin-top:8px;color:#B9AFA6">金種は網の棒の長さ。差額0なら豆腐色で光る。</p></div>
+ </div>
+</section>
+
+<section class="slide light">
+ <div class="kicker">05 — Interaction Spec</div>
+ <h2>動きの約束。</h2>
+ <table class="spec">
+  <tr><td>CONFIRM</td><td>長押し600ms。離せば中断。触覚フィードバック1回。二重確定は会計IDで防止（既存）。</td></tr>
+  <tr><td>BRAND</td><td>焼印の押下は450ms、全体1.6秒。表示中も次の操作でスキップ可能。会計の保存は押下前に完了。</td></tr>
+  <tr><td>SWIPE</td><td>本数ゾーンで縦に24pxごとに±1。横スワイプは無効（誤操作防止）。</td></tr>
+  <tr><td>REDUCED</td><td>「動きを減らす」設定では焦げ・焼印の動きを省き、整理番号を静止表示。</td></tr>
+  <tr><td>CONTRAST</td><td>炭色背景上の文字は#F3EDE6（コントラスト比 15:1 以上）。白い四角の中は炭色の文字。</td></tr>
+ </table>
+</section>
+
+<section class="slide dark">
+ <div class="grillbg"></div>
+ <div class="kicker">06 — Build</div>
+ <h2>今の機能のまま、皮を替える。</h2>
+ <p class="muted" style="max-width:520px">データ・同期・客層・整理番号・受け取った額の規則は現行のまま。変わるのはレジ画面の構成と、長押し確定・焼印演出・ゴマ・ログの3つ。Android（Compose）とiOS（SwiftUI）の標準APIだけで実装でき、新しい依存は不要。</p>
+ <div class="cols" style="margin-top:16px">
+  <div class="card"><h3>Phase 1</h3><p>配色・罫線・数字の組版・長押し確定。</p></div>
+  <div class="card"><h3>Phase 2</h3><p>焼印演出・触覚・動きを減らす設定への対応。</p></div>
+  <div class="card"><h3>Phase 3</h3><p>履歴のゴマ・ログ、締めの網グラフ。</p></div>
+ </div>
+</section>
+
+</div>
+<script>
+(function(){
+ const P=500;let q=1,stock=42,cash=null,manual=0,tk=12;const sel={};
+ const $=id=>document.getElementById(id);
+ const fmt=n=>n.toLocaleString('ja-JP');
+ function total(){return q*P}
+ function render(){
+  $('q').innerHTML=q+'<small>本</small>';$('tot').textContent='¥'+fmt(total());$('st').textContent=stock;
+  document.querySelectorAll('#cash button').forEach(b=>{const v=b.dataset.v;const amt=v==='exact'?total():v==='manual'?null:+v;b.disabled=amt!==null&&amt<total();b.classList.toggle('on',cash===v)});
+  const rec=cash==null?null:cash==='exact'?total():cash==='manual'?manual:+cash;
+  const ok=rec!=null&&rec>=total();
+  $('tz').classList.toggle('off',!ok);
+  $('rc').textContent=rec==null?'—':'受取 ¥'+fmt(rec);
+  $('chg').textContent=ok?'¥'+fmt(rec-total()):'—';
+  $('hint').textContent=ok?'長押しで焼く':'受け取った額を選ぶ';
+ }
+ function setQ(n){q=Math.max(1,Math.min(99,n));cash=null;render()}
+ $('plus').onclick=e=>{e.stopPropagation();setQ(q+1)};$('minus').onclick=e=>{e.stopPropagation();setQ(q-1)};
+ let sy=null,base=1;const qz=$('qz');
+ qz.addEventListener('pointerdown',e=>{if(e.target.tagName==='BUTTON')return;sy=e.clientY;base=q;qz.setPointerCapture(e.pointerId)});
+ qz.addEventListener('pointermove',e=>{if(sy==null)return;const d=Math.round((sy-e.clientY)/24);if(base+d!==q)setQ(base+d)});
+ qz.addEventListener('pointerup',()=>sy=null);
+ document.querySelectorAll('.opts').forEach(o=>o.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;const k=o.dataset.k;const was=e.target.classList.contains('on');o.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(!was){e.target.classList.add('on');sel[k]=e.target.textContent}else delete sel[k]}));
+ $('cash').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const v=b.dataset.v;if(cash===v){cash=null}else{cash=v;if(v==='manual'){const s=prompt('受け取った額（円）',String(total()));manual=parseInt(s||'0',10)||0}}render()});
+ const tz=$('tz'),burn=$('burn');let t0=null,raf=null;const HOLD=600;
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function stopBurn(){cancelAnimationFrame(raf);t0=null;burn.style.clipPath='inset(0 100% 0 0)'}
+ tz.addEventListener('pointerdown',e=>{if(tz.classList.contains('off'))return;t0=performance.now();tz.setPointerCapture(e.pointerId);
+  const step=now=>{const p=Math.min(1,(now-t0)/HOLD);burn.style.clipPath=`inset(0 ${100-p*100}% 0 0)`;if(p<1)raf=requestAnimationFrame(step);else{stopBurn();purchase()}};raf=requestAnimationFrame(step)});
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>tz.addEventListener(ev,()=>{if(t0!=null)stopBurn()}));
+ function purchase(){
+  const rec=cash==='exact'?total():cash==='manual'?manual:+cash;tk+=1;stock-=q;
+  $('tk').textContent=tk;$('bsum').textContent='¥'+fmt(total())+'（'+q+'本）・お釣り ¥'+fmt(rec-total());
+  const br=$('brand');br.classList.add('show');const t=$('tk');t.classList.remove('stamp');void t.offsetWidth;if(!reduce)t.classList.add('stamp');
+  addSeed(q,false);
+  const close=()=>{br.classList.remove('show');q=1;cash=null;document.querySelectorAll('.opts button').forEach(b=>b.classList.remove('on'));render()};
+  const timer=setTimeout(close,1600);br.onclick=()=>{clearTimeout(timer);close()};
+ }
+ const field=$('field');
+ function addSeed(n,x){const i=document.createElement('i');if(x)i.className='x';const s=1+Math.min(1.6,(n-1)*.35);i.style.left=(6+Math.random()*196)+'px';i.style.top=(6+Math.random()*134)+'px';i.style.transform=`rotate(${Math.random()*180}deg) scale(${s})`;field.appendChild(i)}
+ for(let k=0;k<64;k++)addSeed(1+Math.floor(Math.random()*3),Math.random()<.06);
+ render();
+})();
+</script>
+</body></html>

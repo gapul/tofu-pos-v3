@@ -9,7 +9,7 @@ export const DASHBOARD_HTML = `<!doctype html>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--fg:#1d2330;--muted:#667085;--line:#e3e6eb;--accent:#2f6fde;--warn:#c4320a;--warnbg:#fff1ec;--ok:#067647}
 @media (prefers-color-scheme:dark){:root{--bg:#111418;--card:#1a1f26;--fg:#e8ebf0;--muted:#98a2b3;--line:#2c333d;--accent:#6f9cff;--warn:#ff8a65;--warnbg:#3a2018;--ok:#4cc38a}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Hiragino Sans",sans-serif}
 header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;z-index:1}
 header h1{font-size:17px;margin:0 auto 0 0}main{max-width:1100px;margin:0 auto;padding:16px}
 input,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}

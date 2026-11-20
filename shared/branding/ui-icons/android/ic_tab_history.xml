@@ -1,0 +1,34 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M5 2 H19 Q21 2 21 4 V21 Q21 22.3 19.9 21.65 L17 19.95 L14.5 21.4 Q14 21.7 13.5 21.4 L12 20.4 L9.5 21.8 Q9 22.1 8.5 21.8 L7 20.85 L4.55 22 Q3 22.65 3 21 V4 Q3 2 5 2 Z M5.5 4 H18.5 Q19 4 19 4.5 V18.9 L17.4 17.95 Q17 17.7 16.6 17.95 L14 19.45 L12.4 18.45 Q12 18.2 11.6 18.45 L9 19.95 L7.45 18.95 Q7 18.7 6.55 18.92 L5 19.65 V4.5 Q5 4 5.5 4 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M9.427 6.927 C9.64 7.327 9.33 7.908 8.735 8.224 C8.14 8.54 7.485 8.473 7.273 8.073 C7.06 7.673 7.37 7.092 7.965 6.776 C8.56 6.46 9.215 6.527 9.427 6.927 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M9.427 10.927 C9.64 11.327 9.33 11.908 8.735 12.224 C8.14 12.54 7.485 12.473 7.273 12.073 C7.06 11.673 7.37 11.092 7.965 10.776 C8.56 10.46 9.215 10.527 9.427 10.927 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M9.427 14.927 C9.64 15.327 9.33 15.908 8.735 16.224 C8.14 16.54 7.485 16.473 7.273 16.073 C7.06 15.673 7.37 15.092 7.965 14.776 C8.56 14.46 9.215 14.527 9.427 14.927 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M12 6.5 H16 Q17 6.5 17 7.5 V7.5 Q17 8.5 16 8.5 H12 Q11 8.5 11 7.5 V7.5 Q11 6.5 12 6.5 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M12 10.5 H16 Q17 10.5 17 11.5 V11.5 Q17 12.5 16 12.5 H12 Q11 12.5 11 11.5 V11.5 Q11 10.5 12 10.5 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M12 14.5 H14.5 Q15.5 14.5 15.5 15.5 V15.5 Q15.5 16.5 14.5 16.5 H12 Q11 16.5 11 15.5 V15.5 Q11 14.5 12 14.5 Z" />
+</vector>

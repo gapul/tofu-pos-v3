@@ -1,0 +1,3477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOS — Are you Tofu? 実験レジUI 4案</title>
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --paper: #F8F7F6;
+    --paper-deep: #EFECE8;
+    --sesame: #2E2018;
+    --miso-dark: #503225;
+    --miso-amber: #B66427;
+    --miso-light: #D18C53;
+    --ash: #635954;
+    --tofu-top: #FFE8A9;
+    --tent: #C85B1C;
+    --sasa: #4E6B47;
+    --sasa-dark: #385033;
+    --ember: #D4501E;
+  }
+
+  html, body {
+    background-color: #EAE5DF;
+    background-image: radial-gradient(rgba(46, 32, 24, 0.08) 1px, transparent 1px);
+    background-size: 18px 18px;
+    color: var(--sesame);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 920px;
+  }
+
+  /* Showcase Header */
+  .showcase-header {
+    padding: 22px 32px 10px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid rgba(46, 32, 24, 0.12);
+    background: rgba(248, 247, 246, 0.85);
+  }
+  .showcase-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .tos-pill {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .showcase-sub {
+    font-size: 13px;
+    color: var(--ash);
+    font-weight: 600;
+  }
+  .palette-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .p-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(46, 32, 24, 0.25);
+  }
+
+  /* Horizontal Deck */
+  .deck-wrap {
+    overflow-x: auto;
+    padding: 22px 8px 44px 8px;
+  }
+  .deck {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 28px;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .proposal-col {
+    width: 360px;
+    flex: 0 0 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .proposal-meta {
+    min-height: 68px;
+    padding: 0 2px;
+  }
+  .proposal-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--sesame);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .proposal-num {
+    background: var(--miso-amber);
+    color: var(--paper);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .proposal-desc {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ash);
+    font-weight: 500;
+  }
+
+  /* Phone Frame: Fixed 360 x 740 px */
+  .phone {
+    width: 360px;
+    height: 740px;
+    border-radius: 34px;
+    border: 6px solid var(--sesame);
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 38px rgba(46, 32, 24, 0.2), 0 4px 10px rgba(46, 32, 24, 0.12);
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Tent Awning Stripe */
+  .awning {
+    height: 8px;
+    width: 348px;
+    flex: 0 0 8px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--tent) 0px,
+      var(--tent) 18px,
+      var(--miso-amber) 18px,
+      var(--miso-amber) 36px
+    );
+  }
+
+  /* Common App Header */
+  .app-bar {
+    height: 40px;
+    flex: 0 0 40px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--paper);
+    border-bottom: 1px solid rgba(46, 32, 24, 0.12);
+  }
+  .app-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .unit-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--miso-dark);
+    background: var(--tofu-top);
+    padding: 3px 7px;
+    border-radius: 5px;
+    border: 1px solid rgba(80, 50, 37, 0.2);
+  }
+  .tos-mini {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--paper);
+    background: var(--sesame);
+    padding: 3px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.8px;
+  }
+
+  /* Demographic Trigger Bar */
+  .demo-bar {
+    height: 42px;
+    flex: 0 0 42px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F1ECE6;
+    border-bottom: 1px solid rgba(46, 32, 24, 0.1);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .demo-bar:active {
+    background: #E6DDD3;
+  }
+  .demo-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .demo-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ash);
+    flex-shrink: 0;
+  }
+  .demo-tags {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .demo-tag-pill {
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    padding: 2px 7px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .demo-tag-empty {
+    font-size: 11px;
+    color: var(--ash);
+    opacity: 0.85;
+  }
+  .demo-edit-btn {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-amber);
+    flex-shrink: 0;
+  }
+
+  /* Common Payment Grid */
+  .pay-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .pay-btn {
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid rgba(46, 32, 24, 0.18);
+    background: #FFFFFF;
+    color: var(--sesame);
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.15;
+    transition: transform 0.08s, background 0.12s, border-color 0.12s;
+    padding: 2px;
+  }
+  .pay-btn:active {
+    transform: scale(0.96);
+  }
+  .pay-btn .sub {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ash);
+    margin-top: 2px;
+  }
+  .pay-btn.selected {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    border-color: var(--sesame);
+    box-shadow: 0 4px 10px rgba(46, 32, 24, 0.25);
+  }
+  .pay-btn.selected .sub {
+    color: var(--miso-light);
+  }
+  .pay-btn.exact-btn {
+    background: #FFF9E6;
+    border-color: var(--miso-light);
+  }
+  .pay-btn.exact-btn.selected {
+    background: var(--miso-amber);
+    color: #FFFFFF;
+    border-color: var(--miso-dark);
+  }
+  .pay-btn.exact-btn.selected .sub {
+    color: var(--tofu-top);
+  }
+  .pay-btn.insufficient {
+    border-color: var(--ember);
+    background: #FFF2EC;
+  }
+  .pay-btn.insufficient.selected {
+    background: var(--ember);
+    color: #FFFFFF;
+    border-color: var(--sesame);
+  }
+
+  /* Summary / Change Box */
+  .change-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--sesame);
+    color: var(--paper);
+    border-radius: 12px;
+    padding: 8px 14px;
+  }
+  .change-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .change-col.right {
+    align-items: flex-end;
+  }
+  .change-k {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--miso-light);
+    letter-spacing: 0.5px;
+  }
+  .change-v {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--paper);
+    font-variant-numeric: tabular-nums;
+  }
+  .change-v.big-change {
+    font-size: 26px;
+    color: var(--tofu-top);
+    line-height: 1.1;
+  }
+  .change-v.warn {
+    font-size: 18px;
+    color: #FFAD87;
+  }
+  .change-v.muted {
+    font-size: 16px;
+    color: rgba(248, 247, 246, 0.55);
+  }
+
+  /* =========================================================
+     PROPOSAL 1: CHARCOAL GRILL TAP & FLICK
+     ========================================================= */
+  .p1-grill {
+    height: 272px;
+    flex: 0 0 272px;
+    background: radial-gradient(circle at 50% 62%, #6D3418 0%, #3E2417 50%, #241812 100%);
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+    cursor: pointer;
+    border-bottom: 3px solid var(--miso-dark);
+  }
+  .p1-grill-hud {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .p1-qty-badge {
+    background: rgba(46, 32, 24, 0.86);
+    border: 1px solid rgba(255, 232, 169, 0.35);
+    color: var(--tofu-top);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .p1-total-badge {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--paper);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+    font-variant-numeric: tabular-nums;
+  }
+  .p1-grate-svg {
+    position: absolute;
+    inset: 0;
+    width: 348px;
+    height: 272px;
+    pointer-events: none;
+  }
+  .p1-tofu-layer {
+    position: absolute;
+    top: 46px;
+    left: 12px;
+    right: 12px;
+    bottom: 30px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    align-items: center;
+    justify-items: center;
+    z-index: 5;
+  }
+  .p1-skewer {
+    width: 74px;
+    height: 88px;
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+    transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.16s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p1-skewer.dragging {
+    transition: none;
+    cursor: grabbing;
+    z-index: 20;
+  }
+  .p1-skewer.pop-in {
+    animation: p1PopIn 0.24s cubic-bezier(0.2, 1.25, 0.4, 1);
+  }
+  @keyframes p1PopIn {
+    0% { transform: scale(0.4) translateY(-16px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .p1-overflow-pill {
+    position: absolute;
+    right: 12px;
+    bottom: 34px;
+    z-index: 8;
+    background: var(--miso-amber);
+    color: var(--paper);
+    font-size: 13px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 99px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    pointer-events: none;
+  }
+  .p1-grill-hint {
+    position: absolute;
+    bottom: 7px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 232, 169, 0.85);
+    pointer-events: none;
+    z-index: 6;
+  }
+  .p1-sizzle {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--tofu-top);
+    pointer-events: none;
+    z-index: 12;
+    animation: p1Sizzle 0.38s ease-out forwards;
+  }
+  @keyframes p1Sizzle {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.95; }
+    100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+  }
+  .p1-body {
+    flex: 1;
+    padding: 12px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--paper);
+  }
+  .p1-pay-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ash);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  /* Slide-to-confirm track */
+  .p1-slider {
+    height: 62px;
+    border-radius: 16px;
+    background: var(--miso-dark);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    border: 2px solid var(--sesame);
+  }
+  .p1-slider.locked {
+    background: #D8D1C9;
+    border-color: #BDB3A8;
+  }
+  .p1-slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0px;
+    background: linear-gradient(90deg, var(--miso-amber), var(--tent));
+    pointer-events: none;
+  }
+  .p1-slider-label {
+    position: relative;
+    z-index: 2;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--tofu-top);
+    padding-left: 48px;
+    pointer-events: none;
+    letter-spacing: 0.4px;
+  }
+  .p1-slider.locked .p1-slider-label {
+    color: var(--ash);
+    padding-left: 0;
+  }
+  .p1-slider-thumb {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 58px;
+    height: 50px;
+    border-radius: 12px;
+    background: var(--tofu-top);
+    border: 2px solid var(--sesame);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    touch-action: none;
+  }
+  .p1-slider.locked .p1-slider-thumb {
+    display: none;
+  }
+
+  /* =========================================================
+     PROPOSAL 2: DRAG BILL TO TOFU & ROLLING COINS
+     ========================================================= */
+  .p2-stage {
+    height: 256px;
+    flex: 0 0 256px;
+    padding: 10px 12px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #FBF9F6 0%, #EFE8DE 100%);
+    border-bottom: 1px solid rgba(46, 32, 24, 0.12);
+    position: relative;
+  }
+  .p2-total-row {
+    width: 100%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+  .p2-total-num {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--sesame);
+    font-variant-numeric: tabular-nums;
+  }
+  .p2-qty-text {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--miso-amber);
+  }
+  .p2-tofu-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .p2-qty-btn {
+    width: 56px;
+    height: 76px;
+    border-radius: 14px;
+    border: 2px solid var(--sesame);
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    font-size: 30px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .p2-qty-btn:active {
+    transform: scale(0.94);
+  }
+  .p2-qty-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .p2-drop-zone {
+    flex: 1;
+    height: 150px;
+    border-radius: 20px;
+    border: 2px dashed rgba(80, 50, 37, 0.35);
+    background: rgba(255, 248, 232, 0.65);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background 0.14s, border-color 0.14s, transform 0.14s;
+  }
+  .p2-drop-zone.active-target {
+    border-color: var(--miso-amber);
+    border-style: solid;
+    background: rgba(255, 232, 169, 0.55);
+    box-shadow: 0 0 0 4px rgba(182, 100, 39, 0.18);
+  }
+  .p2-drop-zone.hover-ok {
+    background: var(--tofu-top);
+    border-color: var(--sasa);
+    transform: scale(1.03);
+  }
+  .p2-drop-zone.hover-bad {
+    background: #FFE5DA;
+    border-color: var(--ember);
+  }
+  .p2-drop-caption {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-dark);
+    margin-top: 2px;
+    text-align: center;
+    padding: 0 6px;
+  }
+  .p2-skewer-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 170px;
+  }
+  .p2-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--miso-amber);
+    border: 1px solid var(--sesame);
+  }
+
+  .p2-change-bar {
+    height: 62px;
+    flex: 0 0 62px;
+    padding: 8px 12px;
+    background: var(--sesame);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .p2-bills-area {
+    flex: 1;
+    padding: 10px 12px 12px 12px;
+    background: #E8E0D6;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .p2-bills-hint {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-dark);
+    text-align: center;
+  }
+  .p2-bill-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .p2-bill {
+    border-radius: 12px;
+    border: 2px solid var(--miso-dark);
+    background: var(--paper);
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    box-shadow: 0 3px 0 rgba(46, 32, 24, 0.2);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.12s;
+  }
+  .p2-bill::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px dashed rgba(80, 50, 37, 0.28);
+    border-radius: 7px;
+    pointer-events: none;
+  }
+  .p2-bill.exact-bill {
+    background: var(--tofu-top);
+    border-color: var(--miso-amber);
+  }
+  .p2-bill.custom-bill {
+    background: #F4EDE5;
+    border-style: dashed;
+  }
+  .p2-bill.selected {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    border-color: var(--sesame);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(46, 32, 24, 0.28);
+  }
+  .p2-bill.selected::before {
+    border-color: rgba(255, 232, 169, 0.35);
+  }
+  .p2-bill.selected .p2-bill-sub {
+    color: var(--miso-light);
+  }
+  .p2-bill-val {
+    font-size: 17px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+  .p2-bill-sub {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ash);
+    margin-top: 3px;
+  }
+  .p2-drag-ghost {
+    position: absolute;
+    width: 108px;
+    height: 82px;
+    border-radius: 12px;
+    border: 2px solid var(--sesame);
+    background: var(--tofu-top);
+    color: var(--sesame);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 12px 24px rgba(46, 32, 24, 0.35);
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+
+  /* Rolling Coins Tray inside P2 Receipt */
+  .p2-coin-tray {
+    width: 100%;
+    min-height: 128px;
+    background: #3A271C;
+    border: 3px solid var(--miso-light);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .p2-coins-stage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .p2-coin-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: coinRollIn 0.58s cubic-bezier(0.22, 1.15, 0.36, 1) backwards;
+  }
+  @keyframes coinRollIn {
+    0% {
+      transform: translateX(-180px) rotate(-540deg);
+      opacity: 0;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(0px) rotate(0deg);
+      opacity: 1;
+    }
+  }
+  .p2-coin-summary {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tofu-top);
+    text-align: center;
+  }
+
+  /* =========================================================
+     PROPOSAL 3: NOREN PULL-DOWN & PATTERN DEMOGRAPHICS
+     ========================================================= */
+  .p3-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .p3-pole {
+    height: 18px;
+    flex: 0 0 18px;
+    background: linear-gradient(180deg, #9F6936 0%, #6D421F 55%, #472913 100%);
+    border-bottom: 2px solid var(--sesame);
+    position: relative;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 18px;
+  }
+  .p3-loop {
+    width: 12px;
+    height: 18px;
+    background: var(--sesame);
+    border-radius: 2px;
+  }
+  .p3-noren-curtain {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    right: 0;
+    height: 194px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+    transition: height 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.05);
+  }
+  .p3-noren-curtain.dragging {
+    transition: none;
+  }
+  .p3-noren-panels {
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    padding: 0 8px;
+    align-items: stretch;
+  }
+  .p3-panel {
+    flex: 1;
+    background: var(--miso-amber);
+    border: 2px solid var(--sesame);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    box-shadow: 0 6px 12px rgba(46, 32, 24, 0.22);
+  }
+  .p3-panel.has-val {
+    background: var(--miso-dark);
+  }
+  .p3-panel-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .p3-panel-axis {
+    position: relative;
+    z-index: 2;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--tofu-top);
+    background: rgba(46, 32, 24, 0.72);
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .p3-panel-val {
+    position: relative;
+    z-index: 2;
+    font-size: 18px;
+    font-weight: 900;
+    color: #FFFFFF;
+    background: rgba(46, 32, 24, 0.78);
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .p3-panel-tap {
+    position: relative;
+    z-index: 2;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tofu-top);
+    background: rgba(46, 32, 24, 0.6);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+  .p3-pull-bar {
+    height: 36px;
+    flex: 0 0 36px;
+    margin: 4px 12px 0 12px;
+    border-radius: 10px;
+    background: var(--sesame);
+    color: var(--tofu-top);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: grab;
+    box-shadow: 0 4px 10px rgba(46, 32, 24, 0.25);
+  }
+  .p3-pull-bar.ready {
+    background: var(--tent);
+    color: #FFFFFF;
+    border: 2px solid var(--sesame);
+  }
+  .p3-pull-bar.locked {
+    background: #847871;
+    color: #F4EFEA;
+  }
+  .p3-pull-banner {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 52px;
+    background: rgba(46, 32, 24, 0.92);
+    color: var(--tofu-top);
+    border: 2px solid var(--tofu-top);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 900;
+    z-index: 6;
+    display: none;
+    pointer-events: none;
+  }
+  .p3-pull-banner.show {
+    display: block;
+  }
+  .p3-pull-banner.armed {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border-color: var(--sesame);
+  }
+
+  .p3-content {
+    margin-top: 198px;
+    flex: 1;
+    padding: 10px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .p3-order-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #EFE9E1;
+    border: 1px solid rgba(46, 32, 24, 0.14);
+    border-radius: 14px;
+    padding: 8px 10px;
+  }
+  .p3-qty-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 26px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p3-qty-btn:active {
+    background: var(--tofu-top);
+  }
+  .p3-qty-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .p3-order-center {
+    text-align: center;
+  }
+  .p3-order-qty {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--miso-amber);
+  }
+  .p3-order-total {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--sesame);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .p3-status-bar {
+    height: 44px;
+    border-radius: 10px;
+    background: #ECE4DA;
+    border: 1px dashed var(--miso-amber);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--miso-dark);
+    padding: 0 10px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .p3-status-bar.ready {
+    background: #FFF6DC;
+    border-style: solid;
+    color: var(--sesame);
+  }
+
+  /* Pattern Picker Popover inside P3 */
+  .p3-pattern-sheet {
+    position: absolute;
+    inset: 0;
+    background: rgba(46, 32, 24, 0.62);
+    z-index: 40;
+    display: none;
+    align-items: flex-end;
+    padding: 14px;
+  }
+  .p3-pattern-sheet.open {
+    display: flex;
+  }
+  .p3-pattern-card {
+    width: 100%;
+    background: var(--paper);
+    border-radius: 20px;
+    border: 2px solid var(--sesame);
+    padding: 16px;
+  }
+  .p3-pattern-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--sesame);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .p3-pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .p3-swatch-btn {
+    height: 54px;
+    border-radius: 12px;
+    border: 2px solid var(--sesame);
+    background: var(--miso-amber);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p3-swatch-btn.selected {
+    border-width: 3px;
+    box-shadow: 0 0 0 3px var(--tofu-top);
+    background: var(--miso-dark);
+  }
+  .p3-swatch-label {
+    position: relative;
+    z-index: 2;
+    font-size: 16px;
+    font-weight: 900;
+    color: #FFFFFF;
+    background: rgba(46, 32, 24, 0.78);
+    padding: 4px 12px;
+    border-radius: 8px;
+  }
+
+  /* =========================================================
+     PROPOSAL 4: GIANT TOFU MISO BRUSH LONG-PRESS
+     ========================================================= */
+  .p4-stage {
+    height: 266px;
+    flex: 0 0 266px;
+    background: radial-gradient(circle at 50% 45%, #FFF8E6 0%, #EFE7DC 100%);
+    border-bottom: 1px solid rgba(46, 32, 24, 0.14);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+  .p4-stage-top {
+    position: absolute;
+    top: 8px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .p4-big-total {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--sesame);
+    font-variant-numeric: tabular-nums;
+  }
+  .p4-count-pill {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    font-size: 16px;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 99px;
+  }
+  .p4-tofu-btn {
+    width: 224px;
+    height: 174px;
+    margin-top: 14px;
+    position: relative;
+    cursor: pointer;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+  }
+  .p4-tofu-btn.pressing {
+    transform: scale(0.96);
+  }
+  .p4-plus-float {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--miso-amber);
+    background: var(--paper);
+    border: 2px solid var(--sesame);
+    padding: 2px 12px;
+    border-radius: 99px;
+    pointer-events: none;
+    z-index: 10;
+    animation: p4FloatUp 0.55s ease-out forwards;
+  }
+  @keyframes p4FloatUp {
+    0% { transform: translate(-50%, 10px) scale(0.8); opacity: 0; }
+    25% { opacity: 1; }
+    100% { transform: translate(-50%, -32px) scale(1.1); opacity: 0; }
+  }
+  .p4-meter-wrap {
+    width: 176px;
+    height: 8px;
+    background: rgba(46, 32, 24, 0.16);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .p4-meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--miso-amber), var(--miso-dark));
+  }
+  .p4-hint-text {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-dark);
+    margin-top: 5px;
+    text-align: center;
+  }
+  .p4-minus-btn {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    width: 62px;
+    height: 44px;
+    border-radius: 12px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    z-index: 8;
+  }
+  .p4-minus-btn:active {
+    background: var(--tofu-top);
+  }
+  .p4-minus-btn:disabled {
+    opacity: 0.32;
+    cursor: default;
+  }
+  .p4-body {
+    flex: 1;
+    padding: 12px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  /* Hold-to-Stamp Button */
+  .p4-stamp-btn {
+    height: 66px;
+    border-radius: 16px;
+    border: 3px solid var(--sesame);
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    touch-action: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .p4-stamp-btn.locked {
+    background: #D8D1C9;
+    border-color: #B9AEA3;
+    color: var(--ash);
+    cursor: default;
+  }
+  .p4-stamp-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--miso-amber), var(--ember));
+    pointer-events: none;
+  }
+  .p4-stamp-txt {
+    position: relative;
+    z-index: 2;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+  .p4-stamp-sub {
+    position: relative;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  /* =========================================================
+     SHARED MODALS (SCOPED INSIDE EACH 360px PHONE)
+     ========================================================= */
+  .sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(46, 32, 24, 0.62);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .sheet-backdrop.open {
+    display: flex;
+  }
+  .sheet-panel {
+    background: var(--paper);
+    border-top: 3px solid var(--sesame);
+    border-radius: 22px 22px 0 0;
+    padding: 16px 14px 18px 14px;
+    max-height: 640px;
+    overflow-y: auto;
+  }
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .sheet-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--sesame);
+  }
+  .sheet-clear-btn {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--miso-amber);
+    background: none;
+    border: 1px solid var(--miso-amber);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .demo-group {
+    margin-bottom: 12px;
+  }
+  .demo-group-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ash);
+    margin-bottom: 6px;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .chip-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 2px solid rgba(46, 32, 24, 0.2);
+    background: #FFFFFF;
+    color: var(--sesame);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .chip-btn.selected {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    border-color: var(--sesame);
+  }
+  .sheet-done-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: 14px;
+    border: none;
+    background: var(--miso-amber);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* Custom Keypad */
+  .kp-display {
+    background: var(--sesame);
+    color: var(--tofu-top);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: right;
+    font-size: 30px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 10px;
+    min-height: 58px;
+  }
+  .kp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .kp-key {
+    height: 52px;
+    border-radius: 12px;
+    border: 2px solid rgba(46, 32, 24, 0.16);
+    background: #FFFFFF;
+    color: var(--sesame);
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .kp-key:active {
+    background: var(--tofu-top);
+  }
+  .kp-key.fn {
+    background: #EAE2D9;
+    font-size: 15px;
+  }
+  .kp-actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 8px;
+  }
+  .kp-cancel {
+    height: 52px;
+    border-radius: 12px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .kp-ok {
+    height: 52px;
+    border-radius: 12px;
+    border: none;
+    background: var(--miso-amber);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .kp-ok:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* Receipt / Order Number Overlay */
+  .receipt-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 55;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 18px 20px 18px;
+    background: var(--paper);
+  }
+  .receipt-overlay.open {
+    display: flex;
+    animation: receiptFade 0.2s ease-out;
+  }
+  @keyframes receiptFade {
+    0% { opacity: 0; transform: scale(0.97); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .receipt-overlay.noren-theme {
+    background: var(--miso-dark);
+    color: var(--paper);
+  }
+  .receipt-overlay.wood-theme {
+    background: #F4E6CE;
+    border: 8px solid var(--miso-dark);
+  }
+  .receipt-head {
+    text-align: center;
+  }
+  .receipt-status {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    background: var(--sasa);
+    color: #FFFFFF;
+    margin-bottom: 10px;
+  }
+  .noren-theme .receipt-status {
+    background: var(--tofu-top);
+    color: var(--sesame);
+  }
+  .receipt-num-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ash);
+  }
+  .noren-theme .receipt-num-label {
+    color: var(--miso-light);
+  }
+  .receipt-num {
+    font-size: 76px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 2px;
+    color: var(--sesame);
+    font-variant-numeric: tabular-nums;
+    margin: 4px 0 8px 0;
+  }
+  .noren-theme .receipt-num {
+    color: #FFFFFF;
+    text-shadow: 0 3px 0 rgba(46, 32, 24, 0.5);
+  }
+  .receipt-card {
+    background: #FFFFFF;
+    border: 2px solid var(--sesame);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .noren-theme .receipt-card {
+    background: rgba(46, 32, 24, 0.55);
+    border-color: var(--tofu-top);
+    color: var(--paper);
+  }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .receipt-line.highlight {
+    border-top: 2px dashed rgba(46, 32, 24, 0.2);
+    padding-top: 8px;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--miso-amber);
+  }
+  .noren-theme .receipt-line.highlight {
+    border-top-color: rgba(255, 232, 169, 0.3);
+    color: var(--tofu-top);
+  }
+  .receipt-demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    min-height: 24px;
+  }
+  .receipt-next-btn {
+    width: 100%;
+    height: 62px;
+    border-radius: 16px;
+    border: 2px solid var(--sesame);
+    background: var(--sesame);
+    color: var(--tofu-top);
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .noren-theme .receipt-next-btn {
+    background: var(--tofu-top);
+    color: var(--sesame);
+  }
+  .receipt-next-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* Inline Toast inside phone */
+  .phone-toast {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 56px;
+    background: var(--sesame);
+    color: var(--tofu-top);
+    border: 2px solid var(--tofu-top);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    z-index: 65;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .phone-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @keyframes shakeX {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .shake {
+    animation: shakeX 0.25s ease-in-out;
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared SVG Pattern Definitions (kept offscreen without display:none for cross-browser pattern rendering) -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <!-- Empty subtle weave -->
+    <pattern id="pat-none" width="16" height="16" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="8" x2="16" y2="8" stroke="rgba(255,232,169,0.12)" stroke-width="1"/>
+      <line x1="8" y1="0" x2="8" y2="16" stroke="rgba(46,32,24,0.12)" stroke-width="1"/>
+    </pattern>
+    <!-- 子ども: 水玉 -->
+    <pattern id="pat-dot" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="3.5" fill="rgba(255,232,169,0.45)"/>
+      <circle cx="16" cy="16" r="3.5" fill="rgba(255,232,169,0.45)"/>
+    </pattern>
+    <!-- 学生: 麻の葉風 -->
+    <pattern id="pat-asanoha" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M12 0 L24 12 L12 24 L0 12 Z M12 0 L12 24 M0 12 L24 12" fill="none" stroke="rgba(255,232,169,0.42)" stroke-width="1.3"/>
+    </pattern>
+    <!-- 大人: 市松 -->
+    <pattern id="pat-ichimatsu" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="12" height="12" fill="rgba(255,232,169,0.28)"/>
+      <rect x="12" y="12" width="12" height="12" fill="rgba(255,232,169,0.28)"/>
+    </pattern>
+    <!-- シニア: 青海波 -->
+    <pattern id="pat-seigaiha" width="28" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="14" cy="16" r="12" fill="none" stroke="rgba(255,232,169,0.4)" stroke-width="1.4"/>
+      <circle cx="14" cy="16" r="7" fill="none" stroke="rgba(255,232,169,0.4)" stroke-width="1.4"/>
+      <circle cx="0" cy="8" r="12" fill="none" stroke="rgba(255,232,169,0.3)" stroke-width="1.2"/>
+      <circle cx="28" cy="8" r="12" fill="none" stroke="rgba(255,232,169,0.3)" stroke-width="1.2"/>
+    </pattern>
+    <!-- 男性: 矢絣 -->
+    <pattern id="pat-yagasuri" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M0 10 L10 0 L20 10 M0 20 L10 10 L20 20" fill="none" stroke="rgba(255,232,169,0.42)" stroke-width="1.8"/>
+    </pattern>
+    <!-- 女性: 七宝 -->
+    <pattern id="pat-shippo" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="11" fill="none" stroke="rgba(255,232,169,0.42)" stroke-width="1.4"/>
+      <circle cx="0" cy="0" r="11" fill="none" stroke="rgba(255,232,169,0.42)" stroke-width="1.4"/>
+      <circle cx="24" cy="24" r="11" fill="none" stroke="rgba(255,232,169,0.42)" stroke-width="1.4"/>
+    </pattern>
+    <!-- その他: 格子 -->
+    <pattern id="pat-koushi" width="18" height="18" patternUnits="userSpaceOnUse">
+      <path d="M0 0 H18 M0 0 V18 M6 0 V18 M0 6 H18" fill="none" stroke="rgba(255,232,169,0.35)" stroke-width="1.2"/>
+    </pattern>
+    <!-- 一人: 縦縞 -->
+    <pattern id="pat-stripe" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="5" height="14" fill="rgba(255,232,169,0.32)"/>
+    </pattern>
+    <!-- 友人: 鱗 -->
+    <pattern id="pat-uroko" width="24" height="20" patternUnits="userSpaceOnUse">
+      <polygon points="12,2 22,18 2,18" fill="rgba(255,232,169,0.32)"/>
+    </pattern>
+    <!-- 家族: 丸紋 -->
+    <pattern id="pat-maru" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="13" cy="13" r="8" fill="none" stroke="rgba(255,232,169,0.45)" stroke-width="2"/>
+      <circle cx="13" cy="13" r="3" fill="rgba(255,232,169,0.45)"/>
+    </pattern>
+    <!-- カップル: 交差菱 -->
+    <pattern id="pat-hishi" width="24" height="24" patternUnits="userSpaceOnUse">
+      <polygon points="12,2 22,12 12,22 2,12" fill="none" stroke="rgba(255,232,169,0.45)" stroke-width="1.6"/>
+      <polygon points="12,7 17,12 12,17 7,12" fill="rgba(255,232,169,0.35)"/>
+    </pattern>
+    <!-- グループ: 籠目 -->
+    <pattern id="pat-kagome" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M0 12 L24 12 M6 0 L18 24 M18 0 L6 24" stroke="rgba(255,232,169,0.38)" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+</svg>
+
+<header class="showcase-header">
+  <div class="showcase-brand">
+    <span class="tos-pill">TOS</span>
+    <span id="header-logo"></span>
+    <span class="showcase-sub">東京大学 駒場祭 豆腐田楽店 スタッフ専用レジ（田楽豆腐 ¥500）— 実験UI 4案</span>
+  </div>
+  <div class="palette-dots" title="配色">
+    <span class="p-dot" style="background:#F8F7F6;"></span>
+    <span class="p-dot" style="background:#FFE8A9;"></span>
+    <span class="p-dot" style="background:#D18C53;"></span>
+    <span class="p-dot" style="background:#B66427;"></span>
+    <span class="p-dot" style="background:#503225;"></span>
+    <span class="p-dot" style="background:#2E2018;"></span>
+  </div>
+</header>
+
+<main class="deck-wrap">
+  <div class="deck">
+
+    <!-- ==================== 案 1 ==================== -->
+    <section class="proposal-col">
+      <div class="proposal-meta">
+        <h2 class="proposal-title"><span class="proposal-num">案 01</span>焼き網タップ＆弾きレジ</h2>
+        <p class="proposal-desc">炭火の網をタップして豆腐をのせ、外へ弾いて本数を減らす直感操作。会計は下部バーを右へスライド確定し誤タップを防ぐ。</p>
+      </div>
+      <div class="phone" id="phone-1">
+        <div class="awning"></div>
+        <div class="app-bar">
+          <span class="brand-slot"></span>
+          <div class="app-bar-right">
+            <span class="unit-tag">田楽 ¥500</span>
+            <span class="tos-mini">TOS</span>
+          </div>
+        </div>
+        <div class="demo-bar" id="p1-demo-trigger">
+          <div class="demo-bar-left">
+            <span class="demo-label">客層</span>
+            <div class="demo-tags" id="p1-demo-tags"><span class="demo-tag-empty">未設定（任意）</span></div>
+          </div>
+          <span class="demo-edit-btn">選ぶ</span>
+        </div>
+
+        <!-- Grill Interactive Stage -->
+        <div class="p1-grill" id="p1-grill">
+          <svg class="p1-grate-svg" viewBox="0 0 348 272" aria-hidden="true">
+            <!-- Charcoal embers -->
+            <ellipse cx="95" cy="185" rx="64" ry="26" fill="#C94A1E" opacity="0.28"/>
+            <ellipse cx="238" cy="165" rx="72" ry="30" fill="#B66427" opacity="0.32"/>
+            <ellipse cx="170" cy="215" rx="88" ry="22" fill="#D4501E" opacity="0.24"/>
+            <!-- Charcoal chunks -->
+            <rect x="46" y="170" width="54" height="16" rx="5" fill="#1D120D" transform="rotate(-12 73 178)"/>
+            <rect x="132" y="190" width="76" height="18" rx="6" fill="#1B100B" transform="rotate(8 170 199)"/>
+            <rect x="225" y="158" width="66" height="17" rx="5" fill="#1E130E" transform="rotate(-7 258 166)"/>
+            <!-- Grill iron bars -->
+            <g stroke="#635954" stroke-width="3" opacity="0.72">
+              <line x1="16" y1="54" x2="332" y2="54"/>
+              <line x1="16" y1="88" x2="332" y2="88"/>
+              <line x1="16" y1="122" x2="332" y2="122"/>
+              <line x1="16" y1="156" x2="332" y2="156"/>
+              <line x1="16" y1="190" x2="332" y2="190"/>
+              <line x1="16" y1="224" x2="332" y2="224"/>
+            </g>
+            <g stroke="#4A413D" stroke-width="2" opacity="0.65">
+              <line x1="50" y1="42" x2="50" y2="236"/>
+              <line x1="112" y1="42" x2="112" y2="236"/>
+              <line x1="174" y1="42" x2="174" y2="236"/>
+              <line x1="236" y1="42" x2="236" y2="236"/>
+              <line x1="298" y1="42" x2="298" y2="236"/>
+            </g>
+            <rect x="14" y="42" width="320" height="196" rx="10" fill="none" stroke="#857871" stroke-width="3" opacity="0.6"/>
+          </svg>
+          <div class="p1-grill-hud">
+            <span class="p1-qty-badge" id="p1-qty-label">1本</span>
+            <span class="p1-total-badge" id="p1-total-label">¥500</span>
+          </div>
+          <div class="p1-tofu-layer" id="p1-tofu-layer"></div>
+          <div class="p1-overflow-pill" id="p1-overflow" style="display:none;"></div>
+          <div class="p1-grill-hint">網をタップで +1本 ／ 豆腐を外へ弾いて -1本</div>
+        </div>
+
+        <div class="p1-body">
+          <div class="change-strip">
+            <div class="change-col">
+              <span class="change-k">預り金</span>
+              <span class="change-v muted" id="p1-recv-label">未選択</span>
+            </div>
+            <div class="change-col right">
+              <span class="change-k">お釣り</span>
+              <span class="change-v muted" id="p1-change-label">---</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="p1-pay-title">
+              <span>受け取った額を選択</span>
+              <span id="p1-pay-status">購入前に選択必須</span>
+            </div>
+            <div class="pay-grid" id="p1-pay-grid"></div>
+          </div>
+
+          <div class="p1-slider locked" id="p1-slider">
+            <div class="p1-slider-fill" id="p1-slider-fill"></div>
+            <div class="p1-slider-thumb" id="p1-slider-thumb">
+              <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+                <path d="M5 13 H19 M14 7 L20 13 L14 19" fill="none" stroke="#2E2018" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="p1-slider-label" id="p1-slider-label">預り金を選んでください</span>
+          </div>
+        </div>
+
+        <div class="phone-toast" id="p1-toast"></div>
+        <div class="sheet-backdrop" id="p1-sheet"></div>
+        <div class="receipt-overlay" id="p1-receipt"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 案 2 ==================== -->
+    <section class="proposal-col">
+      <div class="proposal-meta">
+        <h2 class="proposal-title"><span class="proposal-num">案 02</span>お札ドラッグ渡し＆小銭ころころレジ</h2>
+        <p class="proposal-desc">お札を上の豆腐へドラッグして渡すと会計完了し、お釣りが小銭として転がり出る。ドラッグ移動で確定するため誤タップしない。</p>
+      </div>
+      <div class="phone" id="phone-2">
+        <div class="awning"></div>
+        <div class="app-bar">
+          <span class="brand-slot"></span>
+          <div class="app-bar-right">
+            <span class="unit-tag">田楽 ¥500</span>
+            <span class="tos-mini">TOS</span>
+          </div>
+        </div>
+        <div class="demo-bar" id="p2-demo-trigger">
+          <div class="demo-bar-left">
+            <span class="demo-label">客層</span>
+            <div class="demo-tags" id="p2-demo-tags"><span class="demo-tag-empty">未設定（任意）</span></div>
+          </div>
+          <span class="demo-edit-btn">選ぶ</span>
+        </div>
+
+        <div class="p2-stage">
+          <div class="p2-total-row">
+            <span class="p2-qty-text" id="p2-qty-label">田楽豆腐 1本</span>
+            <span class="p2-total-num" id="p2-total-label">¥500</span>
+          </div>
+          <div class="p2-tofu-row">
+            <button class="p2-qty-btn" id="p2-minus" type="button" aria-label="1本減らす">−</button>
+            <div class="p2-drop-zone" id="p2-drop-zone">
+              <svg width="114" height="84" viewBox="0 0 120 88" aria-hidden="true">
+                <!-- Sasa leaf -->
+                <path d="M10 64 Q60 40 112 58 Q74 82 10 64 Z" fill="#4E6B47" stroke="#2E2018" stroke-width="2"/>
+                <path d="M18 62 Q60 56 104 58" fill="none" stroke="#FFE8A9" stroke-width="1.2" opacity="0.5"/>
+                <!-- Isometric Tofu Block -->
+                <polygon points="60,12 96,28 60,44 24,28" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2" stroke-linejoin="round"/>
+                <polygon points="24,28 60,44 60,68 24,52" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2" stroke-linejoin="round"/>
+                <polygon points="96,28 60,44 60,68 96,52" fill="#E4D8C7" stroke="#2E2018" stroke-width="2.2" stroke-linejoin="round"/>
+                <!-- Dark miso glaze on top -->
+                <path d="M38,24 Q60,18 82,27 Q72,37 46,35 Q36,31 38,24 Z" fill="#503225"/>
+                <path d="M46,24 Q60,21 73,26" fill="none" stroke="#B66427" stroke-width="2.4" stroke-linecap="round"/>
+                <!-- Black sesame -->
+                <circle cx="52" cy="28" r="1.5" fill="#2E2018"/>
+                <circle cx="62" cy="26" r="1.5" fill="#2E2018"/>
+                <circle cx="68" cy="30" r="1.5" fill="#2E2018"/>
+                <circle cx="57" cy="31" r="1.4" fill="#2E2018"/>
+              </svg>
+              <div class="p2-drop-caption" id="p2-drop-caption">お札をここへドラッグして購入</div>
+              <div class="p2-skewer-dots" id="p2-skewer-dots"></div>
+            </div>
+            <button class="p2-qty-btn" id="p2-plus" type="button" aria-label="1本増やす">＋</button>
+          </div>
+        </div>
+
+        <div class="p2-change-bar">
+          <div class="change-col">
+            <span class="change-k">選択中の預り</span>
+            <span class="change-v muted" id="p2-recv-label">未選択</span>
+          </div>
+          <div class="change-col right">
+            <span class="change-k">お釣り予定</span>
+            <span class="change-v muted" id="p2-change-label">---</span>
+          </div>
+        </div>
+
+        <div class="p2-bills-area">
+          <div class="p2-bills-hint">タップでお釣り確認 ／ 上の豆腐へドラッグして会計確定</div>
+          <div class="p2-bill-grid" id="p2-bill-grid"></div>
+        </div>
+
+        <div class="phone-toast" id="p2-toast"></div>
+        <div class="sheet-backdrop" id="p2-sheet"></div>
+        <div class="receipt-overlay" id="p2-receipt"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 案 3 ==================== -->
+    <section class="proposal-col">
+      <div class="proposal-meta">
+        <h2 class="proposal-title"><span class="proposal-num">案 03</span>のれん引き下げ会計レジ</h2>
+        <p class="proposal-desc">のれんをタップして和柄で客層を選び、のれん自体を下に引いて会計確定。大きく引く動作により立ち作業での誤操作を防ぐ。</p>
+      </div>
+      <div class="phone" id="phone-3">
+        <div class="awning"></div>
+        <div class="p3-wrap">
+          <div class="p3-pole">
+            <span class="p3-loop"></span>
+            <span class="p3-loop"></span>
+            <span class="p3-loop"></span>
+            <span class="p3-loop"></span>
+            <span class="p3-loop"></span>
+            <span class="p3-loop"></span>
+          </div>
+
+          <!-- Draggable 3-panel Noren Curtain -->
+          <div class="p3-noren-curtain" id="p3-noren">
+            <div class="p3-noren-panels" id="p3-noren-panels">
+              <div class="p3-panel" data-axis="age" id="p3-panel-age">
+                <svg class="p3-panel-bg" viewBox="0 0 110 160" preserveAspectRatio="none">
+                  <rect width="110" height="160" fill="url(#pat-none)"/>
+                </svg>
+                <span class="p3-panel-axis">年齢</span>
+                <span class="p3-panel-val" id="p3-val-age">任意</span>
+                <span class="p3-panel-tap">柄を選ぶ</span>
+              </div>
+              <div class="p3-panel" data-axis="gender" id="p3-panel-gender">
+                <svg class="p3-panel-bg" viewBox="0 0 110 160" preserveAspectRatio="none">
+                  <rect width="110" height="160" fill="url(#pat-none)"/>
+                </svg>
+                <span class="p3-panel-axis">性別</span>
+                <span class="p3-panel-val" id="p3-val-gender">任意</span>
+                <span class="p3-panel-tap">柄を選ぶ</span>
+              </div>
+              <div class="p3-panel" data-axis="group" id="p3-panel-group">
+                <svg class="p3-panel-bg" viewBox="0 0 110 160" preserveAspectRatio="none">
+                  <rect width="110" height="160" fill="url(#pat-none)"/>
+                </svg>
+                <span class="p3-panel-axis">集団</span>
+                <span class="p3-panel-val" id="p3-val-group">任意</span>
+                <span class="p3-panel-tap">柄を選ぶ</span>
+              </div>
+            </div>
+            <div class="p3-pull-banner" id="p3-pull-banner">そのまま下に引いて会計確定</div>
+            <div class="p3-pull-bar locked" id="p3-pull-bar">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 2 V12 M4 8 L8 13 L12 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span id="p3-pull-text">先に下の預り金を選択</span>
+            </div>
+          </div>
+
+          <div class="p3-content">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+              <span class="brand-slot"></span>
+              <span class="tos-mini">TOS</span>
+            </div>
+
+            <div class="p3-order-row">
+              <button class="p3-qty-btn" id="p3-minus" type="button" aria-label="1本減らす">−</button>
+              <div class="p3-order-center">
+                <div class="p3-order-qty" id="p3-qty-label">田楽豆腐 1本</div>
+                <div class="p3-order-total" id="p3-total-label">¥500</div>
+              </div>
+              <button class="p3-qty-btn" id="p3-plus" type="button" aria-label="1本増やす">＋</button>
+            </div>
+
+            <div class="change-strip">
+              <div class="change-col">
+                <span class="change-k">預り金</span>
+                <span class="change-v muted" id="p3-recv-label">未選択</span>
+              </div>
+              <div class="change-col right">
+                <span class="change-k">お釣り</span>
+                <span class="change-v muted" id="p3-change-label">---</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="p1-pay-title">
+                <span>受け取った額</span>
+                <span id="p3-pay-status">選択後にのれんを引く</span>
+              </div>
+              <div class="pay-grid" id="p3-pay-grid"></div>
+            </div>
+
+            <div class="p3-status-bar" id="p3-status-bar">預り金を選択後、上ののれんを下に引いて会計</div>
+          </div>
+
+          <!-- Pattern Picker Sheet -->
+          <div class="p3-pattern-sheet" id="p3-pattern-sheet">
+            <div class="p3-pattern-card">
+              <div class="p3-pattern-title">
+                <span id="p3-pattern-title">客層柄を選ぶ</span>
+                <button type="button" class="sheet-clear-btn" id="p3-pattern-clear">選択解除</button>
+              </div>
+              <div class="p3-pattern-grid" id="p3-pattern-grid"></div>
+              <button type="button" class="sheet-done-btn" id="p3-pattern-close">閉じる</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-toast" id="p3-toast"></div>
+        <div class="sheet-backdrop" id="p3-sheet"></div>
+        <div class="receipt-overlay noren-theme" id="p3-receipt"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 案 4 ==================== -->
+    <section class="proposal-col">
+      <div class="proposal-meta">
+        <h2 class="proposal-title"><span class="proposal-num">案 04</span>巨大豆腐・味噌塗り長押しレジ</h2>
+        <p class="proposal-desc">巨大な豆腐を長押しするとヘラで味噌を塗る演出と共に本数が増える。会計も焼き印ボタンの長押し確定で誤操作を防ぐ。</p>
+      </div>
+      <div class="phone" id="phone-4">
+        <div class="awning"></div>
+        <div class="app-bar">
+          <span class="brand-slot"></span>
+          <div class="app-bar-right">
+            <span class="unit-tag">田楽 ¥500</span>
+            <span class="tos-mini">TOS</span>
+          </div>
+        </div>
+        <div class="demo-bar" id="p4-demo-trigger">
+          <div class="demo-bar-left">
+            <span class="demo-label">客層</span>
+            <div class="demo-tags" id="p4-demo-tags"><span class="demo-tag-empty">未設定（任意）</span></div>
+          </div>
+          <span class="demo-edit-btn">選ぶ</span>
+        </div>
+
+        <div class="p4-stage">
+          <div class="p4-stage-top">
+            <span class="p4-big-total" id="p4-total-label">¥500</span>
+            <span class="p4-count-pill" id="p4-qty-label">1本</span>
+          </div>
+
+          <div class="p4-tofu-btn" id="p4-tofu-btn">
+            <svg width="224" height="168" viewBox="0 0 224 168" aria-hidden="true">
+              <defs>
+                <clipPath id="p4-miso-clip">
+                  <rect id="p4-miso-clip-rect" x="34" y="20" width="0" height="90"/>
+                </clipPath>
+              </defs>
+              <!-- Bamboo Leaf Base -->
+              <path d="M18 134 Q112 96 208 124 Q138 162 18 134 Z" fill="#4E6B47" stroke="#2E2018" stroke-width="2.4"/>
+              <!-- Skewer Stick -->
+              <rect x="106" y="114" width="12" height="44" rx="4" fill="#D18C53" stroke="#2E2018" stroke-width="2"/>
+              <!-- Giant 3D Isometric Tofu -->
+              <polygon points="112,24 188,58 112,92 36,58" fill="#FFE8A9" stroke="#2E2018" stroke-width="3" stroke-linejoin="round"/>
+              <polygon points="36,58 112,92 112,136 36,102" fill="#F8F7F6" stroke="#2E2018" stroke-width="3" stroke-linejoin="round"/>
+              <polygon points="188,58 112,92 112,136 188,102" fill="#E3D7C7" stroke="#2E2018" stroke-width="3" stroke-linejoin="round"/>
+
+              <!-- Base 1st coat miso stripe -->
+              <path d="M62,53 Q112,38 162,56 Q142,74 86,73 Q60,65 62,53 Z" fill="#503225" opacity="0.88"/>
+              <path d="M76,52 Q112,44 146,55" fill="none" stroke="#B66427" stroke-width="3.5" stroke-linecap="round"/>
+
+              <!-- Dynamic Fresh Miso Layer revealed while holding -->
+              <g clip-path="url(#p4-miso-clip)">
+                <path d="M46,58 Q112,32 178,58 Q154,84 74,80 Q44,70 46,58 Z" fill="#3D2419"/>
+                <path d="M64,56 Q112,42 160,58" fill="none" stroke="#D18C53" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
+                <circle cx="88" cy="57" r="2.2" fill="#FFE8A9" opacity="0.7"/>
+                <circle cx="114" cy="52" r="2.2" fill="#2E2018"/>
+                <circle cx="132" cy="60" r="2.2" fill="#2E2018"/>
+                <circle cx="102" cy="64" r="2.2" fill="#2E2018"/>
+              </g>
+
+              <!-- Sesame seeds accumulated with count -->
+              <g id="p4-sesame-group">
+                <circle cx="96" cy="56" r="2.2" fill="#2E2018"/>
+                <circle cx="116" cy="54" r="2.2" fill="#2E2018"/>
+                <circle cx="126" cy="62" r="2.2" fill="#2E2018"/>
+                <circle cx="105" cy="65" r="2.0" fill="#2E2018"/>
+              </g>
+
+              <!-- Wooden Miso Spatula (animated via JS transform) -->
+              <g id="p4-spatula" transform="translate(-40, -14)" opacity="0">
+                <path d="M42 26 L68 10 L76 22 L56 44 Z" fill="#D18C53" stroke="#2E2018" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M40 34 L56 44 L48 56 L32 46 Z" fill="#503225" stroke="#2E2018" stroke-width="2" stroke-linejoin="round"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="p4-meter-wrap">
+            <div class="p4-meter-fill" id="p4-meter-fill"></div>
+          </div>
+          <div class="p4-hint-text" id="p4-hint-text">豆腐を長押しで味噌を塗って +1本</div>
+
+          <button class="p4-minus-btn" id="p4-minus" type="button" disabled>-1本</button>
+        </div>
+
+        <div class="p4-body">
+          <div class="change-strip">
+            <div class="change-col">
+              <span class="change-k">預り金</span>
+              <span class="change-v muted" id="p4-recv-label">未選択</span>
+            </div>
+            <div class="change-col right">
+              <span class="change-k">お釣り</span>
+              <span class="change-v muted" id="p4-change-label">---</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="p1-pay-title">
+              <span>受け取った額を選択</span>
+              <span id="p4-pay-status">購入前に選択必須</span>
+            </div>
+            <div class="pay-grid" id="p4-pay-grid"></div>
+          </div>
+
+          <div class="p4-stamp-btn locked" id="p4-stamp-btn">
+            <div class="p4-stamp-fill" id="p4-stamp-fill"></div>
+            <span class="p4-stamp-txt" id="p4-stamp-txt">預り金を選んでください</span>
+            <span class="p4-stamp-sub" id="p4-stamp-sub"></span>
+          </div>
+        </div>
+
+        <div class="phone-toast" id="p4-toast"></div>
+        <div class="sheet-backdrop" id="p4-sheet"></div>
+        <div class="receipt-overlay wood-theme" id="p4-receipt"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+(function() {
+  "use strict";
+
+  const UNIT_PRICE = 500;
+
+  const DEMO_OPTIONS = {
+    age: { label: "年齢", items: ["子ども", "学生", "大人", "シニア"] },
+    gender: { label: "性別", items: ["男性", "女性", "その他"] },
+    group: { label: "集団", items: ["一人", "友人", "家族", "カップル", "グループ"] }
+  };
+
+  const NOREN_PATTERNS = {
+    age: {
+      "子ども": "pat-dot",
+      "学生": "pat-asanoha",
+      "大人": "pat-ichimatsu",
+      "シニア": "pat-seigaiha"
+    },
+    gender: {
+      "男性": "pat-yagasuri",
+      "女性": "pat-shippo",
+      "その他": "pat-koushi"
+    },
+    group: {
+      "一人": "pat-stripe",
+      "友人": "pat-uroko",
+      "家族": "pat-maru",
+      "カップル": "pat-hishi",
+      "グループ": "pat-kagome"
+    }
+  };
+
+  const PAY_PRESETS = [
+    { key: "exact", label: "ちょうど", sub: "お釣りなし" },
+    { key: "1000", amount: 1000, label: "¥1,000" },
+    { key: "2000", amount: 2000, label: "¥2,000" },
+    { key: "5000", amount: 5000, label: "¥5,000" },
+    { key: "10000", amount: 10000, label: "¥10,000" },
+    { key: "custom", label: "手入力", sub: "任意の額" }
+  ];
+
+  function yen(n) {
+    return "¥" + Number(n).toLocaleString("ja-JP");
+  }
+
+  function padNum(n) {
+    return "#" + String(n).padStart(3, "0");
+  }
+
+  /* Custom SVG Logo: "Are you Tofu?" where both 'o's are isometric Tofu cubes */
+  function createBrandLogoSVG(heightPx) {
+    const h = heightPx || 22;
+    const w = Math.round(h * 6.4);
+    return `
+      <svg width="${w}" height="${h}" viewBox="0 0 156 26" aria-label="Are you Tofu?">
+        <text x="0" y="19" font-size="16" font-weight="900" fill="#2E2018" font-family="sans-serif">Are y</text>
+        <!-- Cube Tofu 'o' in you -->
+        <g transform="translate(43, 6)">
+          <polygon points="7,0 14,3.5 7,7 0,3.5" fill="#FFE8A9" stroke="#2E2018" stroke-width="1.3" stroke-linejoin="round"/>
+          <polygon points="0,3.5 7,7 7,14 0,10.5" fill="#F8F7F6" stroke="#2E2018" stroke-width="1.3" stroke-linejoin="round"/>
+          <polygon points="14,3.5 7,7 7,14 14,10.5" fill="#D18C53" stroke="#2E2018" stroke-width="1.3" stroke-linejoin="round"/>
+          <circle cx="7" cy="3.5" r="1.4" fill="#503225"/>
+        </g>
+        <text x="59" y="19" font-size="16" font-weight="900" fill="#2E2018" font-family="sans-serif">u T</text>
+        <!-- Cube Tofu 'o' in Tofu -->
+        <g transform="translate(88, 5)">
+          <polygon points="8,0 16,4 8,8 0,4" fill="#FFE8A9" stroke="#2E2018" stroke-width="1.4" stroke-linejoin="round"/>
+          <polygon points="0,4 8,8 8,16 0,12" fill="#F8F7F6" stroke="#2E2018" stroke-width="1.4" stroke-linejoin="round"/>
+          <polygon points="16,4 8,8 8,16 16,12" fill="#D18C53" stroke="#2E2018" stroke-width="1.4" stroke-linejoin="round"/>
+          <ellipse cx="8" cy="4" rx="2.6" ry="1.3" fill="#503225"/>
+        </g>
+        <text x="106" y="19" font-size="16" font-weight="900" fill="#B66427" font-family="sans-serif">fu?</text>
+      </svg>
+    `;
+  }
+
+  document.getElementById("header-logo").innerHTML = createBrandLogoSVG(26);
+  document.querySelectorAll(".brand-slot").forEach(function(el) {
+    el.innerHTML = createBrandLogoSVG(21);
+  });
+
+  /* Helper: Toast inside a specific phone */
+  const toastTimers = {};
+  function showToast(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimers[id]);
+    toastTimers[id] = setTimeout(function() {
+      el.classList.remove("show");
+    }, 1700);
+  }
+
+  /* Helper: Payment math */
+  function createState() {
+    return {
+      qty: 1,
+      demo: { age: null, gender: null, group: null },
+      payType: null, // null | 'exact' | 'fixed' | 'custom'
+      payAmount: null,
+      customAmount: null,
+      ticketSeq: 1
+    };
+  }
+
+  function calcFinance(st) {
+    const total = st.qty * UNIT_PRICE;
+    let received = null;
+    if (st.payType === "exact") {
+      received = total;
+    } else if (st.payType === "fixed" || st.payType === "custom") {
+      received = st.payAmount;
+    }
+    const hasPay = received !== null;
+    const diff = hasPay ? received - total : null;
+    const canBuy = hasPay && diff >= 0;
+    return { total, received, hasPay, diff, canBuy };
+  }
+
+  function demoList(demo) {
+    const out = [];
+    if (demo.age) out.push(demo.age);
+    if (demo.gender) out.push(demo.gender);
+    if (demo.group) out.push(demo.group);
+    return out;
+  }
+
+  function renderDemoTags(containerEl, demo) {
+    const tags = demoList(demo);
+    if (tags.length === 0) {
+      containerEl.innerHTML = '<span class="demo-tag-empty">未設定（任意）</span>';
+    } else {
+      containerEl.innerHTML = tags.map(function(t) {
+        return '<span class="demo-tag-pill">' + t + '</span>';
+      }).join("");
+    }
+  }
+
+  /* Shared Demographic Drawer */
+  function openDemoSheet(sheetEl, st, onUpdate) {
+    function renderSheet() {
+      let html = '<div class="sheet-panel">';
+      html += '<div class="sheet-head"><span class="sheet-title">客層メモ（任意）</span>';
+      html += '<button type="button" class="sheet-clear-btn" data-action="clear">すべて解除</button></div>';
+      ["age", "gender", "group"].forEach(function(axis) {
+        const cfg = DEMO_OPTIONS[axis];
+        html += '<div class="demo-group"><div class="demo-group-label">' + cfg.label + '</div><div class="chip-row">';
+        cfg.items.forEach(function(item) {
+          const sel = st.demo[axis] === item ? " selected" : "";
+          html += '<button type="button" class="chip-btn' + sel + '" data-axis="' + axis + '" data-val="' + item + '">' + item + '</button>';
+        });
+        html += '</div></div>';
+      });
+      html += '<button type="button" class="sheet-done-btn" data-action="close">決定して戻る</button>';
+      html += '</div>';
+      sheetEl.innerHTML = html;
+
+      sheetEl.querySelectorAll(".chip-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          const ax = btn.getAttribute("data-axis");
+          const val = btn.getAttribute("data-val");
+          st.demo[ax] = (st.demo[ax] === val) ? null : val;
+          renderSheet();
+          onUpdate();
+        });
+      });
+      sheetEl.querySelector('[data-action="clear"]').addEventListener("click", function() {
+        st.demo = { age: null, gender: null, group: null };
+        renderSheet();
+        onUpdate();
+      });
+      sheetEl.querySelector('[data-action="close"]').addEventListener("click", function() {
+        sheetEl.classList.remove("open");
+      });
+    }
+    sheetEl.onclick = function(e) {
+      if (e.target === sheetEl) sheetEl.classList.remove("open");
+    };
+    renderSheet();
+    sheetEl.classList.add("open");
+  }
+
+  /* Shared Numeric Keypad Sheet */
+  function openKeypadSheet(sheetEl, initialVal, onConfirm) {
+    let digits = initialVal ? String(initialVal) : "";
+    function renderKP() {
+      const valNum = digits ? parseInt(digits, 10) : 0;
+      const html = `
+        <div class="sheet-panel">
+          <div class="sheet-head">
+            <span class="sheet-title">預り金を手入力</span>
+            <button type="button" class="sheet-clear-btn" data-k="C">クリア</button>
+          </div>
+          <div class="kp-display">${digits ? yen(valNum) : "¥0"}</div>
+          <div class="kp-grid">
+            <button type="button" class="kp-key" data-k="7">7</button>
+            <button type="button" class="kp-key" data-k="8">8</button>
+            <button type="button" class="kp-key" data-k="9">9</button>
+            <button type="button" class="kp-key" data-k="4">4</button>
+            <button type="button" class="kp-key" data-k="5">5</button>
+            <button type="button" class="kp-key" data-k="6">6</button>
+            <button type="button" class="kp-key" data-k="1">1</button>
+            <button type="button" class="kp-key" data-k="2">2</button>
+            <button type="button" class="kp-key" data-k="3">3</button>
+            <button type="button" class="kp-key" data-k="0">0</button>
+            <button type="button" class="kp-key" data-k="00">00</button>
+            <button type="button" class="kp-key fn" data-k="BS">1文字消</button>
+          </div>
+          <div class="kp-actions">
+            <button type="button" class="kp-cancel" data-k="CANCEL">戻る</button>
+            <button type="button" class="kp-ok" data-k="OK" ${valNum <= 0 ? "disabled" : ""}>この金額で確定</button>
+          </div>
+        </div>
+      `;
+      sheetEl.innerHTML = html;
+      sheetEl.querySelectorAll("[data-k]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          const k = btn.getAttribute("data-k");
+          if (k === "CANCEL") {
+            sheetEl.classList.remove("open");
+            return;
+          }
+          if (k === "OK") {
+            if (valNum > 0) {
+              sheetEl.classList.remove("open");
+              onConfirm(valNum);
+            }
+            return;
+          }
+          if (k === "C") {
+            digits = "";
+          } else if (k === "BS") {
+            digits = digits.slice(0, -1);
+          } else {
+            if ((digits + k).length <= 6) {
+              digits = (digits === "0" ? "" : digits) + k;
+              if (digits === "00") digits = "0";
+            }
+          }
+          renderKP();
+        });
+      });
+    }
+    sheetEl.onclick = function(e) {
+      if (e.target === sheetEl) sheetEl.classList.remove("open");
+    };
+    renderKP();
+    sheetEl.classList.add("open");
+  }
+
+  /* Shared Standard Payment Grid Renderer (used by P1, P3, P4) */
+  function renderPayGrid(containerEl, st, sheetEl, onUpdate) {
+    const fin = calcFinance(st);
+    containerEl.innerHTML = PAY_PRESETS.map(function(p) {
+      let cls = "pay-btn";
+      let mainText = p.label;
+      let subText = p.sub || "";
+      if (p.key === "exact") {
+        cls += " exact-btn";
+        subText = yen(fin.total);
+        if (st.payType === "exact") cls += " selected";
+      } else if (p.key === "custom") {
+        if (st.payType === "custom" && st.payAmount) {
+          mainText = yen(st.payAmount);
+          subText = "手入力・変更";
+          cls += " selected";
+          if (st.payAmount < fin.total) cls += " insufficient";
+        }
+      } else {
+        if (st.payType === "fixed" && st.payAmount === p.amount) {
+          cls += " selected";
+        }
+        if (p.amount < fin.total) {
+          cls += " insufficient";
+          subText = "不足";
+        }
+      }
+      return '<button type="button" class="' + cls + '" data-pay="' + p.key + '"><span>' + mainText + '</span>' +
+        (subText ? '<span class="sub">' + subText + '</span>' : '') + '</button>';
+    }).join("");
+
+    containerEl.querySelectorAll(".pay-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const key = btn.getAttribute("data-pay");
+        if (key === "exact") {
+          st.payType = "exact";
+          st.payAmount = null;
+          onUpdate();
+        } else if (key === "custom") {
+          openKeypadSheet(sheetEl, st.customAmount, function(val) {
+            st.customAmount = val;
+            st.payType = "custom";
+            st.payAmount = val;
+            onUpdate();
+          });
+        } else {
+          st.payType = "fixed";
+          st.payAmount = parseInt(key, 10);
+          onUpdate();
+        }
+      });
+    });
+  }
+
+  function updateChangeDisplay(recvEl, chgEl, statusEl, fin) {
+    if (!fin.hasPay) {
+      recvEl.textContent = "未選択";
+      recvEl.className = "change-v muted";
+      chgEl.textContent = "---";
+      chgEl.className = "change-v muted";
+      if (statusEl) statusEl.textContent = "購入前に選択必須";
+    } else if (fin.diff < 0) {
+      recvEl.textContent = yen(fin.received);
+      recvEl.className = "change-v";
+      chgEl.textContent = yen(Math.abs(fin.diff)) + " 不足";
+      chgEl.className = "change-v warn";
+      if (statusEl) statusEl.textContent = "金額が足りません";
+    } else {
+      recvEl.textContent = yen(fin.received);
+      recvEl.className = "change-v";
+      chgEl.textContent = yen(fin.diff);
+      chgEl.className = "change-v big-change";
+      if (statusEl) statusEl.textContent = "会計準備OK";
+    }
+  }
+
+  /* Shared Receipt Modal Renderer */
+  function openReceipt(overlayEl, st, opts) {
+    const fin = calcFinance(st);
+    const ticketCode = padNum(st.ticketSeq);
+    const tags = demoList(st.demo);
+    const tagHtml = tags.length
+      ? tags.map(function(t) { return '<span class="demo-tag-pill">' + t + '</span>'; }).join("")
+      : '<span style="font-size:11px;opacity:0.7;">客層メモなし</span>';
+
+    const extraBlock = opts.extraHtml || "";
+    const statusLabel = opts.statusLabel || "会計完了";
+    const nextLabel = opts.nextLabel || "次の会計へ";
+
+    overlayEl.innerHTML = `
+      <div class="receipt-head">
+        <div class="receipt-status">${statusLabel}</div>
+        <div class="receipt-num-label">お客様 整理番号</div>
+        <div class="receipt-num">${ticketCode}</div>
+        <div class="receipt-demo-row">${tagHtml}</div>
+      </div>
+      ${extraBlock}
+      <div class="receipt-card">
+        <div class="receipt-line"><span>田楽豆腐</span><span>${st.qty}本（${yen(fin.total)}）</span></div>
+        <div class="receipt-line"><span>預り金</span><span>${yen(fin.received)}</span></div>
+        <div class="receipt-line highlight"><span>お釣り</span><span>${yen(fin.diff)}</span></div>
+      </div>
+      <button type="button" class="receipt-next-btn">${nextLabel}</button>
+    `;
+    overlayEl.classList.add("open");
+    overlayEl.querySelector(".receipt-next-btn").addEventListener("click", function() {
+      st.ticketSeq += 1;
+      st.qty = 1;
+      st.demo = { age: null, gender: null, group: null };
+      st.payType = null;
+      st.payAmount = null;
+      st.customAmount = null;
+      overlayEl.classList.remove("open");
+      if (opts.onReset) opts.onReset();
+    });
+  }
+
+  /* =====================================================================
+     PROPOSAL 1: CHARCOAL GRILL TAP & FLICK + SLIDE-TO-CONFIRM
+     ===================================================================== */
+  (function initP1() {
+    const st = createState();
+    const grillEl = document.getElementById("p1-grill");
+    const layerEl = document.getElementById("p1-tofu-layer");
+    const overflowEl = document.getElementById("p1-overflow");
+    const qtyEl = document.getElementById("p1-qty-label");
+    const totalEl = document.getElementById("p1-total-label");
+    const recvEl = document.getElementById("p1-recv-label");
+    const chgEl = document.getElementById("p1-change-label");
+    const statusEl = document.getElementById("p1-pay-status");
+    const payGridEl = document.getElementById("p1-pay-grid");
+    const demoTrigger = document.getElementById("p1-demo-trigger");
+    const demoTagsEl = document.getElementById("p1-demo-tags");
+    const sheetEl = document.getElementById("p1-sheet");
+    const receiptEl = document.getElementById("p1-receipt");
+    const sliderEl = document.getElementById("p1-slider");
+    const sliderFillEl = document.getElementById("p1-slider-fill");
+    const sliderThumbEl = document.getElementById("p1-slider-thumb");
+    const sliderLabelEl = document.getElementById("p1-slider-label");
+
+    let lastAddedIndex = -1;
+
+    function skewerSVG() {
+      return `
+        <svg width="64" height="80" viewBox="0 0 64 80" aria-hidden="true">
+          <!-- Wooden skewer -->
+          <rect x="29" y="48" width="6" height="28" rx="2.5" fill="#D18C53" stroke="#2E2018" stroke-width="1.6"/>
+          <!-- Tofu body -->
+          <rect x="11" y="10" width="42" height="44" rx="6" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/>
+          <!-- Dark miso glaze -->
+          <path d="M14 14 Q32 9 50 14 L50 38 Q32 45 14 38 Z" fill="#503225"/>
+          <!-- Glossy amber miso highlight -->
+          <path d="M20 19 Q32 16 44 20" fill="none" stroke="#B66427" stroke-width="3" stroke-linecap="round"/>
+          <!-- Black sesame -->
+          <circle cx="24" cy="27" r="1.6" fill="#2E2018"/>
+          <circle cx="33" cy="24" r="1.6" fill="#2E2018"/>
+          <circle cx="40" cy="29" r="1.6" fill="#2E2018"/>
+          <circle cx="28" cy="33" r="1.5" fill="#2E2018"/>
+          <circle cx="36" cy="34" r="1.5" fill="#2E2018"/>
+        </svg>
+      `;
+    }
+
+    function spawnSizzle(clientX, clientY) {
+      const rect = grillEl.getBoundingClientRect();
+      const s = document.createElement("div");
+      s.className = "p1-sizzle";
+      s.style.left = (clientX - rect.left) + "px";
+      s.style.top = (clientY - rect.top) + "px";
+      grillEl.appendChild(s);
+      setTimeout(function() { s.remove(); }, 400);
+    }
+
+    function renderGrill() {
+      const visibleCount = Math.min(st.qty, 8);
+      layerEl.innerHTML = "";
+      for (let i = 0; i < visibleCount; i++) {
+        const sk = document.createElement("div");
+        sk.className = "p1-skewer" + (i === lastAddedIndex ? " pop-in" : "");
+        sk.innerHTML = skewerSVG();
+        attachSkewerGestures(sk);
+        layerEl.appendChild(sk);
+      }
+      lastAddedIndex = -1;
+      if (st.qty > 8) {
+        overflowEl.style.display = "block";
+        overflowEl.textContent = "ほか +" + (st.qty - 8) + "本";
+      } else {
+        overflowEl.style.display = "none";
+      }
+    }
+
+    function attachSkewerGestures(skEl) {
+      let dragging = false;
+      let startX = 0, startY = 0, dx = 0, dy = 0;
+
+      skEl.addEventListener("pointerdown", function(e) {
+        e.stopPropagation();
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        dx = 0;
+        dy = 0;
+        skEl.classList.add("dragging");
+        try { skEl.setPointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      skEl.addEventListener("pointermove", function(e) {
+        if (!dragging) return;
+        dx = e.clientX - startX;
+        dy = e.clientY - startY;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 6) {
+          const rot = Math.max(-28, Math.min(28, dx * 0.25));
+          skEl.style.transform = "translate(" + dx + "px, " + dy + "px) rotate(" + rot + "deg)";
+          skEl.style.opacity = dist > 44 ? "0.65" : "1";
+        }
+      });
+
+      function finishDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        skEl.classList.remove("dragging");
+        const dist = Math.hypot(dx, dy);
+        if (dist < 14) {
+          // Tap on tofu -> Add +1
+          st.qty += 1;
+          lastAddedIndex = Math.min(st.qty - 1, 7);
+          spawnSizzle(e.clientX, e.clientY);
+          renderAll();
+        } else if (dist >= 44) {
+          // Flicked outward -> Remove -1
+          if (st.qty > 1) {
+            skEl.style.transition = "transform 0.16s ease-out, opacity 0.16s";
+            skEl.style.transform = "translate(" + (dx * 2.4) + "px, " + (dy * 2.4) + "px) rotate(35deg)";
+            skEl.style.opacity = "0";
+            setTimeout(function() {
+              st.qty = Math.max(1, st.qty - 1);
+              renderAll();
+            }, 140);
+          } else {
+            skEl.style.transform = "";
+            skEl.style.opacity = "1";
+            showToast("p1-toast", "本数は1本以上必要です");
+          }
+        } else {
+          skEl.style.transform = "";
+          skEl.style.opacity = "1";
+        }
+      }
+
+      skEl.addEventListener("pointerup", finishDrag);
+      skEl.addEventListener("pointercancel", function() {
+        dragging = false;
+        skEl.classList.remove("dragging");
+        skEl.style.transform = "";
+        skEl.style.opacity = "1";
+      });
+    }
+
+    // Tap empty grill area -> Add +1
+    grillEl.addEventListener("pointerdown", function(e) {
+      if (e.target.closest(".p1-skewer")) return;
+      st.qty += 1;
+      lastAddedIndex = Math.min(st.qty - 1, 7);
+      spawnSizzle(e.clientX, e.clientY);
+      renderAll();
+    });
+
+    demoTrigger.addEventListener("click", function() {
+      openDemoSheet(sheetEl, st, renderAll);
+    });
+
+    // Slide-to-confirm logic
+    let slideActive = false;
+    let slideStartX = 0;
+    let slideMax = 250;
+    let slidePos = 0;
+
+    function resetSlider() {
+      slidePos = 0;
+      sliderThumbEl.style.transition = "transform 0.2s ease-out";
+      sliderFillEl.style.transition = "width 0.2s ease-out";
+      sliderThumbEl.style.transform = "translateX(0px)";
+      sliderFillEl.style.width = "0px";
+    }
+
+    sliderThumbEl.addEventListener("pointerdown", function(e) {
+      const fin = calcFinance(st);
+      if (!fin.canBuy) return;
+      slideActive = true;
+      slideStartX = e.clientX;
+      slideMax = sliderEl.clientWidth - sliderThumbEl.offsetWidth - 10;
+      sliderThumbEl.style.transition = "none";
+      sliderFillEl.style.transition = "none";
+      try { sliderThumbEl.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    sliderThumbEl.addEventListener("pointermove", function(e) {
+      if (!slideActive) return;
+      slidePos = Math.max(0, Math.min(slideMax, e.clientX - slideStartX));
+      sliderThumbEl.style.transform = "translateX(" + slidePos + "px)";
+      sliderFillEl.style.width = (slidePos + 32) + "px";
+      if (slidePos >= slideMax * 0.85) {
+        sliderLabelEl.textContent = "離して会計確定";
+      } else {
+        sliderLabelEl.textContent = "右へスライドして会計確定";
+      }
+    });
+
+    function endSlide() {
+      if (!slideActive) return;
+      slideActive = false;
+      if (slidePos >= slideMax * 0.82) {
+        resetSlider();
+        openReceipt(receiptEl, st, {
+          statusLabel: "焼き網レジ 会計完了",
+          nextLabel: "次の会計へ",
+          onReset: renderAll
+        });
+      } else {
+        resetSlider();
+        renderAll();
+      }
+    }
+    sliderThumbEl.addEventListener("pointerup", endSlide);
+    sliderThumbEl.addEventListener("pointercancel", endSlide);
+
+    sliderEl.addEventListener("click", function() {
+      const fin = calcFinance(st);
+      if (!fin.canBuy) {
+        sliderEl.classList.remove("shake");
+        void sliderEl.offsetWidth;
+        sliderEl.classList.add("shake");
+        showToast("p1-toast", !fin.hasPay ? "先に受け取った額を選んでください" : "預り金が不足しています");
+      }
+    });
+
+    function renderAll() {
+      const fin = calcFinance(st);
+      qtyEl.textContent = st.qty + "本";
+      totalEl.textContent = yen(fin.total);
+      renderDemoTags(demoTagsEl, st.demo);
+      renderGrill();
+      updateChangeDisplay(recvEl, chgEl, statusEl, fin);
+      renderPayGrid(payGridEl, st, sheetEl, renderAll);
+
+      if (fin.canBuy) {
+        sliderEl.classList.remove("locked");
+        sliderLabelEl.textContent = "右へスライドして会計確定";
+      } else {
+        sliderEl.classList.add("locked");
+        sliderLabelEl.textContent = !fin.hasPay ? "預り金を選んでください" : yen(Math.abs(fin.diff)) + " 不足しています";
+        resetSlider();
+      }
+    }
+
+    renderAll();
+  })();
+
+  /* =====================================================================
+     PROPOSAL 2: DRAG BILL TO TOFU + ROLLING COINS CHANGE
+     ===================================================================== */
+  (function initP2() {
+    const st = createState();
+    const phoneEl = document.getElementById("phone-2");
+    const qtyLabel = document.getElementById("p2-qty-label");
+    const totalLabel = document.getElementById("p2-total-label");
+    const minusBtn = document.getElementById("p2-minus");
+    const plusBtn = document.getElementById("p2-plus");
+    const dropZone = document.getElementById("p2-drop-zone");
+    const dropCaption = document.getElementById("p2-drop-caption");
+    const dotsEl = document.getElementById("p2-skewer-dots");
+    const recvEl = document.getElementById("p2-recv-label");
+    const chgEl = document.getElementById("p2-change-label");
+    const billGrid = document.getElementById("p2-bill-grid");
+    const demoTrigger = document.getElementById("p2-demo-trigger");
+    const demoTagsEl = document.getElementById("p2-demo-tags");
+    const sheetEl = document.getElementById("p2-sheet");
+    const receiptEl = document.getElementById("p2-receipt");
+
+    minusBtn.addEventListener("click", function() {
+      if (st.qty > 1) {
+        st.qty -= 1;
+        renderAll();
+      }
+    });
+    plusBtn.addEventListener("click", function() {
+      st.qty += 1;
+      renderAll();
+    });
+    demoTrigger.addEventListener("click", function() {
+      openDemoSheet(sheetEl, st, renderAll);
+    });
+
+    /* Generate SVG Japanese Coins & Mini-Bills for Change */
+    function buildCoinTrayHtml(changeYen) {
+      if (changeYen <= 0) {
+        return `
+          <div class="p2-coin-tray">
+            <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+              <circle cx="23" cy="23" r="19" fill="#4E6B47" stroke="#FFE8A9" stroke-width="2.5"/>
+              <path d="M14 23 L20 29 L33 16" fill="none" stroke="#FFE8A9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="p2-coin-summary">ちょうどお預かり（お釣り ¥0）</div>
+          </div>
+        `;
+      }
+      const denoms = [
+        { v: 5000, kind: "bill", label: "5,000円", fill: "#E5D3C2", stroke: "#503225" },
+        { v: 1000, kind: "bill", label: "1,000円", fill: "#DCE3E6", stroke: "#2E2018" },
+        { v: 500,  kind: "coin", label: "500円",   fill: "#E8C97A", stroke: "#8A6820", hole: false, size: 42 },
+        { v: 100,  kind: "coin", label: "100円",   fill: "#DFDFDC", stroke: "#635954", hole: false, size: 36 },
+        { v: 50,   kind: "coin", label: "50円",    fill: "#D8D8D5", stroke: "#635954", hole: true,  size: 34 },
+        { v: 10,   kind: "coin", label: "10円",    fill: "#B66427", stroke: "#503225", hole: false, size: 35 },
+        { v: 5,    kind: "coin", label: "5円",     fill: "#D9B254", stroke: "#6E5215", hole: true,  size: 33 },
+        { v: 1,    kind: "coin", label: "1円",     fill: "#EFEFEF", stroke: "#8A8A8A", hole: false, size: 30 }
+      ];
+      let rem = changeYen;
+      const pieces = [];
+      const summaryParts = [];
+      denoms.forEach(function(d) {
+        const cnt = Math.floor(rem / d.v);
+        if (cnt > 0) {
+          rem -= cnt * d.v;
+          summaryParts.push(d.label + "×" + cnt);
+          const showCnt = Math.min(cnt, 5);
+          for (let i = 0; i < showCnt; i++) {
+            pieces.push(d);
+          }
+        }
+      });
+
+      const piecesHtml = pieces.slice(0, 10).map(function(p, idx) {
+        const delay = (idx * 0.08).toFixed(2);
+        if (p.kind === "bill") {
+          return `
+            <span class="p2-coin-item" style="animation-delay:${delay}s;">
+              <svg width="58" height="32" viewBox="0 0 58 32" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="55" height="29" rx="4" fill="${p.fill}" stroke="${p.stroke}" stroke-width="2"/>
+                <rect x="5" y="5" width="48" height="22" rx="2" fill="none" stroke="${p.stroke}" stroke-width="1" stroke-dasharray="2 2"/>
+                <text x="29" y="20" text-anchor="middle" font-size="11" font-weight="900" fill="#2E2018">${p.v}</text>
+              </svg>
+            </span>
+          `;
+        }
+        const sz = p.size;
+        return `
+          <span class="p2-coin-item" style="animation-delay:${delay}s;">
+            <svg width="${sz}" height="${sz}" viewBox="0 0 42 42" aria-hidden="true">
+              <circle cx="21" cy="21" r="19" fill="${p.fill}" stroke="${p.stroke}" stroke-width="2.4"/>
+              <circle cx="21" cy="21" r="15" fill="none" stroke="${p.stroke}" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+              ${p.hole ? '<circle cx="21" cy="21" r="4.5" fill="#3A271C" stroke="' + p.stroke + '" stroke-width="1.4"/>' : ''}
+              <text x="21" y="${p.hole ? '14' : '25'}" text-anchor="middle" font-size="${p.hole ? '8.5' : '11.5'}" font-weight="900" fill="#2E2018">${p.v}</text>
+            </svg>
+          </span>
+        `;
+      }).join("");
+
+      return `
+        <div class="p2-coin-tray">
+          <div class="p2-coins-stage">${piecesHtml}</div>
+          <div class="p2-coin-summary">お釣り内訳：${summaryParts.join(" ／ ")}</div>
+        </div>
+      `;
+    }
+
+    function completePurchaseP2() {
+      const fin = calcFinance(st);
+      if (!fin.canBuy) return;
+      openReceipt(receiptEl, st, {
+        statusLabel: "お札受取・会計完了",
+        extraHtml: buildCoinTrayHtml(fin.diff),
+        nextLabel: "次の会計へ",
+        onReset: renderAll
+      });
+    }
+
+    function renderBills() {
+      const fin = calcFinance(st);
+      billGrid.innerHTML = PAY_PRESETS.map(function(p) {
+        let cls = "p2-bill";
+        let valText = p.label;
+        let subText = "ドラッグで会計";
+        let isSelected = false;
+
+        if (p.key === "exact") {
+          cls += " exact-bill";
+          subText = yen(fin.total);
+          isSelected = (st.payType === "exact");
+        } else if (p.key === "custom") {
+          cls += " custom-bill";
+          if (st.customAmount) {
+            valText = yen(st.customAmount);
+            subText = "タップ編集/ドラッグ";
+            isSelected = (st.payType === "custom");
+          } else {
+            subText = "タップで金額入力";
+          }
+        } else {
+          isSelected = (st.payType === "fixed" && st.payAmount === p.amount);
+          if (p.amount < fin.total) {
+            subText = "金額不足";
+          }
+        }
+        if (isSelected) cls += " selected";
+
+        return '<div class="' + cls + '" data-key="' + p.key + '">' +
+          '<span class="p2-bill-val">' + valText + '</span>' +
+          '<span class="p2-bill-sub">' + subText + '</span></div>';
+      }).join("");
+
+      billGrid.querySelectorAll(".p2-bill").forEach(function(billEl) {
+        const key = billEl.getAttribute("data-key");
+        let pointerActive = false;
+        let startX = 0, startY = 0;
+        let isDragging = false;
+        let ghost = null;
+
+        function billValue() {
+          if (key === "exact") return st.qty * UNIT_PRICE;
+          if (key === "custom") return st.customAmount;
+          return parseInt(key, 10);
+        }
+
+        function billLabel() {
+          if (key === "exact") return "ちょうど " + yen(st.qty * UNIT_PRICE);
+          if (key === "custom") return st.customAmount ? yen(st.customAmount) : "手入力";
+          return yen(parseInt(key, 10));
+        }
+
+        billEl.addEventListener("pointerdown", function(e) {
+          pointerActive = true;
+          isDragging = false;
+          startX = e.clientX;
+          startY = e.clientY;
+          try { billEl.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+
+        billEl.addEventListener("pointermove", function(e) {
+          if (!pointerActive) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          const val = billValue();
+
+          if (!isDragging && Math.hypot(dx, dy) > 12) {
+            if (key === "custom" && !val) return; // Can't drag empty custom bill
+            isDragging = true;
+            const pRect = phoneEl.getBoundingClientRect();
+            ghost = document.createElement("div");
+            ghost.className = "p2-drag-ghost";
+            ghost.innerHTML = '<span>' + billLabel() + '</span><span style="font-size:10px;color:#503225;">豆腐へ渡す</span>';
+            ghost.style.left = (e.clientX - pRect.left) + "px";
+            ghost.style.top = (e.clientY - pRect.top) + "px";
+            phoneEl.appendChild(ghost);
+            dropZone.classList.add("active-target");
+          }
+
+          if (isDragging && ghost) {
+            const pRect = phoneEl.getBoundingClientRect();
+            ghost.style.left = (e.clientX - pRect.left) + "px";
+            ghost.style.top = (e.clientY - pRect.top) + "px";
+            const dRect = dropZone.getBoundingClientRect();
+            const over = (
+              e.clientX >= dRect.left - 18 &&
+              e.clientX <= dRect.right + 18 &&
+              e.clientY >= dRect.top - 18 &&
+              e.clientY <= dRect.bottom + 26
+            );
+            const ok = val >= st.qty * UNIT_PRICE;
+            dropZone.classList.toggle("hover-ok", over && ok);
+            dropZone.classList.toggle("hover-bad", over && !ok);
+            if (over && ok) {
+              dropCaption.textContent = "離してお会計確定（お釣り " + yen(val - st.qty * UNIT_PRICE) + "）";
+            } else if (over && !ok) {
+              dropCaption.textContent = yen(st.qty * UNIT_PRICE - val) + " 不足しています";
+            } else {
+              dropCaption.textContent = "そのまま豆腐の上で離す";
+            }
+          }
+        });
+
+        function finishBillPointer(e) {
+          if (!pointerActive) return;
+          pointerActive = false;
+
+          if (isDragging) {
+            isDragging = false;
+            const val = billValue();
+            const dRect = dropZone.getBoundingClientRect();
+            const over = (
+              e.clientX >= dRect.left - 18 &&
+              e.clientX <= dRect.right + 18 &&
+              e.clientY >= dRect.top - 18 &&
+              e.clientY <= dRect.bottom + 26
+            );
+            if (ghost) { ghost.remove(); ghost = null; }
+            dropZone.classList.remove("active-target", "hover-ok", "hover-bad");
+
+            // Select the dragged bill
+            if (key === "exact") {
+              st.payType = "exact";
+              st.payAmount = null;
+            } else if (key === "custom") {
+              st.payType = "custom";
+              st.payAmount = st.customAmount;
+            } else {
+              st.payType = "fixed";
+              st.payAmount = parseInt(key, 10);
+            }
+            renderAll();
+
+            if (over) {
+              if (val >= st.qty * UNIT_PRICE) {
+                completePurchaseP2();
+              } else {
+                showToast("p2-toast", "預り金が " + yen(st.qty * UNIT_PRICE - val) + " 不足しています");
+              }
+            }
+          } else {
+            // Short tap -> Select / Preview or open custom keypad
+            if (key === "exact") {
+              st.payType = "exact";
+              st.payAmount = null;
+              renderAll();
+              showToast("p2-toast", "上の豆腐へドラッグすると会計確定します");
+            } else if (key === "custom") {
+              openKeypadSheet(sheetEl, st.customAmount, function(val) {
+                st.customAmount = val;
+                st.payType = "custom";
+                st.payAmount = val;
+                renderAll();
+                showToast("p2-toast", yen(val) + " の札を豆腐へドラッグして購入");
+              });
+            } else {
+              st.payType = "fixed";
+              st.payAmount = parseInt(key, 10);
+              renderAll();
+              if (st.payAmount < st.qty * UNIT_PRICE) {
+                showToast("p2-toast", yen(st.qty * UNIT_PRICE - st.payAmount) + " 不足しています");
+              } else {
+                showToast("p2-toast", "選んだ札を上の豆腐へドラッグして購入");
+              }
+            }
+          }
+        }
+
+        billEl.addEventListener("pointerup", finishBillPointer);
+        billEl.addEventListener("pointercancel", function() {
+          pointerActive = false;
+          isDragging = false;
+          if (ghost) { ghost.remove(); ghost = null; }
+          dropZone.classList.remove("active-target", "hover-ok", "hover-bad");
+          renderAll();
+        });
+      });
+    }
+
+    function renderAll() {
+      const fin = calcFinance(st);
+      qtyLabel.textContent = "田楽豆腐 " + st.qty + "本";
+      totalLabel.textContent = yen(fin.total);
+      minusBtn.disabled = st.qty <= 1;
+      renderDemoTags(demoTagsEl, st.demo);
+
+      // Skewer indicator dots
+      const dotCount = Math.min(st.qty, 10);
+      dotsEl.innerHTML = Array(dotCount).fill('<span class="p2-dot"></span>').join("") +
+        (st.qty > 10 ? '<span style="font-size:10px;font-weight:800;color:#503225;">+' + (st.qty - 10) + '</span>' : '');
+
+      updateChangeDisplay(recvEl, chgEl, null, fin);
+      dropCaption.textContent = fin.canBuy
+        ? "札をここへドラッグして会計確定"
+        : "下のお札を豆腐へドラッグして購入";
+      renderBills();
+    }
+
+    renderAll();
+  })();
+
+  /* =====================================================================
+     PROPOSAL 3: NOREN PULL-DOWN & PATTERN DEMOGRAPHICS
+     ===================================================================== */
+  (function initP3() {
+    const st = createState();
+    const norenEl = document.getElementById("p3-noren");
+    const pullBarEl = document.getElementById("p3-pull-bar");
+    const pullTextEl = document.getElementById("p3-pull-text");
+    const pullBannerEl = document.getElementById("p3-pull-banner");
+    const qtyLabel = document.getElementById("p3-qty-label");
+    const totalLabel = document.getElementById("p3-total-label");
+    const minusBtn = document.getElementById("p3-minus");
+    const plusBtn = document.getElementById("p3-plus");
+    const recvEl = document.getElementById("p3-recv-label");
+    const chgEl = document.getElementById("p3-change-label");
+    const payStatusEl = document.getElementById("p3-pay-status");
+    const payGridEl = document.getElementById("p3-pay-grid");
+    const statusBarEl = document.getElementById("p3-status-bar");
+    const sheetEl = document.getElementById("p3-sheet");
+    const receiptEl = document.getElementById("p3-receipt");
+
+    const patternSheet = document.getElementById("p3-pattern-sheet");
+    const patternTitle = document.getElementById("p3-pattern-title");
+    const patternGrid = document.getElementById("p3-pattern-grid");
+    const patternClear = document.getElementById("p3-pattern-clear");
+    const patternClose = document.getElementById("p3-pattern-close");
+
+    let activeAxis = null;
+
+    minusBtn.addEventListener("click", function() {
+      if (st.qty > 1) {
+        st.qty -= 1;
+        renderAll();
+      }
+    });
+    plusBtn.addEventListener("click", function() {
+      st.qty += 1;
+      renderAll();
+    });
+
+    function openPatternPicker(axis) {
+      activeAxis = axis;
+      const cfg = DEMO_OPTIONS[axis];
+      patternTitle.textContent = "のれん柄で「" + cfg.label + "」を選択（任意）";
+      patternGrid.innerHTML = cfg.items.map(function(item) {
+        const pat = NOREN_PATTERNS[axis][item];
+        const sel = st.demo[axis] === item ? " selected" : "";
+        return `
+          <button type="button" class="p3-swatch-btn${sel}" data-val="${item}">
+            <svg class="p3-panel-bg" viewBox="0 0 140 54" preserveAspectRatio="none">
+              <rect width="140" height="54" fill="url(#${pat})"/>
+            </svg>
+            <span class="p3-swatch-label">${item}</span>
+          </button>
+        `;
+      }).join("");
+
+      patternGrid.querySelectorAll(".p3-swatch-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          const v = btn.getAttribute("data-val");
+          st.demo[axis] = (st.demo[axis] === v) ? null : v;
+          patternSheet.classList.remove("open");
+          renderAll();
+        });
+      });
+
+      patternSheet.classList.add("open");
+    }
+
+    patternClear.addEventListener("click", function() {
+      if (activeAxis) {
+        st.demo[activeAxis] = null;
+        patternSheet.classList.remove("open");
+        renderAll();
+      }
+    });
+    patternClose.addEventListener("click", function() {
+      patternSheet.classList.remove("open");
+    });
+    patternSheet.addEventListener("click", function(e) {
+      if (e.target === patternSheet) patternSheet.classList.remove("open");
+    });
+
+    // Noren Pull-Down + Tap-Panel combined gesture
+    const BASE_HEIGHT = 194;
+    const TRIGGER_DY = 110;
+    let pulling = false;
+    let startY = 0;
+    let currentDy = 0;
+    let tappedPanelAxis = null;
+    let tappedPullBar = false;
+
+    norenEl.addEventListener("pointerdown", function(e) {
+      const panel = e.target.closest(".p3-panel");
+      tappedPanelAxis = panel ? panel.getAttribute("data-axis") : null;
+      tappedPullBar = !!e.target.closest(".p3-pull-bar");
+      pulling = true;
+      startY = e.clientY;
+      currentDy = 0;
+      norenEl.classList.add("dragging");
+      try { norenEl.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    norenEl.addEventListener("pointermove", function(e) {
+      if (!pulling) return;
+      const dy = e.clientY - startY;
+      if (dy <= 10) return;
+      currentDy = dy;
+      const fin = calcFinance(st);
+
+      if (!fin.canBuy) {
+        // Gentle resistance when payment not ready
+        const damped = Math.min(34, dy * 0.25);
+        norenEl.style.height = (BASE_HEIGHT + damped) + "px";
+        pullBannerEl.textContent = !fin.hasPay ? "先に下の預り金を選択してください" : "預り金が不足しています";
+        pullBannerEl.classList.add("show");
+        pullBannerEl.classList.remove("armed");
+        return;
+      }
+
+      const stretch = Math.min(340, dy);
+      norenEl.style.height = (BASE_HEIGHT + stretch) + "px";
+      pullBannerEl.classList.add("show");
+      if (stretch >= TRIGGER_DY) {
+        pullBannerEl.classList.add("armed");
+        pullBannerEl.textContent = "離して会計確定（お釣り " + yen(fin.diff) + "）";
+      } else {
+        pullBannerEl.classList.remove("armed");
+        pullBannerEl.textContent = "そのまま下に引いて会計確定";
+      }
+    });
+
+    function finishPull() {
+      if (!pulling) return;
+      pulling = false;
+      norenEl.classList.remove("dragging");
+      pullBannerEl.classList.remove("show", "armed");
+
+      const fin = calcFinance(st);
+
+      if (currentDy <= 12) {
+        // Short tap
+        norenEl.style.height = BASE_HEIGHT + "px";
+        if (tappedPanelAxis) {
+          openPatternPicker(tappedPanelAxis);
+        } else if (tappedPullBar) {
+          if (!fin.canBuy) {
+            showToast("p3-toast", !fin.hasPay ? "先に下の預り金を選んでください" : "預り金が不足しています");
+          } else {
+            // Bounce hint downward
+            norenEl.style.height = (BASE_HEIGHT + 28) + "px";
+            setTimeout(function() { norenEl.style.height = BASE_HEIGHT + "px"; }, 180);
+            showToast("p3-toast", "下にぐっと引き下げると会計確定します");
+          }
+        }
+        return;
+      }
+
+      if (fin.canBuy && currentDy >= TRIGGER_DY) {
+        norenEl.style.height = "680px";
+        setTimeout(function() {
+          openReceipt(receiptEl, st, {
+            statusLabel: "のれん確定・会計完了",
+            nextLabel: "のれんを上げて次へ",
+            onReset: function() {
+              norenEl.style.height = BASE_HEIGHT + "px";
+              renderAll();
+            }
+          });
+        }, 160);
+      } else {
+        norenEl.style.height = BASE_HEIGHT + "px";
+        if (!fin.canBuy) {
+          showToast("p3-toast", !fin.hasPay ? "先に受け取った額を選択してください" : "預り金が不足しています");
+        }
+      }
+    }
+
+    norenEl.addEventListener("pointerup", finishPull);
+    norenEl.addEventListener("pointercancel", function() {
+      pulling = false;
+      norenEl.classList.remove("dragging");
+      pullBannerEl.classList.remove("show", "armed");
+      norenEl.style.height = BASE_HEIGHT + "px";
+    });
+
+    statusBarEl.addEventListener("click", function() {
+      const fin = calcFinance(st);
+      if (fin.canBuy) {
+        norenEl.style.height = (BASE_HEIGHT + 30) + "px";
+        setTimeout(function() { norenEl.style.height = BASE_HEIGHT + "px"; }, 220);
+        showToast("p3-toast", "上ののれんを下に引き下げて確定");
+      } else {
+        showToast("p3-toast", !fin.hasPay ? "預り金を選んでください" : "預り金が足りません");
+      }
+    });
+
+    function renderNorenPanels() {
+      ["age", "gender", "group"].forEach(function(axis) {
+        const panelEl = document.getElementById("p3-panel-" + axis);
+        const valEl = document.getElementById("p3-val-" + axis);
+        const val = st.demo[axis];
+        const pat = val ? NOREN_PATTERNS[axis][val] : "pat-none";
+        panelEl.classList.toggle("has-val", !!val);
+        valEl.textContent = val || "任意";
+        panelEl.querySelector("rect").setAttribute("fill", "url(#" + pat + ")");
+      });
+    }
+
+    function renderAll() {
+      const fin = calcFinance(st);
+      qtyLabel.textContent = "田楽豆腐 " + st.qty + "本";
+      totalLabel.textContent = yen(fin.total);
+      minusBtn.disabled = st.qty <= 1;
+      renderNorenPanels();
+      updateChangeDisplay(recvEl, chgEl, payStatusEl, fin);
+      renderPayGrid(payGridEl, st, sheetEl, renderAll);
+
+      if (fin.canBuy) {
+        pullBarEl.classList.remove("locked");
+        pullBarEl.classList.add("ready");
+        pullTextEl.textContent = "のれんを下に引いて会計確定";
+        statusBarEl.classList.add("ready");
+        statusBarEl.textContent = "準備OK：上ののれんを下に引き下げて確定";
+      } else {
+        pullBarEl.classList.add("locked");
+        pullBarEl.classList.remove("ready");
+        pullTextEl.textContent = !fin.hasPay ? "先に下の預り金を選択" : yen(Math.abs(fin.diff)) + " 不足しています";
+        statusBarEl.classList.remove("ready");
+        statusBarEl.textContent = !fin.hasPay ? "預り金を選択後、上ののれんを下に引いて会計" : "金額が足りません（預り金を選び直し）";
+      }
+    }
+
+    renderAll();
+  })();
+
+  /* =====================================================================
+     PROPOSAL 4: GIANT TOFU MISO-BRUSH HOLD + STAMP HOLD PURCHASE
+     ===================================================================== */
+  (function initP4() {
+    const st = createState();
+    const tofuBtn = document.getElementById("p4-tofu-btn");
+    const clipRect = document.getElementById("p4-miso-clip-rect");
+    const spatulaEl = document.getElementById("p4-spatula");
+    const sesameGroup = document.getElementById("p4-sesame-group");
+    const meterFill = document.getElementById("p4-meter-fill");
+    const hintText = document.getElementById("p4-hint-text");
+    const qtyLabel = document.getElementById("p4-qty-label");
+    const totalLabel = document.getElementById("p4-total-label");
+    const minusBtn = document.getElementById("p4-minus");
+    const recvEl = document.getElementById("p4-recv-label");
+    const chgEl = document.getElementById("p4-change-label");
+    const payStatusEl = document.getElementById("p4-pay-status");
+    const payGridEl = document.getElementById("p4-pay-grid");
+    const demoTrigger = document.getElementById("p4-demo-trigger");
+    const demoTagsEl = document.getElementById("p4-demo-tags");
+    const sheetEl = document.getElementById("p4-sheet");
+    const receiptEl = document.getElementById("p4-receipt");
+    const stampBtn = document.getElementById("p4-stamp-btn");
+    const stampFill = document.getElementById("p4-stamp-fill");
+    const stampTxt = document.getElementById("p4-stamp-txt");
+    const stampSub = document.getElementById("p4-stamp-sub");
+
+    demoTrigger.addEventListener("click", function() {
+      openDemoSheet(sheetEl, st, renderAll);
+    });
+    minusBtn.addEventListener("click", function() {
+      if (st.qty > 1) {
+        st.qty -= 1;
+        renderAll();
+      }
+    });
+
+    function spawnPlusFloat() {
+      const f = document.createElement("div");
+      f.className = "p4-plus-float";
+      f.textContent = "+1本（味噌塗り）";
+      tofuBtn.appendChild(f);
+      setTimeout(function() { f.remove(); }, 560);
+    }
+
+    function renderSesame() {
+      const coords = [
+        [96, 56], [116, 54], [126, 62], [105, 65],
+        [82, 60], [138, 56], [112, 47], [92, 50],
+        [146, 62], [75, 55], [122, 68], [100, 58]
+      ];
+      const count = Math.min(coords.length, 3 + st.qty);
+      let s = "";
+      for (let i = 0; i < count; i++) {
+        s += '<circle cx="' + coords[i][0] + '" cy="' + coords[i][1] + '" r="2.2" fill="#2E2018"/>';
+      }
+      sesameGroup.innerHTML = s;
+    }
+
+    /* Long-Press Miso Brush Loop on Giant Tofu */
+    const BRUSH_MS = 380;
+    let tofuHolding = false;
+    let brushStart = 0;
+    let brushRaf = null;
+    let addedDuringHold = false;
+
+    function resetBrushVisual() {
+      clipRect.setAttribute("width", "0");
+      spatulaEl.setAttribute("opacity", "0");
+      meterFill.style.width = "0%";
+      tofuBtn.classList.remove("pressing");
+    }
+
+    function brushStep(now) {
+      if (!tofuHolding) return;
+      const elapsed = now - brushStart;
+      const ratio = Math.min(1, elapsed / BRUSH_MS);
+      const w = Math.round(ratio * 154);
+      clipRect.setAttribute("width", String(w));
+      meterFill.style.width = Math.round(ratio * 100) + "%";
+      const spX = 12 + ratio * 116;
+      const spY = 2 + Math.sin(ratio * Math.PI) * 8;
+      spatulaEl.setAttribute("opacity", "1");
+      spatulaEl.setAttribute("transform", "translate(" + spX.toFixed(1) + ", " + spY.toFixed(1) + ")");
+
+      if (ratio >= 1) {
+        st.qty += 1;
+        addedDuringHold = true;
+        spawnPlusFloat();
+        renderAll();
+        brushStart = now + 70; // brief pause before next continuous brush stroke
+      }
+      brushRaf = requestAnimationFrame(brushStep);
+    }
+
+    tofuBtn.addEventListener("pointerdown", function(e) {
+      tofuHolding = true;
+      addedDuringHold = false;
+      brushStart = performance.now();
+      tofuBtn.classList.add("pressing");
+      hintText.textContent = "味噌を塗っています... そのまま長押し";
+      try { tofuBtn.setPointerCapture(e.pointerId); } catch (_) {}
+      brushRaf = requestAnimationFrame(brushStep);
+    });
+
+    function stopTofuHold() {
+      if (!tofuHolding) return;
+      tofuHolding = false;
+      if (brushRaf) cancelAnimationFrame(brushRaf);
+      resetBrushVisual();
+      if (!addedDuringHold) {
+        hintText.textContent = "ぐっと長押し（0.4秒）で味噌を塗って +1本";
+      } else {
+        hintText.textContent = "豆腐を長押しで味噌を塗って +1本";
+      }
+    }
+    tofuBtn.addEventListener("pointerup", stopTofuHold);
+    tofuBtn.addEventListener("pointercancel", stopTofuHold);
+
+    /* Long-Press Burnt-Seal Purchase Confirmation */
+    const STAMP_MS = 520;
+    let stampHolding = false;
+    let stampStart = 0;
+    let stampRaf = null;
+
+    function resetStampVisual() {
+      stampFill.style.width = "0%";
+    }
+
+    function stampStep(now) {
+      if (!stampHolding) return;
+      const ratio = Math.min(1, (now - stampStart) / STAMP_MS);
+      stampFill.style.width = Math.round(ratio * 100) + "%";
+      if (ratio >= 1) {
+        stampHolding = false;
+        if (stampRaf) cancelAnimationFrame(stampRaf);
+        resetStampVisual();
+        openReceipt(receiptEl, st, {
+          statusLabel: "焼き印確定・会計完了",
+          nextLabel: "次の豆腐へ",
+          onReset: renderAll
+        });
+        return;
+      }
+      stampRaf = requestAnimationFrame(stampStep);
+    }
+
+    stampBtn.addEventListener("pointerdown", function(e) {
+      const fin = calcFinance(st);
+      if (!fin.canBuy) {
+        stampBtn.classList.remove("shake");
+        void stampBtn.offsetWidth;
+        stampBtn.classList.add("shake");
+        showToast("p4-toast", !fin.hasPay ? "先に受け取った額を選択してください" : "預り金が不足しています");
+        return;
+      }
+      stampHolding = true;
+      stampStart = performance.now();
+      stampTxt.textContent = "焼き印を押しています...";
+      try { stampBtn.setPointerCapture(e.pointerId); } catch (_) {}
+      stampRaf = requestAnimationFrame(stampStep);
+    });
+
+    function stopStampHold() {
+      if (!stampHolding) return;
+      stampHolding = false;
+      if (stampRaf) cancelAnimationFrame(stampRaf);
+      resetStampVisual();
+      renderAll();
+      showToast("p4-toast", "0.5秒長押しで会計確定します");
+    }
+    stampBtn.addEventListener("pointerup", stopStampHold);
+    stampBtn.addEventListener("pointercancel", stopStampHold);
+
+    function renderAll() {
+      const fin = calcFinance(st);
+      qtyLabel.textContent = st.qty + "本";
+      totalLabel.textContent = yen(fin.total);
+      minusBtn.disabled = st.qty <= 1;
+      renderSesame();
+      renderDemoTags(demoTagsEl, st.demo);
+      updateChangeDisplay(recvEl, chgEl, payStatusEl, fin);
+      renderPayGrid(payGridEl, st, sheetEl, renderAll);
+
+      if (fin.canBuy) {
+        stampBtn.classList.remove("locked");
+        stampTxt.textContent = "長押しで焼き印・会計確定";
+        stampSub.textContent = "お釣り " + yen(fin.diff) + "（0.5秒長押しで確定）";
+      } else {
+        stampBtn.classList.add("locked");
+        stampTxt.textContent = !fin.hasPay ? "預り金を選んでください" : yen(Math.abs(fin.diff)) + " 不足しています";
+        stampSub.textContent = "";
+      }
+    }
+
+    renderAll();
+  })();
+
+})();
+</script>
+</body>
+</html>

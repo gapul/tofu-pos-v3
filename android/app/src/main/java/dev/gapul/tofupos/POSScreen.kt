@@ -41,10 +41,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -97,8 +100,50 @@ private val dark = darkColorScheme(
   surfaceContainerHigh = Color(0xFF3B2A20), surfaceContainerHighest = Color(0xFF3B2A20),
   outline = Color(0xFFADA29C), outlineVariant = Color(0xFF635954)
 )
+// LINE Seed JP (SIL OFL 1.1) everywhere instead of the platform's Noto Sans CJK. Tabular figures keep amounts,
+// quantities and ticket numbers from shifting as digits change.
+private val tofuFont = FontFamily(
+  Font(R.font.line_seed_jp_regular, FontWeight.Normal),
+  Font(R.font.line_seed_jp_bold, FontWeight.Medium), Font(R.font.line_seed_jp_bold, FontWeight.SemiBold), Font(R.font.line_seed_jp_bold, FontWeight.Bold),
+  Font(R.font.line_seed_jp_extrabold, FontWeight.ExtraBold), Font(R.font.line_seed_jp_extrabold, FontWeight.Black)
+)
+private fun androidx.compose.ui.text.TextStyle.tofu() = copy(fontFamily = tofuFont, fontFeatureSettings = "tnum")
+private val tofuTypography = Typography().let { t ->
+  Typography(
+    displayLarge = t.displayLarge.tofu(),
+    displayMedium = t.displayMedium.tofu(),
+    displaySmall = t.displaySmall.tofu(),
+    headlineLarge = t.headlineLarge.tofu(),
+    headlineMedium = t.headlineMedium.tofu(),
+    headlineSmall = t.headlineSmall.tofu(),
+    titleLarge = t.titleLarge.tofu(),
+    titleMedium = t.titleMedium.tofu(),
+    titleSmall = t.titleSmall.tofu(),
+    bodyLarge = t.bodyLarge.tofu(),
+    bodyMedium = t.bodyMedium.tofu(),
+    bodySmall = t.bodySmall.tofu(),
+    labelLarge = t.labelLarge.tofu(),
+    labelMedium = t.labelMedium.tofu(),
+    labelSmall = t.labelSmall.tofu(),
+    displayLargeEmphasized = t.displayLargeEmphasized.tofu(),
+    displayMediumEmphasized = t.displayMediumEmphasized.tofu(),
+    displaySmallEmphasized = t.displaySmallEmphasized.tofu(),
+    headlineLargeEmphasized = t.headlineLargeEmphasized.tofu(),
+    headlineMediumEmphasized = t.headlineMediumEmphasized.tofu(),
+    headlineSmallEmphasized = t.headlineSmallEmphasized.tofu(),
+    titleLargeEmphasized = t.titleLargeEmphasized.tofu(),
+    titleMediumEmphasized = t.titleMediumEmphasized.tofu(),
+    titleSmallEmphasized = t.titleSmallEmphasized.tofu(),
+    bodyLargeEmphasized = t.bodyLargeEmphasized.tofu(),
+    bodyMediumEmphasized = t.bodyMediumEmphasized.tofu(),
+    bodySmallEmphasized = t.bodySmallEmphasized.tofu(),
+    labelLargeEmphasized = t.labelLargeEmphasized.tofu(),
+    labelMediumEmphasized = t.labelMediumEmphasized.tofu(),
+    labelSmallEmphasized = t.labelSmallEmphasized.tofu()
+  )
+}
 @Composable fun TofuTheme(content: @Composable () -> Unit) {
-  MaterialExpressiveTheme(colorScheme = if (isSystemInDarkTheme()) dark else light, content = content)
+  MaterialExpressiveTheme(colorScheme = if (isSystemInDarkTheme()) dark else light, typography = tofuTypography, content = content)
 }
 /** Loading mark: the tofu bounces (scaleY 1.0 <-> 0.85, 0.8 s cycle); static when system animations are off. */
 @Composable fun TofuLoading(modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 64.dp) {
@@ -123,6 +168,23 @@ private fun jst(value: String): String = runCatching {
 @Composable private fun Empty(text: String) {
   Text(text, Modifier.fillMaxWidth().padding(24.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
 }
+/**
+ * Icon-only button: the label is the content description and the long-press tooltip. 48dp minimum touch target.
+ * Confirm actions use a check, dismiss uses ×.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable fun IconAction(label: String, icon: androidx.compose.ui.graphics.painter.Painter, onClick: () -> Unit, modifier: Modifier = Modifier,
+  enabled: Boolean = true, filled: Boolean = false, tint: Color = Color.Unspecified, size: androidx.compose.ui.unit.Dp = 48.dp) {
+  TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), { PlainTooltip { Text(label) } }, rememberTooltipState()) {
+    val content: @Composable () -> Unit = { Icon(icon, label, Modifier.size(if (size > 56.dp) 36.dp else 24.dp), tint = if (tint == Color.Unspecified) LocalContentColor.current else tint) }
+    if (filled) FilledTonalIconButton(onClick, modifier.size(size), enabled = enabled, content = content)
+    else IconButton(onClick, modifier.size(size), enabled = enabled, content = content)
+  }
+}
+@Composable private fun ConfirmIcon(label: String, enabled: Boolean = true, destructive: Boolean = false, onClick: () -> Unit) =
+  IconAction(label, rememberVectorPainter(Icons.Default.Check), onClick, enabled = enabled, tint = if (!enabled) Color.Unspecified else if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+@Composable private fun DismissIcon(label: String = "キャンセル", enabled: Boolean = true, onClick: () -> Unit) =
+  IconAction(label, rememberVectorPainter(Icons.Default.Close), onClick, enabled = enabled)
 @Composable private fun Info(title: String, body: String) {
   Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
     Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -166,11 +228,13 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
     return
   }
   val labels = listOf("レジ", "商品", "履歴", "締め")
-  val icons = listOf(Icons.Default.ShoppingCart, Icons.Default.Add, Icons.AutoMirrored.Filled.List, Icons.Default.Lock)
+  // Outline when idle, filled when selected.
+  val icons = listOf(R.drawable.ic_tab_register to R.drawable.ic_tab_register_filled, R.drawable.ic_tab_products to R.drawable.ic_tab_products_filled,
+    R.drawable.ic_tab_history to R.drawable.ic_tab_history_filled, R.drawable.ic_tab_close to R.drawable.ic_tab_close_filled)
   val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
   // Lifted above the single-product "購入" button so the next sale is never blocked by the notice.
   Scaffold(snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = 88.dp)) { data ->
-    Snackbar(action = { data.visuals.actionLabel?.let { label -> TextButton(data::performAction) { Text(label) } } }) {
+    Snackbar(action = { data.visuals.actionLabel?.let { label -> IconAction(label, painterResource(R.drawable.ic_cancel_sale), data::performAction, tint = MaterialTheme.colorScheme.inversePrimary) } }) {
       Column {
         data.visuals.message.lines().filter { it.isNotBlank() }.forEach { line ->
           if (line.startsWith("整理番号")) Text(line, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
@@ -181,7 +245,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   } }, bottomBar = {
     if (!keyboardVisible) NavigationBar { labels.forEachIndexed { index, title ->
       NavigationBarItem(selected = tab == index, onClick = { focus.clearFocus(); onTab(index) },
-        icon = { Icon(icons[index], null) }, label = { Text(title) })
+        icon = { Icon(painterResource(if (tab == index) icons[index].second else icons[index].first), null) }, label = { Text(title) })
     } }
   }) { insets ->
     BoxWithConstraints(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).imePadding()) {
@@ -196,9 +260,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             color = if (extras.test) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface)
           if (extras.test) TestBadge(Modifier.padding(start = 10.dp))
           Spacer(Modifier.weight(1f))
-          if (tab == 2) IconButton(onExport, enabled = enabled && sales.isNotEmpty(), modifier = Modifier.size(48.dp)) {
-            Icon(painterResource(R.drawable.ic_download), "CSVに書き出す")
-          }
+          if (tab == 2) IconAction("CSVに書き出す", painterResource(R.drawable.ic_export_csv), onExport, enabled = enabled && sales.isNotEmpty())
           SyncButton(pending, syncing, extras) { focus.clearFocus(); sheet = true }
         }
         if (!ready) Column(Modifier.fillMaxSize().padding(24.dp), Arrangement.spacedBy(16.dp, Alignment.CenterVertically), Alignment.CenterHorizontally) {
@@ -211,7 +273,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onGroup, onCheckout)
           }
           1 -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Action("商品を追加", { onEdit(null) }, Modifier.fillMaxWidth(), enabled) }
+            item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { IconAction("商品を追加", rememberVectorPainter(Icons.Default.Add), { onEdit(null) }, enabled = enabled, filled = true, size = 56.dp) } }
             if (products.isEmpty()) item { Empty("商品を登録してください") }
             items(products, key = { it.id }) { p ->
               Card(onClick = { onEdit(p) }, enabled = enabled, shape = RoundedCornerShape(24.dp)) {
@@ -230,9 +292,9 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
                     }
                     Icon(Icons.Default.Edit, "${p.name}を編集")
                   }
-                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton({ onStock(p, "set") }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = enabled) { Text("在庫を数えて設定") }
-                    OutlinedButton({ onStock(p, "add") }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = enabled) { Text("入荷を追加") }
+                  Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+                    IconAction("在庫を数えて設定", painterResource(R.drawable.ic_stock_count), { onStock(p, "set") }, enabled = enabled, filled = true)
+                    IconAction("入荷を追加", painterResource(R.drawable.ic_stock_add), { onStock(p, "add") }, enabled = enabled, filled = true)
                   }
                 }
               }
@@ -251,7 +313,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   val label = when { syncing -> "同期中"; warn -> "同期に問題があります"; pending > 0 -> "未同期${pending}件"; else -> "同期済み" }
   IconButton(open, Modifier.size(48.dp).semantics { contentDescription = label }) {
     BadgedBox(badge = { if (pending > 0) Badge { Text(if (pending > 99) "99+" else "$pending") } else if (warn) Badge() }) {
-      Icon(painterResource(if (warn) R.drawable.ic_cloud_off else if (pending == 0 && !syncing) R.drawable.ic_cloud_done else R.drawable.ic_cloud), null,
+      Icon(painterResource(when { warn -> R.drawable.ic_sync_error; syncing -> R.drawable.ic_sync_running; pending > 0 -> R.drawable.ic_sync_pending; else -> R.drawable.ic_sync_done }), null,
         tint = if (warn) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
     }
   }
@@ -272,8 +334,11 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         Text("送信できなかった" + rows.joinToString("・") { "${it.first} ${it.second}件" } + "", color = MaterialTheme.colorScheme.error)
       }
       if (held.conflicts > 0) Text("競合で保留中の会計 ${held.conflicts}件", color = MaterialTheme.colorScheme.error)
-      Action("今すぐ送信", send, Modifier.fillMaxWidth(), enabled && !syncing)
-      TextButton(advanced, Modifier.align(Alignment.End)) { Text("詳細設定", style = MaterialTheme.typography.labelMedium) }
+      Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        IconAction("今すぐ送信", painterResource(R.drawable.ic_sync_running), send, enabled = enabled && !syncing, filled = true, size = 64.dp)
+        Spacer(Modifier.weight(1f))
+        IconAction("詳細設定", painterResource(R.drawable.ic_settings), advanced)
+      }
     }
   }
 }
@@ -291,16 +356,19 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   val target = if (extras.test) AppEnvironment.PRODUCTION else AppEnvironment.TEST
   if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text(if (extras.test) "本番環境に戻します" else "テスト環境に切り替えます") },
     text = { Text(if (extras.test) "入力中のカートは破棄されます。" else "テストの売上は本番に入りません。") },
-    confirmButton = { TextButton({ confirm = false; onEnvironment(target) }, enabled = enabled) { Text("切り替える") } },
-    dismissButton = { TextButton({ confirm = false }) { Text("戻る") } })
-  Scaffold(topBar = { TopAppBar(title = { Text("詳細設定") }, navigationIcon = { IconButton(back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "戻る") } }) }) { insets ->
+    confirmButton = { ConfirmIcon("切り替える", enabled) { confirm = false; onEnvironment(target) } },
+    dismissButton = { DismissIcon { confirm = false } })
+  Scaffold(topBar = { TopAppBar(title = { Text("詳細設定") }, navigationIcon = { IconAction("戻る", rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowBack), back) }) }) { insets ->
     LazyColumn(Modifier.fillMaxSize().padding(insets), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      item { OutlinedButton(onSettings, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("接続設定（URL・トークン）") } }
-      item { OutlinedButton(onImport, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("同期設定ファイルを読み込む") } }
-      item { OutlinedButton(onBackup, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("商品をバックアップ") } }
-      item { OutlinedButton(onRestore, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("クラウドから復元") } }
-      if (canContinue) item { Action("売上の続きを復元", onContinue, Modifier.fillMaxWidth(), enabled) }
+      item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        IconAction("接続設定（URL・トークン）", rememberVectorPainter(Icons.Default.Build), onSettings, enabled = enabled, filled = true, size = 56.dp)
+        IconAction("同期設定ファイルを読み込む", painterResource(R.drawable.ic_file_import), onImport, enabled = enabled, filled = true, size = 56.dp)
+        IconAction("商品をバックアップ", painterResource(R.drawable.ic_backup), onBackup, enabled = enabled, filled = true, size = 56.dp)
+        IconAction("クラウドから復元", painterResource(R.drawable.ic_restore), onRestore, enabled = enabled, filled = true, size = 56.dp)
+        if (canContinue) IconAction("売上の続きを復元", rememberVectorPainter(Icons.Default.PlayArrow), onContinue, enabled = enabled, filled = true, size = 56.dp)
+      } }
       item { Info("この端末", "端末名: ${extras.deviceLabel}\n端末ID: ${extras.deviceID}") }
+      item { Text("フォント: LINE Seed JP（SIL OFL 1.1）", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
       item { Card(shape = RoundedCornerShape(24.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
           Text("整理番号の接頭辞", style = MaterialTheme.typography.titleMedium)
@@ -308,7 +376,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(prefix, { prefix = it.take(2) }, Modifier.weight(1f), singleLine = true, enabled = enabled, label = { Text("英大文字1〜2文字") },
               isError = !Tickets.validPrefix(clean), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters))
-            Button({ onTicketPrefix(clean) }, enabled = enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix) { Text("保存") }
+            ConfirmIcon("接頭辞を保存", enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix) { onTicketPrefix(clean) }
           }
         }
       } }
@@ -316,9 +384,9 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
           Row(verticalAlignment = Alignment.CenterVertically) {
             Text("環境: ${extras.environment.label}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-            if (extras.test) TestBadge()
+            if (extras.test) TestBadge(Modifier.padding(end = 8.dp))
+            IconAction(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える", painterResource(R.drawable.ic_swap), { confirm = true }, enabled = enabled, filled = true)
           }
-          OutlinedButton({ confirm = true }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える") }
         }
       } }
     }
@@ -426,16 +494,12 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             }
           }
           Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            FilledTonalIconButton({ focus.clearFocus(); onState(state.withQuantity(state.quantity - 1)) }, Modifier.size(72.dp), enabled = enabled && state.quantity > 1) {
-              Text("−", Modifier.semantics { contentDescription = "本数を減らす" }, style = MaterialTheme.typography.displaySmall)
-            }
+            IconAction("本数を減らす", painterResource(R.drawable.ic_qty_minus), { focus.clearFocus(); onState(state.withQuantity(state.quantity - 1)) }, enabled = enabled && state.quantity > 1, filled = true, size = 72.dp)
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
               Text("${state.quantity}本", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.ExtraBold)
               Text("合計 ${total?.let(::yen) ?: "上限を超えています"}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            FilledTonalIconButton({ focus.clearFocus(); onState(state.withQuantity(state.quantity + 1)) }, Modifier.size(72.dp), enabled = enabled && state.quantity < max) {
-              Icon(Icons.Default.Add, "本数を増やす", Modifier.size(36.dp))
-            }
+            IconAction("本数を増やす", painterResource(R.drawable.ic_qty_plus), { focus.clearFocus(); onState(state.withQuantity(state.quantity + 1)) }, enabled = enabled && state.quantity < max, filled = true, size = 72.dp)
           }
         }
       } }
@@ -537,13 +601,9 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
               Text("${yen(line.price)} / 点", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-              FilledTonalIconButton(onClick = { focus.clearFocus(); onQuantity(line.productID, -1) }, enabled = enabled, modifier = Modifier.size(48.dp)) {
-                Text("−", Modifier.semantics { contentDescription = "${line.name}を減らす" }, style = MaterialTheme.typography.headlineSmall)
-              }
+              IconAction("${line.name}を減らす", painterResource(R.drawable.ic_qty_minus), { focus.clearFocus(); onQuantity(line.productID, -1) }, enabled = enabled, filled = true)
               Text("${line.quantity}", Modifier.widthIn(min = 44.dp).wrapContentWidth(), style = MaterialTheme.typography.titleLarge)
-              FilledTonalIconButton(onClick = { focus.clearFocus(); onQuantity(line.productID, 1) }, enabled = enabled && line.quantity < 999 && canAdd(line.productID), modifier = Modifier.size(48.dp)) {
-                Icon(Icons.Default.Add, "${line.name}を増やす")
-              }
+              IconAction("${line.name}を増やす", painterResource(R.drawable.ic_qty_plus), { focus.clearFocus(); onQuantity(line.productID, 1) }, enabled = enabled && line.quantity < 999 && canAdd(line.productID), filled = true)
             }
           }
         }
@@ -573,7 +633,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
               listOf(100L, 500L, 1000L).forEach { amount ->
                 FilledTonalButton({ focus.clearFocus(); onCashAdd(amount) }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = enabled, contentPadding = small) { Text("+" + NumberFormat.getIntegerInstance(Locale.JAPAN).format(amount), maxLines = 1) }
               }
-              TextButton({ focus.clearFocus(); onCash("") }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = enabled && cash.isNotEmpty(), contentPadding = small) { Text("クリア", maxLines = 1) }
+              Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { IconAction("預り金をクリア", rememberVectorPainter(Icons.Default.Clear), { focus.clearFocus(); onCash("") }, enabled = enabled && cash.isNotEmpty()) }
             }
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
               val change = if (total != null && received != null && received >= total) received - total else null
@@ -606,16 +666,14 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
         val key = unit.toString(); val count = counts[key] ?: 0
         fun set(value: Int) = change(counts + (key to value.coerceIn(0, 9999)))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-          Text(yen(unit.toLong()), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-          FilledTonalIconButton({ set(count - 1) }, enabled = enabled && count > 0, modifier = Modifier.size(44.dp)) {
-            Text("−", Modifier.semantics { contentDescription = "${unit}円を減らす" }, style = MaterialTheme.typography.titleLarge)
-          }
+          Text(yen(unit.toLong()), Modifier.weight(1f), maxLines = 1, softWrap = false, style = MaterialTheme.typography.titleSmall)
+          IconAction("${unit}円を減らす", painterResource(R.drawable.ic_qty_minus), { set(count - 1) }, enabled = enabled && count > 0, filled = true)
           // Zero shows as an empty field (placeholder "0"): echoing "0" back after a delete puts the
           // cursor in front of it, so typing 5 would become 50.
-          OutlinedTextField(if (count == 0) "" else count.toString(), { text -> set(text.filter { it in '0'..'9' }.take(4).toIntOrNull() ?: 0) }, Modifier.width(88.dp),
+          OutlinedTextField(if (count == 0) "" else count.toString(), { text -> set(text.filter { it in '0'..'9' }.take(4).toIntOrNull() ?: 0) }, Modifier.width(76.dp),
             enabled = enabled, singleLine = true, placeholder = { Text("0", Modifier.fillMaxWidth(), textAlign = TextAlign.End) }, textStyle = MaterialTheme.typography.titleMedium.copy(textAlign = TextAlign.End),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-          FilledTonalIconButton({ set(count + 1) }, enabled = enabled && count < 9999, modifier = Modifier.size(44.dp)) { Icon(Icons.Default.Add, "${unit}円を増やす") }
+          IconAction("${unit}円を増やす", painterResource(R.drawable.ic_qty_plus), { set(count + 1) }, enabled = enabled && count < 9999, filled = true)
         }
       }
     }
@@ -635,7 +693,7 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
         Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
           Text("釣銭準備金", style = MaterialTheme.typography.titleMedium)
           Text(yen(total), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-          Action("レジ開け", { open(counts) }, Modifier.fillMaxWidth(), enabled)
+          IconAction("レジ開け", painterResource(R.drawable.ic_lock_open), { open(counts) }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 64.dp)
         }
       } }
     } else {
@@ -665,13 +723,13 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
           Text("実際の合計 ${yen(total)}\n理論値 ${yen(expected)}")
           Text("差額 ${difference(total - expected)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
             color = if (total == expected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.error)
-          Action("レジ締め", { confirm = true }, Modifier.fillMaxWidth(), enabled)
+          IconAction("レジ締め", rememberVectorPainter(Icons.Default.Lock), { confirm = true }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 64.dp)
         }
       } }
       if (confirm) item { AlertDialog(onDismissRequest = { confirm = false }, title = { Text("レジを締めますか？") },
         text = { Text("実際の合計 ${yen(total)}\n理論値 ${yen(expected)}\n差額 ${difference(total - expected)}\n締めた後は変更できません。") },
-        confirmButton = { TextButton({ confirm = false; close(counts) }, enabled = enabled) { Text("締める") } },
-        dismissButton = { TextButton({ confirm = false }) { Text("戻る") } }) }
+        confirmButton = { ConfirmIcon("締める", enabled, destructive = true) { confirm = false; close(counts) } },
+        dismissButton = { DismissIcon { confirm = false } }) }
     }
   }
 }
@@ -702,7 +760,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         sale.lines.forEach { Text("${it.name} × ${it.quantity}　${yen(it.price * it.quantity)}") }
         Text("預り ${yen(sale.received)} · 釣銭 ${yen(sale.change)}", style = MaterialTheme.typography.bodySmall)
         sale.cancellationReason?.let { Text("取消理由: $it") }
-        if (sale.cancelledAt == null) TextButton({ cancel(sale) }, enabled = enabled, modifier = Modifier.heightIn(min = 48.dp)) { Text("全額取消・返金記録", color = MaterialTheme.colorScheme.error) }
+        if (sale.cancelledAt == null) IconAction("全額取消・返金記録", painterResource(R.drawable.ic_cancel_sale), { cancel(sale) }, Modifier.align(Alignment.End), enabled = enabled, tint = MaterialTheme.colorScheme.error)
       }
     } }
   }
@@ -739,15 +797,17 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         ProductPhoto(image, imageGeneration, 72.dp, 16.dp)
         Column(Modifier.weight(1f)) {
-          TextButton({ picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !busy) { Text("写真を選ぶ") }
-          if (image != null) TextButton({ image = null }, enabled = !busy) { Text("写真を外す", color = MaterialTheme.colorScheme.error) }
+          Row {
+            IconAction("写真を選ぶ", painterResource(R.drawable.ic_photo), { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !busy)
+            if (image != null) IconAction("写真を外す", rememberVectorPainter(Icons.Default.Delete), { image = null }, enabled = !busy, tint = MaterialTheme.colorScheme.error)
+          }
         }
       }
       Row(verticalAlignment = Alignment.CenterVertically) { Text("販売中", Modifier.weight(1f)); Switch(active, { active = it }, enabled = !busy) }
       Row(verticalAlignment = Alignment.CenterVertically) { Text("在庫0で販売を止める", Modifier.weight(1f)); Switch(stop, { stop = it }, enabled = !busy) }
     }
-  }, confirmButton = { TextButton({ if (amount != null) save(name, amount, active, stop, image) }, enabled = !busy && name.isNotBlank() && amount != null) { Text("保存") } },
-    dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
+  }, confirmButton = { ConfirmIcon("保存", !busy && name.isNotBlank() && amount != null) { if (amount != null) save(name, amount, active, stop, image) } },
+    dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun StockDialog(product: Product, kind: String, current: Long?, busy: Boolean, onDismiss: () -> Unit, save: (Long, String) -> Unit) {
   var quantity by rememberSaveable(product.id, kind) { mutableStateOf("") }
@@ -760,14 +820,14 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = quantity.isNotEmpty() && value == null)
       OutlinedTextField(reason, { reason = it }, label = { Text("メモ（任意）") }, enabled = !busy, singleLine = true)
     }
-  }, confirmButton = { TextButton({ if (value != null) save(value, reason) }, enabled = !busy && value != null) { Text("記録") } },
-    dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
+  }, confirmButton = { ConfirmIcon("記録", !busy && value != null) { if (value != null) save(value, reason) } },
+    dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun CheckoutDialog(checkout: Checkout, busy: Boolean, onDismiss: () -> Unit, confirm: () -> Unit) {
   val change = checkout.received - checkout.total
   AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("${yen(checkout.total)} の会計を確定しますか？") },
     text = { Text("預り金 ${yen(checkout.received)}\nお釣り ${yen(change)}\n客層 ${Customer.describe(checkout.age, checkout.gender, checkout.group) ?: "未設定"}") },
-    confirmButton = { TextButton(confirm, enabled = !busy) { Text("確定する") } }, dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
+    confirmButton = { ConfirmIcon("確定する", !busy, onClick = confirm) }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ReceiptDialog(sale: Sale, next: () -> Unit) {
   AlertDialog(onDismissRequest = {}, icon = { Icon(Icons.Default.Check, null) }, title = { Text("会計を保存しました") }, text = {
@@ -777,7 +837,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       Text("お釣り ${yen(sale.change)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
       Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodyMedium) }
     }
-  }, confirmButton = { Action("次のお客様", next) })
+  }, confirmButton = { ConfirmIcon("次のお客様", onClick = next) })
 }
 @Composable fun CancelDialog(sale: Sale, busy: Boolean, onDismiss: () -> Unit, cancel: (String) -> Unit) {
   var reason by rememberSaveable(sale.id) { mutableStateOf("") }
@@ -791,7 +851,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         Text(if (sale.total == 0L) "0円会計の取消を確認した" else "全額返金を完了した")
       }
     }
-  }, confirmButton = { TextButton({ cancel(reason) }, enabled = !busy && reason.isNotBlank() && refunded) { Text("取消を記録") } }, dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
+  }, confirmButton = { ConfirmIcon("取消を記録", !busy && reason.isNotBlank() && refunded, destructive = true) { cancel(reason) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ConnectionDialog(initialUrl: String, busy: Boolean, onDismiss: () -> Unit, save: (String, String) -> Unit) {
   var url by rememberSaveable(initialUrl) { mutableStateOf(initialUrl) }
@@ -802,10 +862,10 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       OutlinedTextField(url, { url = it }, label = { Text("https://…workers.dev") }, enabled = !busy, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
       OutlinedTextField(token, { token = it }, label = { Text("端末用トークン") }, supportingText = { Text("空欄なら変更なし") }, enabled = !busy, singleLine = true, visualTransformation = PasswordVisualTransformation())
     }
-  }, confirmButton = { TextButton({ save(url, token) }, enabled = !busy && url.isNotBlank()) { Text("保存") } }, dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
+  }, confirmButton = { ConfirmIcon("保存", !busy && url.isNotBlank()) { save(url, token) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ErrorDialog(message: String, dismiss: () -> Unit) {
-  AlertDialog(onDismissRequest = dismiss, title = { Text("確認してください") }, text = { Text(message) }, confirmButton = { TextButton(dismiss) { Text("閉じる") } })
+  AlertDialog(onDismissRequest = dismiss, title = { Text("確認してください") }, text = { Text(message) }, confirmButton = { DismissIcon("閉じる", onClick = dismiss) })
 }
 
 @Composable fun CatalogDialog(catalogs: List<Catalog>, hasMore: Boolean, loading: Boolean, more: () -> Unit, dismiss: () -> Unit, select: (Catalog?) -> Unit) {
@@ -813,12 +873,12 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
     Column(Modifier.heightIn(max=400.dp).verticalScroll(rememberScrollState()), verticalArrangement=Arrangement.spacedBy(8.dp)) {
       OutlinedButton({ select(null) }, Modifier.fillMaxWidth()) { Text("売上のみ復元") }
       catalogs.forEach { c -> OutlinedButton({ select(c) }, Modifier.fillMaxWidth(), enabled = !loading) { Text("${jst(c.receivedAt)} · 商品${c.productCount}件") } }
-      if (hasMore) OutlinedButton(more, Modifier.fillMaxWidth(), enabled = !loading) { Text(if (loading) "読み込み中…" else "さらに表示") }
+      if (hasMore) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { IconAction("さらに表示", rememberVectorPainter(Icons.Default.KeyboardArrowDown), more, enabled = !loading) }
     }
-  }, confirmButton={ TextButton(dismiss) { Text("戻る") } })
+  }, confirmButton={ DismissIcon(onClick = dismiss) })
 }
 @Composable fun RestoreConfirmDialog(catalog: Catalog?, continuation: Boolean, dismiss: () -> Unit, restore: () -> Unit) {
   AlertDialog(onDismissRequest=dismiss, title={ Text(if (continuation) "売上の続きを復元" else "クラウドから復元") },
     text={ Text((catalog?.let { "${jst(it.receivedAt)} の商品${it.productCount}件と、" } ?: "") + "売上を最大50件取り込みます。") },
-    confirmButton={ TextButton(restore) { Text("復元する") } }, dismissButton={ TextButton(dismiss) { Text("戻る") } })
+    confirmButton={ ConfirmIcon("復元する", destructive = true, onClick = restore) }, dismissButton={ DismissIcon(onClick = dismiss) })
 }

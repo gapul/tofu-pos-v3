@@ -105,15 +105,20 @@ func jstTime(_ value: String) -> String {
 struct RootView: View {
     @StateObject private var model = RegisterModel()
     @Environment(\.scenePhase) private var scenePhase
+    @State private var tab = 0
+    /// Shop tab icons (template SVGs): outline when unselected, the "Filled" variant when selected.
+    private func tabLabel(_ title: String, _ icon: String, _ index: Int) -> some View {
+        Label { Text(title) } icon: { Image(tab == index ? icon + "Filled" : icon).renderingMode(.template) }
+    }
     var body: some View {
         Group {
             if model.ready {
-                TabView {
+                TabView(selection: $tab) {
                     Group {
-                        RegisterTab(model: model).tabItem { Label("レジ", systemImage: "cart") }
-                        ProductsView(model: model).tabItem { Label("商品", systemImage: "square.grid.2x2") }
-                        HistoryView(model: model).tabItem { Label("履歴", systemImage: "clock") }
-                        DrawerView(model: model).tabItem { Label("締め", systemImage: "banknote") }
+                        RegisterTab(model: model).tabItem { tabLabel("レジ", "TabRegister", 0) }.tag(0)
+                        ProductsView(model: model).tabItem { tabLabel("商品", "TabProducts", 1) }.tag(1)
+                        HistoryView(model: model).tabItem { tabLabel("履歴", "TabHistory", 2) }.tag(2)
+                        DrawerView(model: model).tabItem { tabLabel("締め", "TabClose", 3) }.tag(3)
                     }
                     .toolbarBackground(Color.tofuCard, for: .tabBar)
                     .toolbarBackground(.visible, for: .tabBar)
@@ -123,7 +128,7 @@ struct RootView: View {
             } else {
                 VStack(spacing: 20) {
                     Text("データを開けません").font(.title); Text(model.error ?? "起動に失敗しました")
-                    if model.environment == .test { Button("本番環境に戻す") { model.switchEnvironment(to: .production) } }
+                    if model.environment == .test { IconButton("本番環境に戻す", .symbol("arrow.uturn.backward.circle")) { model.switchEnvironment(to: .production) } }
                 }
                     .padding().frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.tofuBackground)
             }
@@ -209,7 +214,7 @@ struct RegisterView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("完了") { receivedFocused = false }
+                    IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { receivedFocused = false }
                 }
             }
             .onDisappear { receivedFocused = false }
@@ -288,7 +293,7 @@ struct RegisterView: View {
                 Button("+100") { addReceived(100) }
                 Button("+500") { addReceived(500) }
                 Button("+1,000") { addReceived(1000) }
-                Button("クリア") { receivedFocused = false; received = "" }
+                IconButton("預り金をクリア", .symbol("xmark.circle")) { receivedFocused = false; received = "" }
             }.buttonStyle(.bordered)
             if let total, let cash, cash >= total {
                 Text("お釣り　¥\(Yen.format(cash - total))").font(.title2.bold())
@@ -377,7 +382,7 @@ struct ProductsView: View {
             }.navigationTitle("商品")
                 .tofuSurface()
                 .syncToolbar(model)
-                .toolbar { ToolbarItem(placement: .primaryAction) { Button("追加") { editing = nil; showing = true } } }
+                .toolbar { ToolbarItem(placement: .primaryAction) { IconButton("商品を追加", .symbol("plus")) { editing = nil; showing = true } } }
                 .sheet(isPresented: $showing) { ProductEditor(model: model, product: editing) }
         }
     }
@@ -406,8 +411,12 @@ struct ProductEditor: View {
                             ProductPhoto(images: model.images, hash: imageHash, size: 72, corner: 12)
                             if processing { TofuLoading() }
                         }
-                        PhotosPicker(selection: $pickerItem, matching: .images) { Text("写真を選ぶ") }.disabled(processing)
-                        if imageHash != nil { Button("写真を外す", role: .destructive) { imageHash = nil } }
+                        HStack(spacing: 16) {
+                            PhotosPicker(selection: $pickerItem, matching: .images) { IconImage(icon: .asset("IconPhoto")).frame(minWidth: 44, minHeight: 44) }
+                                .buttonStyle(.borderless).disabled(processing).accessibilityLabel("写真を選ぶ").help("写真を選ぶ")
+                            if imageHash != nil { IconButton("写真を外す", .symbol("xmark.circle"), role: .destructive) { imageHash = nil } }
+                            Spacer()
+                        }
                     }
                     Section {
                         TextField("商品名", text: $name)
@@ -420,8 +429,11 @@ struct ProductEditor: View {
                         Section("在庫") {
                             Text(model.stock[product.id].map(StockMath.label) ?? "在庫は通信後に表示します")
                             TextField("数量", text: $quantity).keyboardType(.numberPad)
-                            Button("在庫を数えて設定") { adjust(product, kind: "set") }
-                            Button("入荷を追加") { adjust(product, kind: "add") }
+                            HStack(spacing: 16) {
+                                IconButton("在庫を数えて設定", .asset("IconStockCount")) { adjust(product, kind: "set") }
+                                IconButton("入荷を追加", .asset("IconStockAdd")) { adjust(product, kind: "add") }
+                                Spacer()
+                            }
                             if let notice { Text(notice).font(.footnote) }
                         }
                     }
@@ -430,8 +442,8 @@ struct ProductEditor: View {
                 .tofuSurface()
                 .scrollDismissesKeyboard(.interactively)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("戻る") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) { Button("保存") { save() } }
+                    ToolbarItem(placement: .cancellationAction) { IconButton("戻る", .symbol("xmark")) { dismiss() } }
+                    ToolbarItem(placement: .confirmationAction) { IconButton("保存", .symbol("checkmark")) { save() } }
                 }
                 .onAppear {
                     name = product?.name ?? ""; price = product.map { String($0.price) } ?? ""
@@ -503,7 +515,7 @@ struct DrawerView: View {
                             LabeledContent("売上", value: "¥\(Yen.format(summary?.salesTotal ?? 0))（\(summary?.orderCount ?? 0)件）")
                             LabeledContent("取消・返金", value: "¥\(Yen.format(summary?.cancelTotal ?? 0))")
                             LabeledContent("現金在高（理論値）", value: "¥\(Yen.format(summary?.expected ?? session.floatTotal))").font(.headline)
-                            Button("レジ締め") { closing = session }
+                            IconButton("レジ締め", .symbol("lock")) { closing = session }
                         }
                         Section("客層別の件数") {
                             ForEach(CustomerAge.allCases) { age in
@@ -523,7 +535,7 @@ struct DrawerView: View {
                     } else {
                         Section("レジ開け（釣銭準備金の枚数）") {
                             DenominationEditor(counts: $counts)
-                            Button("レジを開ける") {
+                            IconButton("レジを開ける", .symbol("lock.open")) {
                                 do { try model.openDrawer(counts); counts = [:] } catch { model.error = error.localizedDescription }
                             }
                         }
@@ -567,13 +579,13 @@ struct DrawerCloseView: View {
                         LabeledContent("理論値", value: "¥\(Yen.format(expected))")
                         LabeledContent("差額", value: difference(counted - expected)).foregroundColor(counted == expected ? .primary : .red)
                         if let failure { Text(failure).foregroundStyle(.red) }
-                        Button("締めを確定") { confirming = true }
+                        IconButton("締めを確定", .symbol("checkmark.circle")) { confirming = true }
                     }
                 }.tofuRows()
             }.navigationTitle("レジ締め")
                 .tofuSurface()
                 .scrollDismissesKeyboard(.interactively)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("戻る") { dismiss() } } }
+                .toolbar { ToolbarItem(placement: .cancellationAction) { IconButton("戻る", .symbol("xmark")) { dismiss() } } }
                 .alert("レジを締めますか？", isPresented: $confirming) {
                     Button("締める", role: .destructive) {
                         do { try model.closeDrawer(session.id, counted: counts); dismiss() } catch { failure = error.localizedDescription }
@@ -611,7 +623,7 @@ struct HistoryView: View {
                             ForEach(sale.lines) { line in Text("\(line.name) × \(line.quantity)　¥\(line.price * Int64(line.quantity))") }
                             Text("預り ¥\(sale.received) ／ 釣銭 ¥\(sale.change)")
                             if let reason = sale.cancellationReason { Text("取消理由: \(reason)") }
-                            if sale.cancelledAt == nil { Button("全額取消・返金記録", role: .destructive) { cancelling = sale } }
+                            if sale.cancelledAt == nil { IconButton("全額取消・返金記録", .asset("IconCancelSale"), role: .destructive) { cancelling = sale } }
                         }
                     }
                 }.tofuRows()
@@ -620,8 +632,8 @@ struct HistoryView: View {
                 .syncToolbar(model)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        Button { document = CSVDocument(text: SalesCSV.make(model.sales, ticket: true)); exporting = true } label: { Image(systemName: "square.and.arrow.up") }
-                            .disabled(model.sales.isEmpty).accessibilityLabel("全件をCSVに書き出す")
+                        IconButton("全件をCSVに書き出す", .asset("IconExportCSV")) { document = CSVDocument(text: SalesCSV.make(model.sales, ticket: true)); exporting = true }
+                            .disabled(model.sales.isEmpty)
                     }
                 }
                 .sheet(item: $cancelling) { CancellationView(model: model, sale: $0) }
@@ -647,14 +659,14 @@ struct CancellationView: View {
                     TextField("取消理由", text: $reason)
                     Toggle(sale.total == 0 ? "0円会計の取消を確認した" : "全額返金を完了した", isOn: $refunded)
                     if let failure { Text(failure).foregroundStyle(.red) }
-                    Button("取消を記録", role: .destructive) {
+                    IconButton("取消を記録", .symbol("checkmark.circle"), role: .destructive) {
                         do { try model.cancel(sale.id, reason: reason); dismiss() }
                         catch { failure = error.localizedDescription }
                     }.disabled(!refunded || reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.tofuRows()
             }.navigationTitle("全額取消")
                 .tofuSurface()
-                .toolbar { Button("戻る") { dismiss() } }
+                .toolbar { IconButton("戻る", .symbol("xmark")) { dismiss() } }
         }
     }
 }

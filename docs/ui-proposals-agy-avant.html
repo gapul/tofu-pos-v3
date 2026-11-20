@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOS — Are you Tofu? 前衛レジUI 4案</title>
+<style>
+  :root {
+    --paper: #F8F7F6;
+    --sesame: #2E2018;
+    --miso-dark: #503225;
+    --miso-amber: #B66427;
+    --miso-light: #D18C53;
+    --ash: #635954;
+    --tofu-top: #FFE8A9;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--sesame);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 400px;
+    margin: 0 auto;
+    padding: 40px 20px 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .page-header {
+    width: 360px;
+    border-bottom: 3px solid var(--sesame);
+    padding-bottom: 16px;
+    margin-bottom: 48px;
+  }
+
+  .page-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--miso-amber);
+    margin: 0 0 6px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin: 0;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .concept {
+    width: 360px;
+    margin-bottom: 84px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .concept-head {
+    margin-bottom: 14px;
+  }
+
+  .concept-title {
+    font-size: 17px;
+    font-weight: 900;
+    margin: 0 0 6px;
+    letter-spacing: 0.4px;
+    color: var(--sesame);
+  }
+
+  .concept-desc {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ash);
+    margin: 0;
+  }
+
+  .phone {
+    width: 360px;
+    height: 740px;
+    position: relative;
+    overflow: hidden;
+    background: var(--paper);
+    border: 2px solid var(--sesame);
+    box-shadow: 8px 8px 0 var(--sesame);
+  }
+
+  .mono {
+    font-family: "SFMono-Regular", Menlo, Consolas, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 共通キーパッド（手入力用・各案で色調微調整可能） */
+  .keypad-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    background: rgba(46, 32, 24, 0.88);
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 50;
+  }
+
+  .keypad-overlay.open {
+    display: flex;
+  }
+
+  .keypad-sheet {
+    background: var(--paper);
+    border-top: 4px solid var(--sesame);
+    padding: 16px;
+  }
+
+  .keypad-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid var(--sesame);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .keypad-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ash);
+    letter-spacing: 1px;
+  }
+
+  .keypad-val {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--sesame);
+  }
+
+  .keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .kp-btn {
+    height: 52px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .kp-btn:active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .kp-btn.sub {
+    background: #ECE9E6;
+    font-size: 14px;
+  }
+
+  .keypad-actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 8px;
+  }
+
+  .kp-cancel {
+    height: 48px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--ash);
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .kp-ok {
+    height: 48px;
+    border: 2px solid var(--sesame);
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  /* =========================================================
+     案01: BRUTAL SWISS GRID
+     ========================================================= */
+  #app1 {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+  }
+
+  .a1-bar {
+    height: 42px;
+    border-bottom: 4px solid var(--sesame);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: var(--paper);
+    flex-shrink: 0;
+  }
+
+  .a1-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+
+  .a1-meta {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-dark);
+  }
+
+  .a1-hero {
+    height: 174px;
+    display: flex;
+    border-bottom: 4px solid var(--sesame);
+    flex-shrink: 0;
+  }
+
+  .a1-qty-box {
+    width: 152px;
+    border-right: 4px solid var(--sesame);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 10px;
+    position: relative;
+    touch-action: none;
+    cursor: ew-resize;
+    background: var(--paper);
+  }
+
+  .a1-cell-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    color: var(--ash);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .a1-qty-num {
+    font-size: 76px;
+    font-weight: 900;
+    line-height: 0.88;
+    letter-spacing: -4px;
+    color: var(--sesame);
+    text-align: center;
+    margin: 4px 0;
+  }
+
+  .a1-qty-ctrls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .a1-step-btn {
+    height: 30px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .a1-step-btn:active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a1-total-box {
+    width: 204px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--paper);
+  }
+
+  .a1-total-num {
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: var(--sesame);
+    text-align: right;
+  }
+
+  .a1-total-sub {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ash);
+    text-align: right;
+    border-top: 2px solid var(--sesame);
+    padding-top: 6px;
+  }
+
+  .a1-demo {
+    height: 82px;
+    border-bottom: 4px solid var(--sesame);
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--paper);
+    flex-shrink: 0;
+  }
+
+  .a1-demo-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .a1-demo-key {
+    width: 30px;
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ash);
+    flex-shrink: 0;
+  }
+
+  .a1-demo-btn {
+    flex: 1;
+    height: 20px;
+    border: 1px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a1-demo-btn.active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a1-pay-grid {
+    height: 152px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    border-bottom: 4px solid var(--sesame);
+    flex-shrink: 0;
+  }
+
+  .a1-pay-btn {
+    border: none;
+    border-right: 3px solid var(--sesame);
+    border-bottom: 3px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .a1-pay-btn:nth-child(3n) {
+    border-right: none;
+  }
+
+  .a1-pay-btn:nth-child(n+4) {
+    border-bottom: none;
+  }
+
+  .a1-pay-k {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--ash);
+  }
+
+  .a1-pay-v {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+
+  .a1-pay-btn.active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a1-pay-btn.active .a1-pay-k {
+    color: var(--miso-light);
+  }
+
+  .a1-state-panel {
+    height: 146px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--sesame);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .a1-state-panel.idle {
+    background: var(--ash);
+    color: var(--paper);
+  }
+
+  .a1-state-panel.short {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+  }
+
+  .a1-state-panel.ready {
+    background: var(--miso-light);
+    color: var(--sesame);
+  }
+
+  .a1-state-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  .a1-change-num {
+    font-size: 54px;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    text-align: right;
+  }
+
+  .a1-buy-slab {
+    flex: 1;
+    border: none;
+    width: 100%;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    cursor: not-allowed;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .a1-buy-slab.idle {
+    background: var(--sesame);
+    color: var(--ash);
+  }
+
+  .a1-buy-slab.short {
+    background: var(--sesame);
+    color: var(--miso-light);
+  }
+
+  .a1-buy-slab.ready {
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    cursor: pointer;
+  }
+
+  .a1-buy-slab.ready:active {
+    background: var(--sesame);
+  }
+
+  .a1-buy-hint {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-align: left;
+  }
+
+  .a1-buy-main {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .a1-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    background: var(--sesame);
+    color: var(--paper);
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    z-index: 40;
+  }
+
+  .a1-receipt.open {
+    display: flex;
+  }
+
+  .a1-rec-no {
+    font-size: 112px;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -6px;
+    color: var(--tofu-top);
+    border-top: 4px solid var(--paper);
+    border-bottom: 4px solid var(--paper);
+    padding: 24px 0;
+    text-align: center;
+  }
+
+  .a1-rec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    border-bottom: 2px solid var(--ash);
+    padding-bottom: 16px;
+  }
+
+  .a1-rec-cell-k {
+    font-size: 10px;
+    color: var(--miso-light);
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .a1-rec-cell-v {
+    font-size: 26px;
+    font-weight: 900;
+  }
+
+  .a1-next-btn {
+    height: 72px;
+    border: 3px solid var(--tofu-top);
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+
+  /* =========================================================
+     案02: SESAME FIELD (GENERATIVE CANVAS)
+     ========================================================= */
+  #app2 {
+    background: var(--paper);
+  }
+
+  .a2-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    display: block;
+    z-index: 1;
+  }
+
+  .a2-ui {
+    position: relative;
+    z-index: 2;
+    width: 360px;
+    height: 740px;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+  }
+
+  .a2-header {
+    height: 44px;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(248, 247, 246, 0.88);
+    border-bottom: 1px solid rgba(46, 32, 24, 0.25);
+    pointer-events: auto;
+  }
+
+  .a2-stage-hud {
+    height: 236px;
+    position: relative;
+    pointer-events: auto;
+    touch-action: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 12px;
+  }
+
+  .a2-top-plates {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .a2-plate {
+    background: var(--paper);
+    border: 2px solid var(--sesame);
+    padding: 6px 10px;
+    box-shadow: 3px 3px 0 var(--sesame);
+  }
+
+  .a2-plate-k {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--ash);
+    letter-spacing: 1px;
+  }
+
+  .a2-plate-v {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.05;
+    color: var(--sesame);
+  }
+
+  .a2-qty-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .a2-round-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 22px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--sesame);
+    padding: 0;
+  }
+
+  .a2-round-btn:active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a2-swipe-tag {
+    background: rgba(248, 247, 246, 0.9);
+    border: 1px solid var(--sesame);
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--miso-dark);
+  }
+
+  .a2-demo {
+    margin: 0 12px 10px;
+    background: rgba(248, 247, 246, 0.92);
+    border: 2px solid var(--sesame);
+    padding: 7px 8px;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .a2-demo-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .a2-demo-label {
+    width: 28px;
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ash);
+  }
+
+  .a2-chip {
+    flex: 1;
+    height: 22px;
+    border: 1px solid var(--ash);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a2-chip.active {
+    background: var(--miso-dark);
+    border-color: var(--miso-dark);
+    color: var(--tofu-top);
+  }
+
+  .a2-pay-wrap {
+    margin: 0 12px 10px;
+    pointer-events: auto;
+  }
+
+  .a2-pay-title {
+    display: inline-block;
+    background: var(--sesame);
+    color: var(--tofu-top);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .a2-pay-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .a2-pay-btn {
+    height: 46px;
+    border: 2px solid var(--sesame);
+    background: rgba(248, 247, 246, 0.94);
+    color: var(--sesame);
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--sesame);
+    padding: 0;
+  }
+
+  .a2-pay-btn.active {
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    border-color: var(--tofu-top);
+    box-shadow: 0 0 0 2px var(--sesame);
+  }
+
+  .a2-bottom {
+    margin-top: auto;
+    padding: 0 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: auto;
+  }
+
+  .a2-status-card {
+    background: var(--paper);
+    border: 3px solid var(--sesame);
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 4px 4px 0 var(--sesame);
+  }
+
+  .a2-status-card.short {
+    background: var(--miso-dark);
+    color: var(--tofu-top);
+  }
+
+  .a2-status-card.ready {
+    background: var(--tofu-top);
+    color: var(--sesame);
+  }
+
+  .a2-st-left {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.4;
+  }
+
+  .a2-st-right {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -1px;
+  }
+
+  .a2-buy-btn {
+    height: 64px;
+    border: 3px solid var(--sesame);
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: not-allowed;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .a2-buy-btn.idle, .a2-buy-btn.short {
+    background: rgba(99, 89, 84, 0.92);
+    color: rgba(248, 247, 246, 0.7);
+  }
+
+  .a2-buy-btn.ready {
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--sesame);
+  }
+
+  .a2-receipt-hud {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px 16px 20px;
+    pointer-events: auto;
+  }
+
+  .a2-receipt-hud.open {
+    display: flex;
+  }
+
+  .a2-rec-top {
+    background: rgba(248, 247, 246, 0.92);
+    border: 2px solid var(--sesame);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .a2-rec-card {
+    background: rgba(46, 32, 24, 0.94);
+    border: 3px solid var(--tofu-top);
+    color: var(--paper);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* =========================================================
+     案03: TOFU ORBIT DIAL
+     ========================================================= */
+  #app3 {
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .a3-top {
+    height: 92px;
+    padding: 14px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid rgba(46, 32, 24, 0.15);
+  }
+
+  .a3-brand-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .a3-kicker {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--ash);
+  }
+
+  .a3-brand {
+    font-size: 14px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .a3-total-col {
+    text-align: right;
+  }
+
+  .a3-total-val {
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -1.5px;
+    color: var(--sesame);
+  }
+
+  .a3-total-sub {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--miso-amber);
+    margin-top: 3px;
+  }
+
+  .a3-orbit-stage {
+    width: 360px;
+    height: 356px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  .a3-orbit-svg {
+    width: 360px;
+    height: 356px;
+    display: block;
+  }
+
+  .a3-center-ctrls {
+    position: absolute;
+    bottom: 8px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .a3-mini-step {
+    pointer-events: auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a3-mini-step:active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a3-dial-hint {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ash);
+    letter-spacing: 0.5px;
+  }
+
+  .a3-demo {
+    padding: 8px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-top: 1px solid rgba(46, 32, 24, 0.14);
+    border-bottom: 1px solid rgba(46, 32, 24, 0.14);
+  }
+
+  .a3-demo-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .a3-demo-k {
+    width: 30px;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--ash);
+  }
+
+  .a3-pill {
+    flex: 1;
+    height: 22px;
+    border-radius: 11px;
+    border: 1px solid rgba(46, 32, 24, 0.35);
+    background: transparent;
+    color: var(--sesame);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a3-pill.active {
+    background: var(--sesame);
+    border-color: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a3-footer {
+    height: 204px;
+    padding: 14px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .a3-readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--sesame);
+  }
+
+  .a3-recv-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .a3-small-k {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ash);
+    letter-spacing: 1px;
+  }
+
+  .a3-recv-val {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--sesame);
+  }
+
+  .a3-change-box {
+    text-align: right;
+  }
+
+  .a3-change-val {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -1.5px;
+    color: var(--sesame);
+  }
+
+  .a3-change-val.short {
+    color: var(--miso-amber);
+    font-size: 28px;
+  }
+
+  .a3-change-val.idle {
+    color: var(--ash);
+    font-size: 20px;
+  }
+
+  .a3-slider-track {
+    height: 60px;
+    border-radius: 30px;
+    border: 2px solid var(--sesame);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: none;
+    transition: background 0.2s;
+  }
+
+  .a3-slider-track.idle, .a3-slider-track.short {
+    background: #EAE7E4;
+    cursor: not-allowed;
+  }
+
+  .a3-slider-track.ready {
+    background: var(--miso-amber);
+    cursor: pointer;
+  }
+
+  .a3-slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--sesame);
+    pointer-events: none;
+  }
+
+  .a3-slider-label {
+    position: relative;
+    z-index: 2;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    pointer-events: none;
+  }
+
+  .a3-slider-track.idle .a3-slider-label,
+  .a3-slider-track.short .a3-slider-label {
+    color: var(--ash);
+  }
+
+  .a3-slider-track.ready .a3-slider-label {
+    color: var(--tofu-top);
+  }
+
+  .a3-knob {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    background: var(--paper);
+    border: 2px solid var(--sesame);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .a3-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    background: var(--paper);
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 36px 24px 28px;
+  }
+
+  .a3-receipt.open {
+    display: flex;
+  }
+
+  .a3-stamp {
+    width: 240px;
+    height: 240px;
+    border-radius: 120px;
+    border: 6px solid var(--miso-amber);
+    box-shadow: inset 0 0 0 6px var(--paper), inset 0 0 0 9px var(--sesame);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--tofu-top);
+  }
+
+  .a3-stamp-k {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--miso-dark);
+  }
+
+  .a3-stamp-no {
+    font-size: 84px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -4px;
+    color: var(--sesame);
+  }
+
+  /* =========================================================
+     案04: KINETIC ARE YOU TOFU?
+     ========================================================= */
+  #app4 {
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .a4-kinetic {
+    height: 222px;
+    padding: 12px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--sesame);
+    background: var(--paper);
+    touch-action: none;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .a4-top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--ash);
+  }
+
+  .a4-phrase {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: var(--sesame);
+    word-break: break-word;
+  }
+
+  .a4-phrase-tag {
+    display: inline-block;
+    background: var(--tofu-top);
+    color: var(--sesame);
+    border: 2px solid var(--sesame);
+    padding: 0 5px;
+    font-size: 14px;
+    vertical-align: middle;
+    margin: 0 2px;
+  }
+
+  .a4-tofu-word {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0;
+  }
+
+  .a4-word-run {
+    display: flex;
+    align-items: center;
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: var(--sesame);
+    overflow: hidden;
+  }
+
+  .a4-cube-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 3px;
+  }
+
+  .a4-qty-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .a4-qbtn {
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a4-qbtn:active {
+    background: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  .a4-total-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 2px dashed var(--sesame);
+    padding-top: 6px;
+  }
+
+  .a4-total-num {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: var(--sesame);
+  }
+
+  .a4-demo {
+    height: 76px;
+    padding: 6px 12px;
+    background: var(--paper);
+    border-bottom: 4px solid var(--sesame);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .a4-demo-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .a4-dkey {
+    width: 28px;
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ash);
+  }
+
+  .a4-dchip {
+    flex: 1;
+    height: 19px;
+    border: 1px solid var(--sesame);
+    background: var(--paper);
+    color: var(--sesame);
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .a4-dchip.active {
+    background: var(--miso-amber);
+    border-color: var(--sesame);
+    color: var(--tofu-top);
+  }
+
+  /* のれん受取額エリア */
+  .a4-noren-stage {
+    height: 196px;
+    background: var(--miso-dark);
+    padding: 0 8px 10px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .a4-noren-rod {
+    height: 12px;
+    margin: 0 -8px 0;
+    background: var(--sesame);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--miso-light);
+    letter-spacing: 1px;
+  }
+
+  .a4-noren-row {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    padding-top: 4px;
+  }
+
+  .a4-noren-panel {
+    background: var(--paper);
+    border: 2px solid var(--sesame);
+    border-top: none;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 2px 12px;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.15s, color 0.15s;
+    touch-action: none;
+    color: var(--sesame);
+    position: relative;
+  }
+
+  .a4-noren-panel.active {
+    transform: translateY(24px);
+    background: var(--miso-amber);
+    color: var(--tofu-top);
+    border-color: var(--tofu-top);
+  }
+
+  .a4-noren-vtext {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  .a4-noren-sub {
+    font-size: 9px;
+    font-weight: 900;
+    border-top: 1px solid currentColor;
+    padding-top: 4px;
+    width: 80%;
+    text-align: center;
+  }
+
+  .a4-lower {
+    flex: 1;
+    background: var(--miso-dark);
+    color: var(--paper);
+    padding: 10px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-top: 3px solid var(--sesame);
+  }
+
+  .a4-change-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid rgba(255, 232, 169, 0.35);
+    padding-bottom: 10px;
+  }
+
+  .a4-change-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--miso-light);
+    line-height: 1.5;
+  }
+
+  .a4-change-big {
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    color: var(--tofu-top);
+  }
+
+  .a4-change-big.idle {
+    font-size: 20px;
+    color: rgba(248, 247, 246, 0.65);
+    letter-spacing: 0;
+  }
+
+  .a4-change-big.short {
+    font-size: 28px;
+    color: var(--miso-light);
+    letter-spacing: -0.5px;
+  }
+
+  .a4-buy-btn {
+    height: 76px;
+    border: 3px solid var(--sesame);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-weight: 900;
+    transition: background 0.15s, color 0.15s;
+    touch-action: none;
+  }
+
+  .a4-buy-btn.idle, .a4-buy-btn.short {
+    background: var(--ash);
+    color: rgba(248, 247, 246, 0.6);
+    cursor: not-allowed;
+  }
+
+  .a4-buy-btn.ready {
+    background: var(--tofu-top);
+    color: var(--sesame);
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--miso-amber);
+  }
+
+  .a4-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 740px;
+    background: var(--paper);
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px;
+    overflow: hidden;
+  }
+
+  .a4-receipt.open {
+    display: flex;
+  }
+
+  .a4-poster-bg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 360px;
+    height: 360px;
+    background: var(--miso-dark);
+    z-index: 0;
+  }
+
+  .a4-poster-layer {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .a4-poster-type {
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -2px;
+    color: var(--sesame);
+  }
+
+  .a4-poster-square {
+    width: 240px;
+    height: 240px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 6px solid var(--sesame);
+    box-shadow: 10px 10px 0 var(--miso-amber);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .a4-poster-no {
+    font-size: 92px;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -5px;
+    color: var(--sesame);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="page-header">
+    <p class="page-kicker">KOMABA FESTIVAL / STAFF POS</p>
+    <h1 class="page-title">
+      TOS — Are y<svg width="20" height="22" viewBox="0 0 24 26" style="display:inline-block;vertical-align:-3px;"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2"/></svg>u T<svg width="20" height="22" viewBox="0 0 24 26" style="display:inline-block;vertical-align:-3px;"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2"/></svg>fu?
+    </h1>
+  </header>
+
+  <!-- =======================================================
+       案01: ブルータリズム / スイス・タイポグラフィ
+       ======================================================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2 class="concept-title">01 / BRUTAL SWISS GRID</h2>
+      <p class="concept-desc">極太罫線と巨大数字だけで組んだスイス・ブルータリズム。本数は数値エリアの左右スワイプでも増減でき、下部色面の反転で金額・お釣り・購入可否を一瞥で判別できます。</p>
+    </div>
+    <div class="phone" id="app1">
+      <div class="a1-bar">
+        <div class="a1-brand">
+          <span>TOS</span>
+          <svg width="16" height="18" viewBox="0 0 24 26"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2.2"/></svg>
+          <span>Are you Tofu?</span>
+        </div>
+        <div class="a1-meta mono" id="a1-order-badge">次 #001 / 田楽 ¥500</div>
+      </div>
+
+      <div class="a1-hero">
+        <div class="a1-qty-box" id="a1-qty-swipe">
+          <div class="a1-cell-label"><span>本数</span><span>スワイプ可</span></div>
+          <div class="a1-qty-num mono" id="a1-qty">01</div>
+          <div class="a1-qty-ctrls">
+            <button class="a1-step-btn" id="a1-minus" type="button">−</button>
+            <button class="a1-step-btn" id="a1-plus" type="button">+</button>
+          </div>
+        </div>
+        <div class="a1-total-box">
+          <div class="a1-cell-label"><span>合計金額</span><span>JPY</span></div>
+          <div class="a1-total-num mono" id="a1-total">¥500</div>
+          <div class="a1-total-sub mono" id="a1-formula">田楽豆腐 1本 × ¥500</div>
+        </div>
+      </div>
+
+      <div class="a1-demo" id="a1-demo"></div>
+
+      <div class="a1-pay-grid" id="a1-pay-grid"></div>
+
+      <div class="a1-state-panel idle" id="a1-state-panel">
+        <div class="a1-state-top">
+          <span id="a1-state-label">状態 / 受取未選択</span>
+          <span class="mono" id="a1-recv-label">受取: —</span>
+        </div>
+        <div class="a1-change-num mono" id="a1-change">—</div>
+      </div>
+
+      <button class="a1-buy-slab idle" id="a1-buy" type="button">
+        <span class="a1-buy-hint" id="a1-buy-hint">受取額を選択してください</span>
+        <span class="a1-buy-main">
+          <span id="a1-buy-text">購入不可</span>
+          <svg width="28" height="28" viewBox="0 0 28 28"><path d="M4 14 H22 M16 8 L22 14 L16 20" stroke="currentColor" stroke-width="3.5" fill="none" stroke-linecap="square"/></svg>
+        </span>
+      </button>
+
+      <div class="a1-receipt" id="a1-receipt">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;font-weight:900;letter-spacing:2px;color:#D18C53;">会計完了 / 整理番号</span>
+          <span class="mono" style="font-size:12px;color:#F8F7F6;">TOS / Are you Tofu?</span>
+        </div>
+        <div class="a1-rec-no mono" id="a1-rec-no">#001</div>
+        <div class="a1-rec-grid">
+          <div>
+            <div class="a1-rec-cell-k">田楽豆腐</div>
+            <div class="a1-rec-cell-v mono" id="a1-rec-qty">1本</div>
+          </div>
+          <div>
+            <div class="a1-rec-cell-k">お釣り</div>
+            <div class="a1-rec-cell-v mono" id="a1-rec-change">¥0</div>
+          </div>
+          <div style="grid-column:span 2;">
+            <div class="a1-rec-cell-k">客層記録</div>
+            <div class="mono" style="font-size:14px;font-weight:800;" id="a1-rec-demo">未入力</div>
+          </div>
+        </div>
+        <button class="a1-next-btn" id="a1-next" type="button">次の会計へ</button>
+      </div>
+
+      <div class="keypad-overlay" id="a1-keypad"></div>
+    </div>
+  </section>
+
+  <!-- =======================================================
+       案02: ジェネラティブ黒ゴマ粒子場
+       ======================================================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2 class="concept-title">02 / SESAME PARTICLE FIELD</h2>
+      <p class="concept-desc">ポスターの黒ゴマ一面を粒子場として生成し、本数分の白い豆腐空間が浮かび上がり購入で弾けて整理番号を結びます。高コントラストの数値プレートで金額・お釣り・購入可否が一目で読めます。</p>
+    </div>
+    <div class="phone" id="app2">
+      <canvas class="a2-canvas" id="a2-canvas" width="360" height="740"></canvas>
+      <div class="a2-ui" id="a2-ui">
+        <div class="a2-header">
+          <div class="a1-brand">
+            <span>TOS</span>
+            <svg width="16" height="18" viewBox="0 0 24 26"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2.2"/></svg>
+            <span>SESAME FIELD</span>
+          </div>
+          <div class="a1-meta mono" id="a2-order-badge">次 #001</div>
+        </div>
+
+        <div class="a2-stage-hud" id="a2-stage">
+          <div class="a2-top-plates">
+            <div class="a2-plate">
+              <div class="a2-plate-k">田楽豆腐 / 本数</div>
+              <div class="a2-plate-v mono" id="a2-qty">1本</div>
+            </div>
+            <div class="a2-plate" style="text-align:right;">
+              <div class="a2-plate-k">合計金額</div>
+              <div class="a2-plate-v mono" id="a2-total">¥500</div>
+            </div>
+          </div>
+          <div class="a2-qty-bar">
+            <button class="a2-round-btn" id="a2-minus" type="button">−</button>
+            <div class="a2-swipe-tag">粒子場タップで波紋 / スワイプで本数</div>
+            <button class="a2-round-btn" id="a2-plus" type="button">+</button>
+          </div>
+        </div>
+
+        <div class="a2-demo" id="a2-demo"></div>
+
+        <div class="a2-pay-wrap">
+          <div class="a2-pay-title">受け取った額（選択必須）</div>
+          <div class="a2-pay-grid" id="a2-pay-grid"></div>
+        </div>
+
+        <div class="a2-bottom">
+          <div class="a2-status-card" id="a2-status-card">
+            <div class="a2-st-left">
+              <div id="a2-st-title">受取額を選択</div>
+              <div class="mono" id="a2-st-sub">受取: —</div>
+            </div>
+            <div class="a2-st-right mono" id="a2-change">—</div>
+          </div>
+          <button class="a2-buy-btn idle" id="a2-buy" type="button">受取額を選択</button>
+        </div>
+      </div>
+
+      <div class="a2-receipt-hud" id="a2-receipt">
+        <div class="a2-rec-top">
+          <span style="font-size:12px;font-weight:900;letter-spacing:1px;">粒子解放 / 整理番号生成</span>
+          <span class="mono" style="font-size:18px;font-weight:900;" id="a2-rec-no-top">#001</span>
+        </div>
+        <div class="a2-rec-card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:11px;color:#D18C53;font-weight:800;">整理番号</span>
+            <span class="mono" style="font-size:40px;font-weight:900;color:#FFE8A9;" id="a2-rec-no">#001</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;border-top:1px solid #635954;padding-top:10px;">
+            <span id="a2-rec-qty">田楽豆腐 1本</span>
+            <span class="mono" style="color:#FFE8A9;" id="a2-rec-change">お釣り ¥0</span>
+          </div>
+          <div style="font-size:11px;color:#D18C53;" id="a2-rec-demo">客層: 未入力</div>
+          <button class="a1-next-btn" style="height:54px;font-size:16px;" id="a2-next" type="button">次の会計へ（粒子再集合）</button>
+        </div>
+      </div>
+
+      <div class="keypad-overlay" id="a2-keypad"></div>
+    </div>
+  </section>
+
+  <!-- =======================================================
+       案03: 円環ダイヤル（余白と回転）
+       ======================================================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2 class="concept-title">03 / TOFU ORBIT DIAL</h2>
+      <p class="concept-desc">余白の中央に立方体の豆腐を据え、内環の回転ドラッグで本数、外環の弧で受取額を同時に操ります。合計とお釣りを上下に固定し、スライダーの点灯で購入可否が一目で分かります。</p>
+    </div>
+    <div class="phone" id="app3">
+      <div class="a3-top">
+        <div class="a3-brand-col">
+          <span class="a3-kicker">TOS / ORBIT POS</span>
+          <span class="a3-brand">Are y<svg width="13" height="15" viewBox="0 0 24 26"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2.2"/></svg>u Tofu?</span>
+        </div>
+        <div class="a3-total-col">
+          <div class="a3-total-val mono" id="a3-total">¥500</div>
+          <div class="a3-total-sub mono" id="a3-qty-sub">田楽豆腐 × 1本 / 次 #001</div>
+        </div>
+      </div>
+
+      <div class="a3-orbit-stage" id="a3-orbit-stage">
+        <svg class="a3-orbit-svg" id="a3-svg" viewBox="0 0 360 356"></svg>
+        <div class="a3-center-ctrls">
+          <button class="a3-mini-step" id="a3-minus" type="button">−</button>
+          <span class="a3-dial-hint">内環ドラッグで本数 / 外環タップで受取額</span>
+          <button class="a3-mini-step" id="a3-plus" type="button">+</button>
+        </div>
+      </div>
+
+      <div class="a3-demo" id="a3-demo"></div>
+
+      <div class="a3-footer">
+        <div class="a3-readout">
+          <div class="a3-recv-box">
+            <span class="a3-small-k">受取額</span>
+            <span class="a3-recv-val mono" id="a3-recv">未選択</span>
+          </div>
+          <div class="a3-change-box">
+            <span class="a3-small-k" id="a3-change-k">お釣り</span>
+            <div class="a3-change-val mono idle" id="a3-change">受取額を選択</div>
+          </div>
+        </div>
+
+        <div class="a3-slider-track idle" id="a3-slider">
+          <div class="a3-slider-fill" id="a3-slider-fill"></div>
+          <div class="a3-knob" id="a3-knob">
+            <svg width="20" height="22" viewBox="0 0 24 26"><polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/><polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2"/><polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2.2"/></svg>
+          </div>
+          <span class="a3-slider-label" id="a3-slider-label">外環から受取額を選択</span>
+        </div>
+      </div>
+
+      <div class="a3-receipt" id="a3-receipt">
+        <div style="text-align:center;">
+          <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#B66427;">CHARCOAL GRILLED TOFU</div>
+          <div style="font-size:16px;font-weight:900;margin-top:4px;">会計完了</div>
+        </div>
+        <div class="a3-stamp">
+          <span class="a3-stamp-k">整理番号</span>
+          <span class="a3-stamp-no mono" id="a3-rec-no">#001</span>
+          <span class="mono" style="font-size:12px;font-weight:800;color:#503225;margin-top:4px;" id="a3-rec-qty">田楽豆腐 1本</span>
+        </div>
+        <div style="width:100%;border-top:2px solid #2E2018;border-bottom:2px solid #2E2018;padding:14px 0;display:flex;justify-content:space-between;align-items:baseline;">
+          <span style="font-size:12px;font-weight:800;color:#635954;">お釣り</span>
+          <span class="mono" style="font-size:36px;font-weight:900;color:#2E2018;" id="a3-rec-change">¥0</span>
+        </div>
+        <div style="font-size:12px;color:#635954;font-weight:700;" id="a3-rec-demo">客層: 未入力</div>
+        <button class="a1-next-btn" style="width:100%;border-radius:36px;height:60px;" id="a3-next" type="button">次の会計へ</button>
+      </div>
+
+      <div class="keypad-overlay" id="a3-keypad"></div>
+    </div>
+  </section>
+
+  <!-- =======================================================
+       案04: キネティック・タイポグラフィ & のれん
+       ======================================================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2 class="concept-title">04 / KINETIC ARE YOU TOFU?</h2>
+      <p class="concept-desc">本数や客層に応じて「Are you Tofu?」の文字組みが組み替わり、6枚ののれんを引き下げて受取額を選びます。等幅特大の金額・お釣り表示と反転ボタンで購入可否を迷わず読めます。</p>
+    </div>
+    <div class="phone" id="app4">
+      <div class="a4-kinetic" id="a4-kinetic">
+        <div class="a4-top-line">
+          <span>TOS / KINETIC TYPE</span>
+          <span class="mono" id="a4-order-badge">次 #001</span>
+        </div>
+        <div class="a4-phrase" id="a4-phrase">ARE YOU</div>
+        <div class="a4-tofu-word">
+          <div class="a4-word-run" id="a4-word-run"></div>
+          <div class="a4-qty-badge">
+            <button class="a4-qbtn" id="a4-minus" type="button">−</button>
+            <span class="mono" style="font-size:20px;font-weight:900;min-width:30px;text-align:center;" id="a4-qty">×1</span>
+            <button class="a4-qbtn" id="a4-plus" type="button">+</button>
+          </div>
+        </div>
+        <div class="a4-total-strip">
+          <span style="font-size:11px;font-weight:900;color:#635954;">田楽豆腐 ¥500 / スワイプで本数</span>
+          <span class="a4-total-num mono" id="a4-total">¥500</span>
+        </div>
+      </div>
+
+      <div class="a4-demo" id="a4-demo"></div>
+
+      <div class="a4-noren-stage">
+        <div class="a4-noren-rod">
+          <span>のれんを引く・タップで受取額を選択</span>
+          <span class="mono" id="a4-recv-rod">未選択</span>
+        </div>
+        <div class="a4-noren-row" id="a4-noren-row"></div>
+      </div>
+
+      <div class="a4-lower">
+        <div class="a4-change-row">
+          <div class="a4-change-label">
+            <div id="a4-status-txt">受取額未選択</div>
+            <div class="mono" id="a4-recv-sub">受取: —</div>
+          </div>
+          <div class="a4-change-big mono idle" id="a4-change">のれんを選択</div>
+        </div>
+        <button class="a4-buy-btn idle" id="a4-buy" type="button">
+          <span style="font-size:22px;letter-spacing:1px;" id="a4-buy-txt">購入不可</span>
+          <span style="font-size:11px;font-weight:800;letter-spacing:1px;" id="a4-buy-sub">受取額を選択</span>
+        </button>
+      </div>
+
+      <div class="a4-receipt" id="a4-receipt">
+        <div class="a4-poster-bg"></div>
+        <div class="a4-poster-layer">
+          <div>
+            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#B66427;">YOU ARE TOFU.</div>
+            <div class="a4-poster-type" id="a4-poster-type">ORDER<br>READY</div>
+          </div>
+          <div class="a4-poster-square">
+            <span style="font-size:11px;font-weight:900;letter-spacing:3px;color:#635954;">整理番号</span>
+            <span class="a4-poster-no mono" id="a4-rec-no">#001</span>
+            <span class="mono" style="font-size:13px;font-weight:900;color:#B66427;margin-top:6px;" id="a4-rec-qty">田楽豆腐 1本</span>
+          </div>
+          <div style="color:#F8F7F6;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #FFE8A9;padding-bottom:8px;margin-bottom:8px;">
+              <span style="font-size:12px;font-weight:800;color:#D18C53;">お釣り</span>
+              <span class="mono" style="font-size:38px;font-weight:900;color:#FFE8A9;" id="a4-rec-change">¥0</span>
+            </div>
+            <div style="font-size:11px;color:#D18C53;margin-bottom:12px;" id="a4-rec-demo">客層: 未入力</div>
+            <button class="a1-next-btn" style="width:100%;height:58px;" id="a4-next" type="button">次の会計へ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="keypad-overlay" id="a4-keypad"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const UNIT_PRICE = 500;
+  const DEMO_DEFS = [
+    { key: 'age', label: '年齢', options: ['10代', '20代', '30-40', '50+'] },
+    { key: 'gender', label: '性別', options: ['男', '女', '他'] },
+    { key: 'group', label: '集団', options: ['1人', '2人', '3+'] }
+  ];
+  const PAY_OPTS = [
+    { id: 'exact', label: 'ちょうど', short: '丁度', sub: 'EXACT' },
+    { id: 1000, label: '¥1,000', short: '千円', sub: '1,000' },
+    { id: 2000, label: '¥2,000', short: '二千', sub: '2,000' },
+    { id: 5000, label: '¥5,000', short: '五千', sub: '5,000' },
+    { id: 10000, label: '¥10,000', short: '一万', sub: '10,000' },
+    { id: 'custom', label: '手入力', short: '手入力', sub: 'INPUT' }
+  ];
+
+  function yen(n) {
+    return '¥' + Number(n).toLocaleString('ja-JP');
+  }
+
+  function pad3(n) {
+    return '#' + String(n).padStart(3, '0');
+  }
+
+  function createState() {
+    return {
+      qty: 1,
+      demo: { age: null, gender: null, group: null },
+      payMode: null,
+      customAmount: 0,
+      orderNo: 1,
+      completed: false
+    };
+  }
+
+  function calc(st) {
+    const total = st.qty * UNIT_PRICE;
+    let received = null;
+    if (st.payMode === 'exact') received = total;
+    else if (st.payMode === 'custom') received = st.customAmount;
+    else if (typeof st.payMode === 'number') received = st.payMode;
+
+    const status = received === null ? 'idle' : (received < total ? 'short' : 'ready');
+    const change = status === 'ready' ? received - total : null;
+    const shortage = status === 'short' ? total - received : null;
+    return { total, received, status, change, shortage };
+  }
+
+  function formatDemo(demo) {
+    const parts = [demo.age, demo.gender, demo.group].filter(Boolean);
+    return parts.length ? parts.join(' / ') : '未入力';
+  }
+
+  function resetForNext(st) {
+    st.qty = 1;
+    st.demo = { age: null, gender: null, group: null };
+    st.payMode = null;
+    st.customAmount = 0;
+    st.completed = false;
+  }
+
+  function bindKeypad(overlayEl, onConfirm) {
+    let buf = '';
+    overlayEl.innerHTML =
+      '<div class="keypad-sheet">' +
+        '<div class="keypad-top">' +
+          '<span class="keypad-label">受取金額を手入力</span>' +
+          '<span class="keypad-val mono" data-kp-val>¥0</span>' +
+        '</div>' +
+        '<div class="keypad-grid">' +
+          ['7','8','9','4','5','6','1','2','3','00','0','BS'].map(k =>
+            '<button type="button" class="kp-btn' + (k === 'BS' ? ' sub' : '') + '" data-k="' + k + '">' + (k === 'BS' ? '削除' : k) + '</button>'
+          ).join('') +
+        '</div>' +
+        '<div class="keypad-actions">' +
+          '<button type="button" class="kp-cancel" data-kp-cancel>キャンセル</button>' +
+          '<button type="button" class="kp-ok" data-kp-ok>この金額で決定</button>' +
+        '</div>' +
+      '</div>';
+
+    const valEl = overlayEl.querySelector('[data-kp-val]');
+    function refresh() {
+      const num = buf === '' ? 0 : parseInt(buf, 10);
+      valEl.textContent = yen(num);
+    }
+
+    overlayEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-k]');
+      if (btn) {
+        const k = btn.getAttribute('data-k');
+        if (k === 'BS') {
+          buf = buf.slice(0, -1);
+        } else {
+          if (buf.length < 6) {
+            buf = (buf + k).replace(/^0+/, '');
+          }
+        }
+        refresh();
+        return;
+      }
+      if (e.target.closest('[data-kp-cancel]') || e.target === overlayEl) {
+        overlayEl.classList.remove('open');
+        return;
+      }
+      if (e.target.closest('[data-kp-ok]')) {
+        const num = buf === '' ? 0 : parseInt(buf, 10);
+        overlayEl.classList.remove('open');
+        if (num > 0) onConfirm(num);
+      }
+    });
+
+    return {
+      open(initialVal) {
+        buf = initialVal > 0 ? String(initialVal) : '';
+        refresh();
+        overlayEl.classList.add('open');
+      }
+    };
+  }
+
+  function addHorizontalSwipe(el, onDelta) {
+    let startX = null;
+    let accum = 0;
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return;
+      startX = e.clientX;
+      accum = 0;
+      el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (startX === null) return;
+      const dx = e.clientX - startX;
+      const step = Math.trunc((dx - accum) / 36);
+      if (step !== 0) {
+        accum += step * 36;
+        onDelta(step);
+      }
+    });
+    function end() { startX = null; }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+  }
+
+  function tofuCubeSvg(size) {
+    const h = Math.round(size * 1.08);
+    return '<svg width="' + size + '" height="' + h + '" viewBox="0 0 24 26" style="display:inline-block;flex-shrink:0;">' +
+      '<polygon points="12,1 23,7 12,13 1,7" fill="#FFE8A9" stroke="#2E2018" stroke-width="2.2"/>' +
+      '<polygon points="1,7 12,13 12,25 1,19" fill="#F8F7F6" stroke="#2E2018" stroke-width="2.2"/>' +
+      '<polygon points="23,7 12,13 12,25 23,19" fill="#B66427" stroke="#2E2018" stroke-width="2.2"/>' +
+      '<circle cx="12" cy="7" r="1.4" fill="#2E2018"/>' +
+      '<circle cx="9" cy="6" r="1" fill="#503225"/>' +
+      '<circle cx="15" cy="8" r="1" fill="#503225"/>' +
+      '</svg>';
+  }
+
+  /* =========================================================
+     案01: BRUTAL SWISS GRID
+     ========================================================= */
+  (function initApp1() {
+    const st = createState();
+    const elBadge = document.getElementById('a1-order-badge');
+    const elQty = document.getElementById('a1-qty');
+    const elTotal = document.getElementById('a1-total');
+    const elFormula = document.getElementById('a1-formula');
+    const elDemo = document.getElementById('a1-demo');
+    const elPayGrid = document.getElementById('a1-pay-grid');
+    const elPanel = document.getElementById('a1-state-panel');
+    const elStateLabel = document.getElementById('a1-state-label');
+    const elRecvLabel = document.getElementById('a1-recv-label');
+    const elChange = document.getElementById('a1-change');
+    const elBuy = document.getElementById('a1-buy');
+    const elBuyHint = document.getElementById('a1-buy-hint');
+    const elBuyText = document.getElementById('a1-buy-text');
+    const elReceipt = document.getElementById('a1-receipt');
+
+    const keypad = bindKeypad(document.getElementById('a1-keypad'), (num) => {
+      st.payMode = 'custom';
+      st.customAmount = num;
+      render();
+    });
+
+    // Build demo rows
+    DEMO_DEFS.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'a1-demo-row';
+      row.innerHTML = '<span class="a1-demo-key">' + d.label + '</span>';
+      d.options.forEach(opt => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'a1-demo-btn';
+        b.textContent = opt;
+        b.dataset.k = d.key;
+        b.dataset.v = opt;
+        b.addEventListener('click', () => {
+          st.demo[d.key] = st.demo[d.key] === opt ? null : opt;
+          render();
+        });
+        row.appendChild(b);
+      });
+      elDemo.appendChild(row);
+    });
+
+    // Build pay grid
+    PAY_OPTS.forEach(p => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'a1-pay-btn';
+      b.dataset.id = String(p.id);
+      b.innerHTML = '<span class="a1-pay-k">' + p.sub + '</span><span class="a1-pay-v mono">' + p.label + '</span>';
+      b.addEventListener('click', () => {
+        if (p.id === 'custom') {
+          keypad.open(st.customAmount);
+        } else {
+          st.payMode = p.id;
+          render();
+        }
+      });
+      elPayGrid.appendChild(b);
+    });
+
+    function changeQty(delta) {
+      st.qty = Math.max(1, Math.min(99, st.qty + delta));
+      render();
+    }
+
+    document.getElementById('a1-minus').addEventListener('click', () => changeQty(-1));
+    document.getElementById('a1-plus').addEventListener('click', () => changeQty(1));
+    addHorizontalSwipe(document.getElementById('a1-qty-swipe'), (step) => changeQty(step));
+
+    function completePurchase() {
+      const c = calc(st);
+      if (c.status !== 'ready') return;
+      st.completed = true;
+      document.getElementById('a1-rec-no').textContent = pad3(st.orderNo);
+      document.getElementById('a1-rec-qty').textContent = st.qty + '本 / ' + yen(c.total);
+      document.getElementById('a1-rec-change').textContent = yen(c.change);
+      document.getElementById('a1-rec-demo').textContent = formatDemo(st.demo);
+      st.orderNo += 1;
+      elReceipt.classList.add('open');
+    }
+
+    elBuy.addEventListener('click', completePurchase);
+    addHorizontalSwipe(elBuy, (step) => {
+      if (step > 0) completePurchase();
+    });
+
+    document.getElementById('a1-next').addEventListener('click', () => {
+      resetForNext(st);
+      elReceipt.classList.remove('open');
+      render();
+    });
+
+    function render() {
+      const c = calc(st);
+      elBadge.textContent = '次 ' + pad3(st.orderNo) + ' / 田楽 ¥500';
+      elQty.textContent = String(st.qty).padStart(2, '0');
+      elTotal.textContent = yen(c.total);
+      elFormula.textContent = '田楽豆腐 ' + st.qty + '本 × ¥500';
+
+      elDemo.querySelectorAll('.a1-demo-btn').forEach(b => {
+        b.classList.toggle('active', st.demo[b.dataset.k] === b.dataset.v);
+      });
+
+      elPayGrid.querySelectorAll('.a1-pay-btn').forEach(b => {
+        const active = String(st.payMode) === b.dataset.id;
+        b.classList.toggle('active', active);
+        if (b.dataset.id === 'custom') {
+          b.querySelector('.a1-pay-v').textContent = st.payMode === 'custom' ? yen(st.customAmount) : '手入力';
+        }
+      });
+
+      elPanel.className = 'a1-state-panel ' + c.status;
+      elBuy.className = 'a1-buy-slab ' + c.status;
+
+      if (c.status === 'idle') {
+        elStateLabel.textContent = 'お釣り / 受取未選択';
+        elRecvLabel.textContent = '受取: —';
+        elChange.textContent = '—';
+        elBuyHint.textContent = '上の受取額を選ぶと購入できます';
+        elBuyText.textContent = '購入不可';
+      } else if (c.status === 'short') {
+        elStateLabel.textContent = '金額不足';
+        elRecvLabel.textContent = '受取: ' + yen(c.received);
+        elChange.textContent = '不足 ' + yen(c.shortage);
+        elBuyHint.textContent = '受取額が合計に達していません';
+        elBuyText.textContent = '購入不可';
+      } else {
+        elStateLabel.textContent = 'お釣り';
+        elRecvLabel.textContent = '受取: ' + yen(c.received);
+        elChange.textContent = yen(c.change);
+        elBuyHint.textContent = 'タップまたは右スワイプで確定';
+        elBuyText.textContent = '購入確定';
+      }
+    }
+
+    render();
+  })();
+
+  /* =========================================================
+     案02: SESAME PARTICLE FIELD (CANVAS GENERATIVE)
+     ========================================================= */
+  (function initApp2() {
+    const st = createState();
+    const canvas = document.getElementById('a2-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = 360, H = 740;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+
+    const elBadge = document.getElementById('a2-order-badge');
+    const elQty = document.getElementById('a2-qty');
+    const elTotal = document.getElementById('a2-total');
+    const elDemo = document.getElementById('a2-demo');
+    const elPayGrid = document.getElementById('a2-pay-grid');
+    const elStatusCard = document.getElementById('a2-status-card');
+    const elStTitle = document.getElementById('a2-st-title');
+    const elStSub = document.getElementById('a2-st-sub');
+    const elChange = document.getElementById('a2-change');
+    const elBuy = document.getElementById('a2-buy');
+    const elUi = document.getElementById('a2-ui');
+    const elReceipt = document.getElementById('a2-receipt');
+
+    // Offscreen text sampler for order number particles
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = W;
+    offCanvas.height = 300;
+    const offCtx = offCanvas.getContext('2d');
+
+    const COUNT = 320;
+    const particles = [];
+    for (let i = 0; i < COUNT; i++) {
+      const rx = Math.random() * W;
+      const ry = Math.random() * H;
+      particles.push({
+        x: rx, y: ry,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        tx: rx, ty: ry,
+        size: 2.2 + Math.random() * 2.4,
+        rot: Math.random() * Math.PI,
+        seed: Math.random() * 1000,
+        kind: i % 9 === 0 ? 'amber' : (i % 5 === 0 ? 'miso' : 'sesame')
+      });
+    }
+
+    let mode = 'pos'; // 'pos' | 'burst' | 'number'
+    let burstTimer = 0;
+    let numberTargets = [];
+    let tofuRects = [];
+
+    function computeTofuLayout() {
+      const count = Math.min(st.qty, 9);
+      const cols = count === 1 ? 1 : (count <= 4 ? 2 : 3);
+      const rows = Math.ceil(count / cols);
+      const boxW = cols === 1 ? 104 : (cols === 2 ? 68 : 48);
+      const boxH = rows === 1 ? 84 : (rows === 2 ? 56 : 40);
+      const gap = 12;
+      const totalW = cols * boxW + (cols - 1) * gap;
+      const totalH = rows * boxH + (rows - 1) * gap;
+      const startX = (W - totalW) / 2;
+      const centerY = 166;
+      const startY = centerY - totalH / 2;
+      tofuRects = [];
+      for (let i = 0; i < count; i++) {
+        const c = i % cols;
+        const r = Math.floor(i / cols);
+        tofuRects.push({
+          x: startX + c * (boxW + gap),
+          y: startY + r * (boxH + gap),
+          w: boxW,
+          h: boxH
+        });
+      }
+      assignPosTargets();
+    }
+
+    function assignPosTargets() {
+      const c = calc(st);
+      const splitY = c.status === 'ready' ? 400 : (c.status === 'short' ? 470 : 535);
+      for (let i = 0; i < COUNT; i++) {
+        const p = particles[i];
+        if (i < 150 && tofuRects.length > 0) {
+          // Form crisp sesame frames around the white tofu squares
+          const rect = tofuRects[i % tofuRects.length];
+          const perim = (rect.w + rect.h) * 2;
+          const pos = ((i * 37.3) % perim);
+          const jitter = ((i % 7) - 3) * 2.2;
+          let gx, gy;
+          if (pos < rect.w) {
+            gx = rect.x + pos; gy = rect.y - 4 + jitter;
+          } else if (pos < rect.w + rect.h) {
+            gx = rect.x + rect.w + 4 + jitter; gy = rect.y + (pos - rect.w);
+          } else if (pos < rect.w * 2 + rect.h) {
+            gx = rect.x + rect.w - (pos - rect.w - rect.h); gy = rect.y + rect.h + 4 + jitter;
+          } else {
+            gx = rect.x - 4 + jitter; gy = rect.y + rect.h - (pos - rect.w * 2 - rect.h);
+          }
+          p.tx = gx;
+          p.ty = gy;
+        } else {
+          // Background sesame field + lower burnt miso band
+          const inLower = i >= 210;
+          const angle = (i * 137.508) * Math.PI / 180;
+          if (inLower) {
+            p.tx = ((i * 53) % (W - 20)) + 10;
+            p.ty = splitY + ((i * 71) % (H - splitY - 10));
+          } else {
+            const rx = ((i * 97) % (W - 20)) + 10;
+            const ry = 48 + ((i * 61) % 330);
+            p.tx = rx + Math.cos(angle) * 6;
+            p.ty = ry + Math.sin(angle) * 6;
+          }
+        }
+      }
+    }
+
+    function sampleOrderNumber(text) {
+      offCtx.clearRect(0, 0, W, 300);
+      offCtx.fillStyle = '#000';
+      offCtx.font = '900 124px "SFMono-Regular", Menlo, sans-serif';
+      offCtx.textAlign = 'center';
+      offCtx.textBaseline = 'middle';
+      offCtx.fillText(text, W / 2, 150);
+      const data = offCtx.getImageData(0, 0, W, 300).data;
+      const pts = [];
+      for (let y = 0; y < 300; y += 5) {
+        for (let x = 0; x < W; x += 5) {
+          if (data[(y * W + x) * 4 + 3] > 128) {
+            pts.push({ x, y: y + 110 });
+          }
+        }
+      }
+      numberTargets = pts;
+      for (let i = 0; i < COUNT; i++) {
+        if (pts.length > 0) {
+          const pt = pts[Math.floor((i / COUNT) * pts.length)];
+          particles[i].tx = pt.x + (Math.random() - 0.5) * 3;
+          particles[i].ty = pt.y + (Math.random() - 0.5) * 3;
+        }
+      }
+    }
+
+    function impulseAt(cx, cy, power) {
+      for (let i = 0; i < COUNT; i++) {
+        const p = particles[i];
+        const dx = p.x - cx;
+        const dy = p.y - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 160 || power > 12) {
+          const f = power / Math.max(dist * 0.04, 1);
+          p.vx += (dx / dist) * f;
+          p.vy += (dy / dist) * f;
+        }
+      }
+    }
+
+    function tick(t) {
+      const c = calc(st);
+      ctx.fillStyle = '#F8F7F6';
+      ctx.fillRect(0, 0, W, H);
+
+      // Lower burnt miso field reflecting poster & payment state
+      const bandTop = mode === 'pos'
+        ? (c.status === 'ready' ? 392 : (c.status === 'short' ? 465 : 535))
+        : 450;
+      ctx.fillStyle = c.status === 'ready' ? '#503225' : '#3C281E';
+      ctx.fillRect(0, bandTop, W, H - bandTop);
+
+      // Subtle charcoal grill bars in background
+      ctx.strokeStyle = 'rgba(46, 32, 24, 0.07)';
+      ctx.lineWidth = 1;
+      for (let gy = 60; gy < bandTop; gy += 22) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(W, gy);
+        ctx.stroke();
+      }
+
+      // Draw negative-space white tofu squares
+      if (mode === 'pos') {
+        tofuRects.forEach((r, idx) => {
+          ctx.fillStyle = '#F8F7F6';
+          ctx.fillRect(r.x, r.y, r.w, r.h);
+          ctx.strokeStyle = '#2E2018';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(r.x, r.y, r.w, r.h);
+          // Tofu top gleam + miso dot
+          ctx.fillStyle = '#FFE8A9';
+          ctx.fillRect(r.x + 4, r.y + 4, r.w - 8, Math.max(8, r.h * 0.28));
+          ctx.fillStyle = '#B66427';
+          ctx.fillRect(r.x + r.w * 0.25, r.y + r.h * 0.48, r.w * 0.5, Math.max(6, r.h * 0.2));
+        });
+      }
+
+      if (mode === 'burst') {
+        burstTimer -= 1;
+        if (burstTimer <= 0) {
+          mode = 'number';
+        }
+      }
+
+      const spring = mode === 'burst' ? 0.002 : (mode === 'number' ? 0.11 : 0.065);
+      const damp = mode === 'burst' ? 0.94 : 0.82;
+
+      for (let i = 0; i < COUNT; i++) {
+        const p = particles[i];
+        const driftX = mode === 'pos' ? Math.sin(t * 0.002 + p.seed) * 0.35 : 0;
+        const driftY = mode === 'pos' ? Math.cos(t * 0.0023 + p.seed) * 0.35 : 0;
+        p.vx = (p.vx + (p.tx - p.x) * spring + driftX) * damp;
+        p.vy = (p.vy + (p.ty - p.y) * spring + driftY) * damp;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const inDark = p.y > bandTop;
+        if (mode === 'number') {
+          ctx.fillStyle = i % 5 === 0 ? '#B66427' : '#2E2018';
+        } else if (inDark) {
+          ctx.fillStyle = p.kind === 'amber' ? '#FFE8A9' : '#D18C53';
+        } else {
+          ctx.fillStyle = p.kind === 'amber' ? '#B66427' : (p.kind === 'miso' ? '#503225' : '#2E2018');
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot + p.vx * 0.08);
+        // Sesame seed oval
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size * 1.15, p.size * 0.62, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    const keypad = bindKeypad(document.getElementById('a2-keypad'), (num) => {
+      st.payMode = 'custom';
+      st.customAmount = num;
+      render();
+      impulseAt(180, 440, 8);
+    });
+
+    DEMO_DEFS.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'a2-demo-row';
+      row.innerHTML = '<span class="a2-demo-label">' + d.label + '</span>';
+      d.options.forEach(opt => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'a2-chip';
+        b.textContent = opt;
+        b.dataset.k = d.key;
+        b.dataset.v = opt;
+        b.addEventListener('click', () => {
+          st.demo[d.key] = st.demo[d.key] === opt ? null : opt;
+          render();
+        });
+        row.appendChild(b);
+      });
+      elDemo.appendChild(row);
+    });
+
+    PAY_OPTS.forEach(p => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'a2-pay-btn mono';
+      b.dataset.id = String(p.id);
+      b.textContent = p.label;
+      b.addEventListener('click', () => {
+        if (p.id === 'custom') {
+          keypad.open(st.customAmount);
+        } else {
+          st.payMode = p.id;
+          render();
+          impulseAt(180, 440, 7);
+        }
+      });
+      elPayGrid.appendChild(b);
+    });
+
+    function changeQty(delta) {
+      st.qty = Math.max(1, Math.min(99, st.qty + delta));
+      computeTofuLayout();
+      impulseAt(180, 166, 6);
+      render();
+    }
+
+    document.getElementById('a2-minus').addEventListener('click', () => changeQty(-1));
+    document.getElementById('a2-plus').addEventListener('click', () => changeQty(1));
+
+    const elStage = document.getElementById('a2-stage');
+    elStage.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return;
+      const rect = canvas.getBoundingClientRect();
+      impulseAt(e.clientX - rect.left, e.clientY - rect.top, 9);
+    });
+    addHorizontalSwipe(elStage, (step) => changeQty(step));
+
+    elBuy.addEventListener('click', () => {
+      const c = calc(st);
+      if (c.status !== 'ready') return;
+      const noStr = pad3(st.orderNo);
+      document.getElementById('a2-rec-no').textContent = noStr;
+      document.getElementById('a2-rec-no-top').textContent = noStr;
+      document.getElementById('a2-rec-qty').textContent = '田楽豆腐 ' + st.qty + '本 / ' + yen(c.total);
+      document.getElementById('a2-rec-change').textContent = 'お釣り ' + yen(c.change);
+      document.getElementById('a2-rec-demo').textContent = '客層: ' + formatDemo(st.demo);
+      st.orderNo += 1;
+
+      mode = 'burst';
+      burstTimer = 24;
+      impulseAt(180, 260, 26);
+      sampleOrderNumber(noStr);
+      elUi.style.display = 'none';
+      elReceipt.classList.add('open');
+    });
+
+    document.getElementById('a2-next').addEventListener('click', () => {
+      resetForNext(st);
+      mode = 'pos';
+      elReceipt.classList.remove('open');
+      elUi.style.display = 'flex';
+      computeTofuLayout();
+      impulseAt(180, 300, 10);
+      render();
+    });
+
+    function render() {
+      const c = calc(st);
+      elBadge.textContent = '次 ' + pad3(st.orderNo);
+      elQty.textContent = st.qty + '本';
+      elTotal.textContent = yen(c.total);
+      assignPosTargets();
+
+      elDemo.querySelectorAll('.a2-chip').forEach(b => {
+        b.classList.toggle('active', st.demo[b.dataset.k] === b.dataset.v);
+      });
+
+      elPayGrid.querySelectorAll('.a2-pay-btn').forEach(b => {
+        b.classList.toggle('active', String(st.payMode) === b.dataset.id);
+        if (b.dataset.id === 'custom') {
+          b.textContent = st.payMode === 'custom' ? yen(st.customAmount) : '手入力';
+        }
+      });
+
+      elStatusCard.className = 'a2-status-card ' + (c.status === 'idle' ? '' : c.status);
+      elBuy.className = 'a2-buy-btn ' + c.status;
+
+      if (c.status === 'idle') {
+        elStTitle.textContent = 'お釣り（受取未選択）';
+        elStSub.textContent = '受取: —';
+        elChange.textContent = '—';
+        elBuy.textContent = '受取額を選択';
+      } else if (c.status === 'short') {
+        elStTitle.textContent = '金額不足';
+        elStSub.textContent = '受取: ' + yen(c.received);
+        elChange.textContent = '不足 ' + yen(c.shortage);
+        elBuy.textContent = '金額不足（購入不可）';
+      } else {
+        elStTitle.textContent = 'お釣り';
+        elStSub.textContent = '受取: ' + yen(c.received);
+        elChange.textContent = yen(c.change);
+        elBuy.textContent = '購入確定（粒子解放）';
+      }
+    }
+
+    computeTofuLayout();
+    render();
+    requestAnimationFrame(tick);
+  })();
+
+  /* =========================================================
+     案03: TOFU ORBIT DIAL
+     ========================================================= */
+  (function initApp3() {
+    const st = createState();
+    const svg = document.getElementById('a3-svg');
+    const elTotal = document.getElementById('a3-total');
+    const elQtySub = document.getElementById('a3-qty-sub');
+    const elDemo = document.getElementById('a3-demo');
+    const elRecv = document.getElementById('a3-recv');
+    const elChangeK = document.getElementById('a3-change-k');
+    const elChange = document.getElementById('a3-change');
+    const elSlider = document.getElementById('a3-slider');
+    const elSliderFill = document.getElementById('a3-slider-fill');
+    const elKnob = document.getElementById('a3-knob');
+    const elSliderLabel = document.getElementById('a3-slider-label');
+    const elReceipt = document.getElementById('a3-receipt');
+
+    const CX = 180, CY = 172;
+    const NS = 'http://www.w3.org/2000/svg';
+
+    const keypad = bindKeypad(document.getElementById('a3-keypad'), (num) => {
+      st.payMode = 'custom';
+      st.customAmount = num;
+      render();
+    });
+
+    DEMO_DEFS.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'a3-demo-row';
+      row.innerHTML = '<span class="a3-demo-k">' + d.label + '</span>';
+      d.options.forEach(opt => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'a3-pill';
+        b.textContent = opt;
+        b.dataset.k = d.key;
+        b.dataset.v = opt;
+        b.addEventListener('click', () => {
+          st.demo[d.key] = st.demo[d.key] === opt ? null : opt;
+          render();
+        });
+        row.appendChild(b);
+      });
+      elDemo.appendChild(row);
+    });
+
+    function polar(r, deg) {
+      const rad = (deg - 90) * Math.PI / 180;
+      return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+    }
+
+    function arcSectorPath(rIn, rOut, a1, a2) {
+      const p1 = polar(rOut, a1);
+      const p2 = polar(rOut, a2);
+      const p3 = polar(rIn, a2);
+      const p4 = polar(rIn, a1);
+      const large = (a2 - a1) > 180 ? 1 : 0;
+      return [
+        'M', p1.x.toFixed(1), p1.y.toFixed(1),
+        'A', rOut, rOut, 0, large, 1, p2.x.toFixed(1), p2.y.toFixed(1),
+        'L', p3.x.toFixed(1), p3.y.toFixed(1),
+        'A', rIn, rIn, 0, large, 0, p4.x.toFixed(1), p4.y.toFixed(1),
+        'Z'
+      ].join(' ');
+    }
+
+    function svgEl(tag, attrs, text) {
+      const el = document.createElementNS(NS, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      if (text !== undefined) el.textContent = text;
+      return el;
+    }
+
+    function drawOrbit() {
+      svg.innerHTML = '';
+
+      // Outer faint grill circles
+      svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 160, fill: 'none', stroke: 'rgba(46,32,24,0.12)', 'stroke-width': 1, 'stroke-dasharray': '3 4' }));
+
+      // Outer 6 payment arc sectors (r: 112..154)
+      PAY_OPTS.forEach((p, idx) => {
+        const a1 = idx * 60 + 3;
+        const a2 = (idx + 1) * 60 - 3;
+        const mid = (a1 + a2) / 2;
+        const active = String(st.payMode) === String(p.id);
+        const g = svgEl('g', { style: 'cursor:pointer;' });
+        const path = svgEl('path', {
+          d: arcSectorPath(112, 154, a1, a2),
+          fill: active ? '#B66427' : '#F8F7F6',
+          stroke: '#2E2018',
+          'stroke-width': active ? 2.5 : 1.5
+        });
+        g.appendChild(path);
+
+        const lp = polar(133, mid);
+        const txtLabel = (p.id === 'custom' && st.payMode === 'custom') ? yen(st.customAmount) : p.label;
+        const t = svgEl('text', {
+          x: lp.x.toFixed(1),
+          y: (lp.y + 4).toFixed(1),
+          'text-anchor': 'middle',
+          fill: active ? '#FFE8A9' : '#2E2018',
+          'font-size': txtLabel.length > 6 ? '10' : '12',
+          'font-weight': '900'
+        }, txtLabel);
+        g.appendChild(t);
+
+        g.addEventListener('click', () => {
+          if (p.id === 'custom') keypad.open(st.customAmount);
+          else {
+            st.payMode = p.id;
+            render();
+          }
+        });
+        svg.appendChild(g);
+      });
+
+      // Inner qty dial ring (r: 72..100)
+      svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 86, fill: 'none', stroke: '#EAE7E4', 'stroke-width': 22 }));
+      svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 97, fill: 'none', stroke: '#2E2018', 'stroke-width': 1.5 }));
+      svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 75, fill: 'none', stroke: '#2E2018', 'stroke-width': 1.5 }));
+
+      // Active qty arc (up to 12 ticks around circle)
+      const visualQty = Math.min(st.qty, 12);
+      const degEnd = visualQty * 30;
+      if (visualQty >= 12) {
+        svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 86, fill: 'none', stroke: '#503225', 'stroke-width': 18 }));
+      } else {
+        const pStart = polar(86, 0);
+        const pEnd = polar(86, degEnd);
+        const large = degEnd > 180 ? 1 : 0;
+        svg.appendChild(svgEl('path', {
+          d: 'M ' + pStart.x.toFixed(1) + ' ' + pStart.y.toFixed(1) + ' A 86 86 0 ' + large + ' 1 ' + pEnd.x.toFixed(1) + ' ' + pEnd.y.toFixed(1),
+          fill: 'none',
+          stroke: '#503225',
+          'stroke-width': 18,
+          'stroke-linecap': 'round'
+        }));
+      }
+
+      // 12 tick dots
+      for (let i = 1; i <= 12; i++) {
+        const tp = polar(86, i * 30);
+        const isOn = i <= visualQty;
+        svg.appendChild(svgEl('circle', {
+          cx: tp.x.toFixed(1),
+          cy: tp.y.toFixed(1),
+          r: i === visualQty ? 6 : 2.2,
+          fill: i === visualQty ? '#FFE8A9' : (isOn ? '#D18C53' : '#635954'),
+          stroke: i === visualQty ? '#2E2018' : 'none',
+          'stroke-width': 2
+        }));
+      }
+
+      // Center isometric tofu cube & skewers
+      const centerG = svgEl('g', { style: 'cursor:pointer;' });
+      centerG.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 64, fill: '#F8F7F6' }));
+      // Skewer sticks matching qty (up to 5 shown)
+      const sticks = Math.min(st.qty, 5);
+      for (let s = 0; s < sticks; s++) {
+        const offset = (s - (sticks - 1) / 2) * 8;
+        centerG.appendChild(svgEl('line', {
+          x1: CX + offset, y1: CY + 12,
+          x2: CX + offset, y2: CY + 54,
+          stroke: '#635954', 'stroke-width': 2.5
+        }));
+      }
+      // Subtle rotation tilt with qty
+      const tilt = ((st.qty - 1) % 12) * 4 - 12;
+      const cubeG = svgEl('g', { transform: 'translate(' + CX + ',' + (CY - 6) + ') rotate(' + tilt + ')' });
+      cubeG.appendChild(svgEl('polygon', { points: '0,-32 30,-16 0,0 -30,-16', fill: '#FFE8A9', stroke: '#2E2018', 'stroke-width': 2.2 }));
+      cubeG.appendChild(svgEl('polygon', { points: '-30,-16 0,0 0,32 -30,16', fill: '#F8F7F6', stroke: '#2E2018', 'stroke-width': 2.2 }));
+      cubeG.appendChild(svgEl('polygon', { points: '30,-16 0,0 0,32 30,16', fill: '#D18C53', stroke: '#2E2018', 'stroke-width': 2.2 }));
+      // Miso glaze on top
+      cubeG.appendChild(svgEl('polygon', { points: '0,-24 19,-14 0,-4 -19,-14', fill: '#503225' }));
+      cubeG.appendChild(svgEl('circle', { cx: -5, cy: -14, r: 1.5, fill: '#FFE8A9' }));
+      cubeG.appendChild(svgEl('circle', { cx: 4, cy: -12, r: 1.3, fill: '#FFE8A9' }));
+      cubeG.appendChild(svgEl('circle', { cx: 1, cy: -17, r: 1.2, fill: '#D18C53' }));
+      centerG.appendChild(cubeG);
+
+      // Quantity readout badge on center bottom
+      centerG.appendChild(svgEl('rect', { x: CX - 24, y: CY + 24, width: 48, height: 22, rx: 11, fill: '#2E2018' }));
+      centerG.appendChild(svgEl('text', {
+        x: CX, y: CY + 39,
+        'text-anchor': 'middle',
+        fill: '#FFE8A9',
+        'font-size': '13',
+        'font-weight': '900'
+      }, st.qty + '本'));
+
+      centerG.addEventListener('click', () => {
+        st.qty = Math.min(99, st.qty + 1);
+        render();
+      });
+      svg.appendChild(centerG);
+    }
+
+    // Inner dial drag rotation
+    let dialDragging = false;
+    let lastSector = null;
+    svg.addEventListener('pointerdown', (e) => {
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left - CX;
+      const y = e.clientY - rect.top - CY;
+      const dist = Math.hypot(x, y);
+      if (dist >= 66 && dist <= 108) {
+        dialDragging = true;
+        svg.setPointerCapture(e.pointerId);
+        const ang = (Math.atan2(y, x) * 180 / Math.PI + 450) % 360;
+        const sec = Math.max(1, Math.min(12, Math.round(ang / 30) || 12));
+        lastSector = sec;
+        st.qty = sec;
+        render();
+      }
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (!dialDragging) return;
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left - CX;
+      const y = e.clientY - rect.top - CY;
+      const ang = (Math.atan2(y, x) * 180 / Math.PI + 450) % 360;
+      const sec = Math.max(1, Math.min(12, Math.round(ang / 30) || 12));
+      if (sec !== lastSector) {
+        // Handle smooth increment across 12 -> 1 or direct dial set
+        let diff = sec - lastSector;
+        if (diff < -6) diff += 12;
+        if (diff > 6) diff -= 12;
+        st.qty = Math.max(1, Math.min(99, st.qty + diff));
+        lastSector = sec;
+        render();
+      }
+    });
+    svg.addEventListener('pointerup', () => { dialDragging = false; });
+    svg.addEventListener('pointercancel', () => { dialDragging = false; });
+
+    document.getElementById('a3-minus').addEventListener('click', () => {
+      st.qty = Math.max(1, st.qty - 1);
+      render();
+    });
+    document.getElementById('a3-plus').addEventListener('click', () => {
+      st.qty = Math.min(99, st.qty + 1);
+      render();
+    });
+
+    // Slide-to-buy (also works on simple tap when ready)
+    let slideStart = null;
+    let slideX = 0;
+    const MAX_SLIDE = 260;
+
+    function completePurchase() {
+      const c = calc(st);
+      if (c.status !== 'ready') return;
+      document.getElementById('a3-rec-no').textContent = pad3(st.orderNo);
+      document.getElementById('a3-rec-qty').textContent = '田楽豆腐 ' + st.qty + '本 / ' + yen(c.total);
+      document.getElementById('a3-rec-change').textContent = yen(c.change);
+      document.getElementById('a3-rec-demo').textContent = '客層: ' + formatDemo(st.demo);
+      st.orderNo += 1;
+      elReceipt.classList.add('open');
+    }
+
+    function resetSliderVisual() {
+      slideX = 0;
+      elKnob.style.transform = 'translateX(0px)';
+      elSliderFill.style.width = '0px';
+    }
+
+    elSlider.addEventListener('pointerdown', (e) => {
+      if (calc(st).status !== 'ready') return;
+      slideStart = e.clientX;
+      slideX = 0;
+      elSlider.setPointerCapture(e.pointerId);
+    });
+    elSlider.addEventListener('pointermove', (e) => {
+      if (slideStart === null) return;
+      slideX = Math.max(0, Math.min(MAX_SLIDE, e.clientX - slideStart));
+      elKnob.style.transform = 'translateX(' + slideX + 'px)';
+      elSliderFill.style.width = (slideX + 28) + 'px';
+    });
+    elSlider.addEventListener('pointerup', () => {
+      if (slideStart === null) return;
+      const moved = slideX;
+      slideStart = null;
+      resetSliderVisual();
+      // Tap (<12px) or swipe (>140px) completes
+      if (moved < 12 || moved > 140) {
+        completePurchase();
+      }
+    });
+    elSlider.addEventListener('pointercancel', () => {
+      slideStart = null;
+      resetSliderVisual();
+    });
+
+    document.getElementById('a3-next').addEventListener('click', () => {
+      resetForNext(st);
+      elReceipt.classList.remove('open');
+      render();
+    });
+
+    function render() {
+      const c = calc(st);
+      elTotal.textContent = yen(c.total);
+      elQtySub.textContent = '田楽豆腐 × ' + st.qty + '本 / 次 ' + pad3(st.orderNo);
+
+      elDemo.querySelectorAll('.a3-pill').forEach(b => {
+        b.classList.toggle('active', st.demo[b.dataset.k] === b.dataset.v);
+      });
+
+      elSlider.className = 'a3-slider-track ' + c.status;
+      if (c.status === 'idle') {
+        elRecv.textContent = '未選択';
+        elChangeK.textContent = 'お釣り';
+        elChange.className = 'a3-change-val mono idle';
+        elChange.textContent = '受取額を選択';
+        elSliderLabel.textContent = '外環から受取額を選択';
+      } else if (c.status === 'short') {
+        elRecv.textContent = yen(c.received);
+        elChangeK.textContent = '不足額';
+        elChange.className = 'a3-change-val mono short';
+        elChange.textContent = '不足 ' + yen(c.shortage);
+        elSliderLabel.textContent = '金額不足（購入不可）';
+      } else {
+        elRecv.textContent = yen(c.received);
+        elChangeK.textContent = 'お釣り';
+        elChange.className = 'a3-change-val mono';
+        elChange.textContent = yen(c.change);
+        elSliderLabel.textContent = '右へスワイプ / タップで購入';
+      }
+
+      drawOrbit();
+    }
+
+    render();
+  })();
+
+  /* =========================================================
+     案04: KINETIC ARE YOU TOFU?
+     ========================================================= */
+  (function initApp4() {
+    const st = createState();
+    const elBadge = document.getElementById('a4-order-badge');
+    const elPhrase = document.getElementById('a4-phrase');
+    const elWordRun = document.getElementById('a4-word-run');
+    const elQty = document.getElementById('a4-qty');
+    const elTotal = document.getElementById('a4-total');
+    const elDemo = document.getElementById('a4-demo');
+    const elNorenRow = document.getElementById('a4-noren-row');
+    const elRecvRod = document.getElementById('a4-recv-rod');
+    const elStatusTxt = document.getElementById('a4-status-txt');
+    const elRecvSub = document.getElementById('a4-recv-sub');
+    const elChange = document.getElementById('a4-change');
+    const elBuy = document.getElementById('a4-buy');
+    const elBuyTxt = document.getElementById('a4-buy-txt');
+    const elBuySub = document.getElementById('a4-buy-sub');
+    const elReceipt = document.getElementById('a4-receipt');
+
+    const keypad = bindKeypad(document.getElementById('a4-keypad'), (num) => {
+      st.payMode = 'custom';
+      st.customAmount = num;
+      render();
+    });
+
+    DEMO_DEFS.forEach(d => {
+      const row = document.createElement('div');
+      row.className = 'a4-demo-row';
+      row.innerHTML = '<span class="a4-dkey">' + d.label + '</span>';
+      d.options.forEach(opt => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'a4-dchip';
+        b.textContent = opt;
+        b.dataset.k = d.key;
+        b.dataset.v = opt;
+        b.addEventListener('click', () => {
+          st.demo[d.key] = st.demo[d.key] === opt ? null : opt;
+          render();
+        });
+        row.appendChild(b);
+      });
+      elDemo.appendChild(row);
+    });
+
+    // Build 6 Noren curtains (tap or swipe down to select)
+    PAY_OPTS.forEach(p => {
+      const panel = document.createElement('div');
+      panel.className = 'a4-noren-panel';
+      panel.dataset.id = String(p.id);
+      panel.innerHTML =
+        '<span class="a4-noren-vtext">' + p.short + '</span>' +
+        '<span class="a4-noren-sub mono">' + (p.id === 'exact' ? 'EX' : (p.id === 'custom' ? '入力' : (p.id / 1000) + 'k')) + '</span>';
+
+      let startY = null;
+      panel.addEventListener('pointerdown', (e) => {
+        startY = e.clientY;
+        panel.setPointerCapture(e.pointerId);
+      });
+      panel.addEventListener('pointerup', (e) => {
+        if (startY === null) return;
+        const dy = e.clientY - startY;
+        startY = null;
+        // Tap or pull down activates
+        if (dy > -15) {
+          if (p.id === 'custom') keypad.open(st.customAmount);
+          else {
+            st.payMode = p.id;
+            render();
+          }
+        }
+      });
+      panel.addEventListener('pointercancel', () => { startY = null; });
+      elNorenRow.appendChild(panel);
+    });
+
+    function changeQty(delta) {
+      st.qty = Math.max(1, Math.min(99, st.qty + delta));
+      render();
+    }
+
+    document.getElementById('a4-minus').addEventListener('click', () => changeQty(-1));
+    document.getElementById('a4-plus').addEventListener('click', () => changeQty(1));
+    addHorizontalSwipe(document.getElementById('a4-kinetic'), (step) => changeQty(step));
+
+    function completePurchase() {
+      const c = calc(st);
+      if (c.status !== 'ready') return;
+      const noStr = pad3(st.orderNo);
+      document.getElementById('a4-rec-no').textContent = noStr;
+      document.getElementById('a4-rec-qty').textContent = '田楽豆腐 ' + st.qty + '本 / ' + yen(c.total);
+      document.getElementById('a4-rec-change').textContent = yen(c.change);
+      document.getElementById('a4-rec-demo').textContent = '客層: ' + formatDemo(st.demo);
+      document.getElementById('a4-poster-type').innerHTML = 'TOFU × ' + st.qty + '<br>READY';
+      st.orderNo += 1;
+      elReceipt.classList.add('open');
+    }
+
+    elBuy.addEventListener('click', completePurchase);
+    addHorizontalSwipe(elBuy, (step) => {
+      if (step > 0) completePurchase();
+    });
+
+    document.getElementById('a4-next').addEventListener('click', () => {
+      resetForNext(st);
+      elReceipt.classList.remove('open');
+      render();
+    });
+
+    function render() {
+      const c = calc(st);
+      elBadge.textContent = '次 ' + pad3(st.orderNo);
+      elQty.textContent = '×' + st.qty;
+      elTotal.textContent = yen(c.total);
+
+      // Kinetic phrase incorporates selected demographics
+      const tags = [st.demo.age, st.demo.gender, st.demo.group].filter(Boolean);
+      if (tags.length > 0) {
+        elPhrase.innerHTML = 'ARE YOU ' + tags.map(t => '<span class="a4-phrase-tag">' + t + '</span>').join('');
+      } else {
+        elPhrase.textContent = 'ARE YOU';
+      }
+
+      // Kinetic T[cubes]FU? expands cubes according to qty
+      const cubeCount = Math.min(st.qty, 5);
+      const cubeSize = cubeCount <= 2 ? 26 : (cubeCount === 3 ? 21 : 17);
+      let cubesHtml = '';
+      for (let i = 0; i < cubeCount; i++) {
+        cubesHtml += tofuCubeSvg(cubeSize);
+      }
+      if (st.qty > 5) {
+        cubesHtml += '<span class="mono" style="font-size:14px;font-weight:900;color:#B66427;">+' + (st.qty - 5) + '</span>';
+      }
+      elWordRun.innerHTML = '<span>T</span><span class="a4-cube-strip">' + cubesHtml + '</span><span>FU?</span>';
+
+      elDemo.querySelectorAll('.a4-dchip').forEach(b => {
+        b.classList.toggle('active', st.demo[b.dataset.k] === b.dataset.v);
+      });
+
+      elNorenRow.querySelectorAll('.a4-noren-panel').forEach(p => {
+        const active = String(st.payMode) === p.dataset.id;
+        p.classList.toggle('active', active);
+        if (p.dataset.id === 'custom') {
+          p.querySelector('.a4-noren-sub').textContent = st.payMode === 'custom' ? yen(st.customAmount) : '入力';
+        }
+      });
+
+      elBuy.className = 'a4-buy-btn ' + c.status;
+
+      if (c.status === 'idle') {
+        elRecvRod.textContent = '未選択';
+        elStatusTxt.textContent = 'お釣り（受取未選択）';
+        elRecvSub.textContent = '受取: —';
+        elChange.className = 'a4-change-big mono idle';
+        elChange.textContent = 'のれんを選択';
+        elBuyTxt.textContent = '購入不可';
+        elBuySub.textContent = '受取額を選択';
+      } else if (c.status === 'short') {
+        elRecvRod.textContent = '受取 ' + yen(c.received);
+        elStatusTxt.textContent = '金額不足';
+        elRecvSub.textContent = '受取: ' + yen(c.received);
+        elChange.className = 'a4-change-big mono short';
+        elChange.textContent = '不足 ' + yen(c.shortage);
+        elBuyTxt.textContent = '購入不可';
+        elBuySub.textContent = '金額が足りません';
+      } else {
+        elRecvRod.textContent = '受取 ' + yen(c.received);
+        elStatusTxt.textContent = 'お釣り';
+        elRecvSub.textContent = '受取: ' + yen(c.received);
+        elChange.className = 'a4-change-big mono';
+        elChange.textContent = yen(c.change);
+        elBuyTxt.textContent = '焼く・購入確定';
+        elBuySub.textContent = 'タップ / 右スワイプ';
+      }
+    }
+
+    render();
+  })();
+})();
+</script>
+</body>
+</html>

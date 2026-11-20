@@ -8,7 +8,7 @@ export const PRIVACY_HTML = `<!doctype html>
 <style>
 :root{--bg:#F8F7F6;--fg:#2E2018;--muted:#635954;--accent:#B66427}
 @media (prefers-color-scheme:dark){:root{--bg:#2E2018;--fg:#F6F4F3;--muted:#ADA29C;--accent:#D18C53}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,-apple-system,"Hiragino Sans",sans-serif}
 main{max-width:720px;margin:0 auto;padding:32px 16px 64px}h1{font-size:1.6rem}h2{font-size:1.15rem;margin-top:2em}a{color:var(--accent)}
 </style>
 </head>

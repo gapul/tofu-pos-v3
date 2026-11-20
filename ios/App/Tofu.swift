@@ -178,16 +178,16 @@ struct SyncStatusButton: View {
             } else if !controller.configured {
                 Image(systemName: "icloud.slash")
             } else if warning {
-                Image(systemName: "exclamationmark.icloud").foregroundColor(.red)
+                IconImage(icon: .asset("IconSyncError")).foregroundColor(.red)
             } else if controller.pending > 0 {
-                Image(systemName: "icloud")
+                IconImage(icon: .asset("IconSyncPending"))
                     .overlay(alignment: .topTrailing) {
                         Text(controller.pending > 99 ? "99+" : "\(controller.pending)")
                             .font(.caption2.bold()).foregroundColor(.tofuOnAccent)
                             .padding(.horizontal, 4).background(Capsule().fill(Color.accentColor)).offset(x: 10, y: -8)
                     }
             } else {
-                Image(systemName: "checkmark.icloud")
+                IconImage(icon: .asset("IconSyncDone"))
             }
         }
         .accessibilityLabel(controller.pending > 0 ? "未同期 \(controller.pending)件" : "同期済み")
@@ -226,17 +226,20 @@ struct SyncSheet: View {
                         }.foregroundColor(.red)
                     }
                     Section {
-                        Button(controller.isSyncing ? "同期中…" : "今すぐ送信") { Task { await controller.run() } }
-                            .disabled(controller.isSyncing || !controller.configured)
-                    }
-                    Section {
-                        NavigationLink { CloudSyncView(controller: controller) } label: { Text("詳細設定").font(.footnote).foregroundColor(.tofuMuted) }
+                        HStack {
+                            if controller.isSyncing { TofuLoading().frame(minWidth: 44, minHeight: 44) }
+                            else { IconButton("今すぐ送信", .asset("IconSyncPending")) { Task { await controller.run() } }.disabled(!controller.configured) }
+                            Spacer()
+                            NavigationLink { CloudSyncView(controller: controller) } label: { IconImage(icon: .asset("IconSettings")).foregroundColor(.tofuMuted) }
+                                .frame(minWidth: 44, minHeight: 44).fixedSize()
+                                .accessibilityLabel("詳細設定").help("詳細設定")
+                        }
                     }
                 }.tofuRows()
             }
             .tofuSurface()
             .navigationTitle("同期")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { IconButton("閉じる", .symbol("xmark")) { dismiss() } } }
         }
     }
 }
@@ -300,5 +303,43 @@ enum MacWindow {
             scene.sizeRestrictions?.minimumSize = CGSize(width: 900, height: 640)
         }
         #endif
+    }
+}
+
+/// Icon-only button: shop icon from Assets.xcassets (template SVG) or an SF Symbol, ≥44pt target,
+/// VoiceOver label, pointer hover name (.help) and the name in the long-press menu.
+struct IconButton: View {
+    enum Icon { case asset(String), symbol(String) }
+    let label: String
+    let icon: Icon
+    var role: ButtonRole?
+    let action: () -> Void
+    init(_ label: String, _ icon: Icon, role: ButtonRole? = nil, action: @escaping () -> Void) {
+        self.label = label; self.icon = icon; self.role = role; self.action = action
+    }
+    var body: some View {
+        Button(role: role, action: action) {
+            // Only destructive buttons force a color, so callers can tint the others (e.g. the toast's undo).
+            if role == .destructive {
+                IconImage(icon: icon).foregroundColor(.red).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+            } else {
+                IconImage(icon: icon).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+            }
+        }
+            .buttonStyle(.borderless)  // several icon buttons can share one list row
+            .accessibilityLabel(label)
+            .help(label)
+            .contextMenu { Button(role: role, action: action) { Text(label) } }
+    }
+}
+
+struct IconImage: View {
+    let icon: IconButton.Icon
+    var size: CGFloat = 24
+    var body: some View {
+        switch icon {
+        case .asset(let name): Image(name).renderingMode(.template).resizable().scaledToFit().frame(width: size, height: size)
+        case .symbol(let name): Image(systemName: name).font(.system(size: size * 0.8, weight: .semibold))
+        }
     }
 }
