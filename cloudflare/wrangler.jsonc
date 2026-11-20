@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tofu-pos-v3-sync",
+  "account_id": "38e092dee9c904784d58cc1b7f0096b8",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "vars": { "SHOP_ID": "tofu" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tofu-pos-v3",
+      "database_id": "3d9d40d7-5392-4c7f-ac18-b00ca1293669",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+﻿order_id,created_at_utc,status,cancelled_at_utc,cancellation_reason,order_total_yen,received_yen,change_yen,line_no,product_id,product_name,quantity,unit_price_yen,line_total_yen,net_line_sales_yen
+"order-a","2026-11-18T00:00:00Z","paid","","","1100","2000","900","1","p1","豆腐","2","500","1000","1000"
+"order-a","2026-11-18T00:00:00Z","paid","","","","","","2","p2","'=SUM(1,2)
+""商品""","1","100","100","100"
+"order-b","2026-11-18T00:01:00Z","cancelled","2026-11-18T00:02:00Z","返金済み","500","1000","500","1","p1","豆腐","1","500","500","0"

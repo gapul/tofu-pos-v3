@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+.wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start}
+.opt h3{margin:0 0 4px;font-size:15px}
+.opt p{margin:0 0 10px;font-size:12px;color:var(--muted-foreground);line-height:1.5}
+.phone{background:#F8F7F6;color:#2E2018;border-radius:28px;padding:14px 12px 10px;border:1px solid var(--border);font-family:var(--font-sans);font-size:12px}
+.bar{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:16px;margin:2px 4px 10px}
+.cloud{width:22px;height:14px;border-radius:8px;background:#B66427}
+.card{background:#fff;border-radius:16px;padding:10px;margin-bottom:8px}
+.hero{display:flex;gap:10px;align-items:center}
+.tofu{width:44px;height:48px;flex:none}
+.name{font-weight:700;font-size:15px}
+.price{font-size:13px;color:#635954}
+.stock{font-size:11px;color:#B66427}
+.big{font-size:34px;font-weight:800}
+.step{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.round{width:46px;height:46px;border-radius:23px;background:#F3DCC6;display:flex;align-items:center;justify-content:center;font-size:22px;color:#503225}
+.qty{font-size:34px;font-weight:800;text-align:center;line-height:1}
+.qty small{font-size:14px}
+.sub{text-align:center;color:#635954;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{border:1px solid #ADA29C;border-radius:8px;padding:4px 7px;font-size:11px}
+.chip.on{background:#503225;color:#F3DCC6;border-color:#503225}
+.lab{font-size:11px;color:#635954;margin-top:6px;display:flex;justify-content:space-between}
+.lab i{font-style:normal;color:#ADA29C}
+.money{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
+.m{background:#F3DCC6;border-radius:8px;padding:7px 0;text-align:center;font-size:11px;color:#503225}
+.m.on{background:#503225;color:#F3DCC6}
+.change{background:#FFE8A9;border-radius:14px;padding:10px 12px;margin:6px 0 2px;display:flex;justify-content:space-between;align-items:baseline}
+.note{font-size:11px;color:#635954;margin:0 2px 8px;display:flex;justify-content:space-between}
+.btn{background:#B66427;color:#fff;border-radius:22px;text-align:center;padding:12px 0;font-weight:700;font-size:14px}
+.nav{display:flex;justify-content:space-around;font-size:10px;color:#635954;margin-top:8px}
+.nav .on{color:#503225;font-weight:700}
+.toast{background:#2E2018;color:#F6F4F3;border-radius:12px;padding:8px 10px;font-size:11px;margin-top:8px;display:flex;justify-content:space-between}
+.toast b{color:#D18C53}
+</style></head><body>
+<div class="wrap">
+
+<div class="opt">
+<h3>お札を受け取ったとき</h3>
+<p>本数を変えると「ちょうど」が自動で入る。5,000円札を受け取ったので「5,000」を押した状態。客層は任意。</p>
+<div class="phone">
+ <div class="bar">レジ<span class="cloud"></span></div>
+ <div class="card">
+  <div class="hero"><svg class="tofu" viewBox="0 0 60 66"><path d="M30 2 2 18v30l28 16 28-16V18z" fill="#fff" stroke="#635954" stroke-width="1.5"/><path d="M30 34v30l28-16V18z" fill="#FFE8A9"/></svg>
+  <div><div class="name">田楽豆腐</div><div class="price">¥500 / 本</div><div class="stock">在庫 42</div></div></div>
+  <div class="step"><div class="round">−</div><div><div class="qty">2<small>本</small></div><div class="sub">合計 ¥1,000</div></div><div class="round">＋</div></div>
+ </div>
+ <div class="card">
+  <div class="lab" style="margin-top:0">客層<i>任意</i></div>
+  <div class="chips"><span class="chip">子ども</span><span class="chip on">学生</span><span class="chip">大人</span><span class="chip">シニア</span></div>
+  <div class="chips"><span class="chip">男性</span><span class="chip on">女性</span><span class="chip">その他</span></div>
+  <div class="lab">受け取った額</div>
+  <div class="money"><span class="m">ちょうど</span><span class="m">1,000</span><span class="m">2,000</span><span class="m on">5,000</span><span class="m">10,000</span><span class="m">手入力</span></div>
+ </div>
+ <div class="change"><span>お釣り</span><span class="big">¥4,000</span></div>
+ <div class="note"><span>1,000円札×4</span><span>預り ¥5,000</span></div>
+ <div class="btn">確定して次へ</div>
+ <div class="nav"><span class="on">レジ</span><span>商品</span><span>履歴</span><span>締め</span></div>
+</div></div>
+
+<div class="opt">
+<h3>ちょうど払い・確定直後</h3>
+<p>本数を選んだだけで確定できる（客層なしでも可）。確認ダイアログは出さず、確定後は数秒の通知から取消できる。</p>
+<div class="phone">
+ <div class="bar">レジ<span class="cloud"></span></div>
+ <div class="card">
+  <div class="hero"><svg class="tofu" viewBox="0 0 60 66"><path d="M30 2 2 18v30l28 16 28-16V18z" fill="#fff" stroke="#635954" stroke-width="1.5"/><path d="M30 34v30l28-16V18z" fill="#FFE8A9"/></svg>
+  <div><div class="name">田楽豆腐</div><div class="price">¥500 / 本</div><div class="stock">在庫 40</div></div></div>
+  <div class="step"><div class="round">−</div><div><div class="qty">1<small>本</small></div><div class="sub">合計 ¥500</div></div><div class="round">＋</div></div>
+ </div>
+ <div class="card">
+  <div class="lab" style="margin-top:0">客層<i>任意</i></div>
+  <div class="chips"><span class="chip">子ども</span><span class="chip">学生</span><span class="chip">大人</span><span class="chip">シニア</span></div>
+  <div class="chips"><span class="chip">男性</span><span class="chip">女性</span><span class="chip">その他</span></div>
+  <div class="lab">受け取った額</div>
+  <div class="money"><span class="m on">ちょうど</span><span class="m">1,000</span><span class="m">2,000</span><span class="m">5,000</span><span class="m">10,000</span><span class="m">手入力</span></div>
+ </div>
+ <div class="change"><span>お釣り</span><span class="big">¥0</span></div>
+ <div class="note"><span>お釣りなし</span><span>預り ¥500</span></div>
+ <div class="btn">確定して次へ</div>
+ <div class="toast"><span>¥1,000（2本）を保存しました・お釣り ¥4,000</span><b>取消</b></div>
+ <div class="nav"><span class="on">レジ</span><span>商品</span><span>履歴</span><span>締め</span></div>
+</div></div>
+
+</div>
+</body></html>

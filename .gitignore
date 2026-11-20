@@ -1,0 +1,18 @@
+.DS_Store
+.build/
+.gradle/
+build/
+local.properties
+*.xcodeproj/
+DerivedData/
+*.xcuserstate
+artifacts/
+__pycache__/
+node_modules/
+.wrangler/
+.dev.vars*
+.env*
+
+# Build-time sync connection (device token). Never commit.
+android/app/src/*/assets/sync-default.json
+ios/Config/sync-default.json

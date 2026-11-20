@@ -1,0 +1,13 @@
+{
+  "name": "tofu-pos-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "deploy": "wrangler deploy",
+    "migrate": "wrangler d1 migrations apply tofu-pos-v3 --remote"
+  },
+  "devDependencies": {
+    "wrangler": "4.158.0"
+  }
+}

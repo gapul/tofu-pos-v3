@@ -1,0 +1,43 @@
+name: TofuPOS
+options:
+  bundleIdPrefix: dev.gapul
+  deploymentTarget:
+    iOS: '16.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+targets:
+  TofuPOS:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Core
+      - Assets.xcassets
+      # Build-time default sync connection (git-ignored Config/sync-default.json). The folder is scanned when
+      # `xcodegen generate` runs, so a checkout without the file generates no dangling reference.
+      - path: Config
+        optional: true
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gapul.tofupos.v3
+        GENERATE_INFOPLIST_FILE: YES
+        MARKETING_VERSION: '0.4.0'
+        CURRENT_PROJECT_VERSION: '11'
+        INFOPLIST_KEY_CFBundleShortVersionString: '$(MARKETING_VERSION)'
+        INFOPLIST_KEY_CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
+        INFOPLIST_KEY_CFBundleDisplayName: TOS
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TARGETED_DEVICE_FAMILY: '1,2'
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - sdk: libsqlite3.tbd
+schemes:
+  TofuPOS:
+    build:
+      targets:
+        TofuPOS: all
