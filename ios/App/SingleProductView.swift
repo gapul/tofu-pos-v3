@@ -136,7 +136,6 @@ struct SingleProductView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(!canConfirm)
                     .keyboardShortcut(.defaultAction)  // Return on iPad/Mac hardware keyboards
-                    Text("会計は端末内に保存し、通信を待ちません。").font(.footnote).foregroundColor(.tofuMuted)
                 }
                 .padding(16)
                 .padding(.bottom, toast == nil ? 0 : 72)

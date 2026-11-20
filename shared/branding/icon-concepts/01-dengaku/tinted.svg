@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 100 100">
+  <title>斜めの田楽 — tinted</title>
+<path fill="#CBCBCB" d="M22 48H78L75 65Q74 71 69 72H31Q26 72 25 67Z"/>
+<path fill="#F8F8F8" d="M22 48H70L68 62Q67 66 63 67H25Z"/>
+<path fill="#ACACAC" d="M22 47H78L77 56Q74 58 69 57L37 58Q33 58 28 59L24 57Z"/>
+<path fill="#6B6B6B" d="M22.7 46.5L30 32Q32 27 37 27H68Q73 27 75 32L78.2 46.5Q80.4 52.5 74 54L30 55Q20.7 55 22.7 46.5Z"/>
+<path fill="#7C7C7C" d="M27 45L33 33Q34 31 38 31H65Q69 31 71 34L74 42Q75 46 70 47L34 49Q25 50 27 45Z"/>
+<ellipse cx="38" cy="35.6" rx="2" ry="0.95" fill="#B4B4B4" transform="rotate(-26 38 35.6)"/>
+<ellipse cx="48.8" cy="35" rx="1.8" ry="1" fill="#C6C6C6" transform="rotate(25 48.8 35)"/>
+<ellipse cx="59.4" cy="35.7" rx="2.15" ry="1" fill="#ABABAB" transform="rotate(-25 59.4 35.7)"/>
+<ellipse cx="68.6" cy="39.4" rx="1.85" ry="1" fill="#B4B4B4" transform="rotate(41 68.6 39.4)"/>
+<ellipse cx="33.1" cy="43.2" rx="1.8" ry="1" fill="#BCBCBC" transform="rotate(20 33.1 43.2)"/>
+<ellipse cx="43.8" cy="42.1" rx="2.2" ry="1.05" fill="#A8A8A8" transform="rotate(34 43.8 42.1)"/>
+<ellipse cx="54.7" cy="43.4" rx="2.15" ry="1.04" fill="#BCBCBC" transform="rotate(-20 54.7 43.4)"/>
+<ellipse cx="64.4" cy="47.5" rx="1.95" ry="1" fill="#9D9D9D" transform="rotate(-28 64.4 47.5)"/>
+<ellipse cx="38.5" cy="49.3" rx="1.75" ry="0.84" fill="#ADADAD" transform="rotate(-17 38.5 49.3)"/>
+</svg>

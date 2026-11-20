@@ -203,7 +203,7 @@ struct SyncSheet: View {
             List {
                 Group {
                     if controller.environment == .test {
-                        Section { Label("テスト環境です。売上は本番に入りません", systemImage: "exclamationmark.triangle.fill").foregroundColor(.red) }
+                        Section { Label("テスト環境", systemImage: "exclamationmark.triangle.fill").foregroundColor(.red) }
                     }
                     Section {
                         HStack {
@@ -217,8 +217,8 @@ struct SyncSheet: View {
                     }
                     if controller.held + controller.conflicts + controller.rejectedImages + controller.rejected.products + controller.rejected.stock + controller.rejected.sessions > 0 {
                         Section("保留") {
-                            if controller.held > 0 { Text("サイズ超過の会計 \(controller.held)件（CSVで取り出せます）") }
-                            if controller.conflicts > 0 { Text("内容が競合した会計 \(controller.conflicts)件（「今すぐ送信」で1回再送）") }
+                            if controller.held > 0 { Text("サイズ超過の会計 \(controller.held)件") }
+                            if controller.conflicts > 0 { Text("競合した会計 \(controller.conflicts)件") }
                             if controller.rejected.products > 0 { Text("送信できなかった商品 \(controller.rejected.products)件") }
                             if controller.rejected.stock > 0 { Text("送信できなかった在庫 \(controller.rejected.stock)件") }
                             if controller.rejected.sessions > 0 { Text("送信できなかったレジ記録 \(controller.rejected.sessions)件") }
@@ -228,7 +228,6 @@ struct SyncSheet: View {
                     Section {
                         Button(controller.isSyncing ? "同期中…" : "今すぐ送信") { Task { await controller.run() } }
                             .disabled(controller.isSyncing || !controller.configured)
-                        Text("会計・商品・在庫・締めは自動で送信し、画面を開いている間は1分ごとに他の端末の売上と在庫を取り込みます。会計は通信を待ちません。").font(.footnote).foregroundColor(.tofuMuted)
                     }
                     Section {
                         NavigationLink { CloudSyncView(controller: controller) } label: { Text("詳細設定").font(.footnote).foregroundColor(.tofuMuted) }

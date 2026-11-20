@@ -12,6 +12,6 @@ public enum AppEnvironment: String, CaseIterable, Identifiable {
     public var imageFolder: String { self == .production ? "product-images" : "product-images-test" }
     public var keychainAccount: String { self == .production ? "connection" : "connection-test" }
     public var bundledConnection: String { self == .production ? "sync-default" : "sync-default-test" }
-    public var switchPrompt: String { self == .test ? "テスト環境に切り替えます。テストの売上は本番に入りません" : "本番環境に戻します" }
+    public var switchPrompt: String { self == .test ? "テスト環境に切り替えます（売上は本番に入りません）。" : "本番環境に戻します。" }
     public static func stored(_ value: String?) -> AppEnvironment { value.flatMap(AppEnvironment.init(rawValue:)) ?? .production }
 }

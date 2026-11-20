@@ -97,7 +97,7 @@ final class CloudSyncController: ObservableObject {
         deviceLabel = String(String.UnicodeScalarView((name.isEmpty ? "iOS" : name).unicodeScalars.prefix(64)))
         authBlocked = ((try? store.metadata("auth_blocked")) ?? nil) != nil
         do {
-            if let connection = try ConnectionKeychain.current(environment) { serverURL = connection.url; configured = true; message = "会計後に自動で送信します" }
+            if let connection = try ConnectionKeychain.current(environment) { serverURL = connection.url; configured = true; message = "接続済み" }
             nextAllowedAt = Date(timeIntervalSince1970: try store.syncGate().next)
             try refreshCount()
         } catch { message = error.localizedDescription }
@@ -154,7 +154,7 @@ final class CloudSyncController: ObservableObject {
                 struct Receipt: Decodable { let schema_version: Int; let id: String; let product_count: Int }
                 let receipt = try JSONDecoder().decode(Receipt.self, from: data)
                 guard receipt.schema_version == 1, receipt.id.count == 64, receipt.id.allSatisfy({ "0123456789abcdef".contains($0) }), receipt.product_count == products.count else { throw POSFailure.invalid("不正なバックアップ応答です") }
-                self.message = "商品\(products.count)件をバックアップしました。売上は会計ごとに自動で送信します"
+                self.message = "商品\(products.count)件をバックアップしました"
                 return true
             }
         } catch { message = error.localizedDescription }
@@ -421,7 +421,6 @@ struct CloudSyncView: View {
                 Picker("環境", selection: Binding(get: { controller.environment }, set: { if $0 != controller.environment { switchTarget = $0 } })) {
                     ForEach(AppEnvironment.allCases) { Text($0.label).tag($0) }
                 }.pickerStyle(.segmented).disabled(controller.isSyncing)
-                Text("本番とテストは会計・商品・在庫・レジ記録・接続設定がすべて別です。同期中は切り替えできません。").font(.footnote)
             }
             Section("この端末") {
                 LabeledContent("端末名", value: controller.deviceLabel)
@@ -436,14 +435,12 @@ struct CloudSyncView: View {
                         catch { failure = error.localizedDescription }
                     }.disabled(prefix.uppercased() == controller.ticketPrefix)
                 }
-                Text("英大文字1〜2文字（例: A → 「A-12」）。番号はこの端末で毎日1から振ります。").font(.footnote)
                 LabeledContent("端末ID") { Text(controller.deviceID).font(.caption.monospaced()).textSelection(.enabled) }
             }
             Section("バックアップ・復元") {
                 Button("商品をバックアップ") { focused = false; Task { await controller.backupProducts() } }
                 Button("クラウドから復元") { focused = false; Task { if await controller.listBackups() { choosingCatalogs = true } } }
                 if controller.canContinueRestore { Button("売上の続きを復元") { continuing = true; confirmRestore = true } }
-                Text("商品は別途バックアップしてください。復元は最大50会計ずつ取り込み、端末の内容が異なる場合は保持します。").font(.footnote)
             }.disabled(controller.isSyncing || !controller.configured)
             Section("接続設定") {
                 TextField("https://…workers.dev", text: $url).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL).focused($focused)
@@ -454,14 +451,12 @@ struct CloudSyncView: View {
                 }
                 Button("設定ファイルを読み込む") { focused = false; importing = true }
                 if let failure { Text(failure).foregroundStyle(.red) }
-                Text("Cloudflare管理用APIトークンではなく、このレジ専用の接続設定を使います。同期先URLは初回設定後に変更できません。").font(.footnote)
             }.disabled(controller.isSyncing)
         }.navigationTitle("詳細設定")
             .tofuSurface()
             .sheet(isPresented: $choosingCatalogs, onDismiss: { if chosen { chosen = false; confirmRestore = true } }) {
                 NavigationStack {
                     List {
-                        Text("商品バックアップは新しい順に表示。過去の分は「さらに表示」で選べます。売上は現在のクラウド保存内容から復元します。").font(.footnote)
                         Button("売上のみ復元") { selectedCatalog = nil; continuing = false; chosen = true; choosingCatalogs = false }
                         ForEach(controller.catalogs) { catalog in
                             Button("\(catalogDate(catalog.received_at)) · 商品\(catalog.product_count)件") { selectedCatalog = catalog; continuing = false; chosen = true; choosingCatalogs = false }
@@ -476,7 +471,7 @@ struct CloudSyncView: View {
             .alert("クラウドから復元", isPresented: $confirmRestore) {
                 Button("復元する") { Task { await controller.restore(catalog: selectedCatalog?.id, continuation: continuing) } }
                 Button("戻る", role: .cancel) { }
-            } message: { Text("商品と売上を最大50会計ずつ取り込みます。端末の既存データは削除せず、内容の異なる商品・会計は保持します。取消済みの会計を元に戻しません。") }
+            } message: { Text("端末のデータは消さずに取り込みます。") }
             .alert("環境の切り替え", isPresented: Binding(get: { switchTarget != nil }, set: { if !$0 { switchTarget = nil } })) {
                 Button(switchTarget == .test ? "テストに切り替える" : "本番に戻す", role: .destructive) {
                     if let target = switchTarget, !controller.isSyncing { controller.onSwitchEnvironment?(target) }

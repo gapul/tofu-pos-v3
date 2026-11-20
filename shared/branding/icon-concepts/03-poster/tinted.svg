@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 100 100">
+  <title>ポスターの白四角 — tinted</title>
+<rect x="29.4" y="29.4" width="41.2" height="41.2" rx="2.4" fill="#8B8B8B"/>
+<rect x="30.9" y="30.9" width="38.2" height="38.2" rx="1.2" fill="#C0C0C0"/>
+<path fill="#F6F6F6" d="M30.9 32.2Q30.9 30.9 32.2 30.9H67.8Q69.1 30.9 69.1 32.2V62.9H30.9Z"/>
+</svg>

@@ -119,6 +119,10 @@ private fun jst(value: String): String = runCatching {
     Text(label, style = MaterialTheme.typography.titleMedium)
   }
 }
+/** Empty-state one-liner. */
+@Composable private fun Empty(text: String) {
+  Text(text, Modifier.fillMaxWidth().padding(24.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+}
 @Composable private fun Info(title: String, body: String) {
   Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
     Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -208,7 +212,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
           }
           1 -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Action("商品を追加", { onEdit(null) }, Modifier.fillMaxWidth(), enabled) }
-            if (products.isEmpty()) item { Info("商品を登録しましょう", "商品名と価格を登録すると、レジから選べるようになります。") }
+            if (products.isEmpty()) item { Empty("商品を登録してください") }
             items(products, key = { it.id }) { p ->
               Card(onClick = { onEdit(p) }, enabled = enabled, shape = RoundedCornerShape(24.dp)) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -260,15 +264,14 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       if (extras.test) TestBadge()
       Text("未同期の会計", style = MaterialTheme.typography.titleMedium)
       Text("${pending}件", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-      Text("会計は端末に保存し、自動でクラウドへ送信します。他の端末の売上・商品・在庫は表示中に1分ごとに取り込みます。", style = MaterialTheme.typography.bodyMedium)
       if (syncing) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { TofuLoading(size = 40.dp); Text("送信しています…") }
       else if (message.isNotBlank()) Text(message, color = if (extras.syncFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
       Text("最終送信: ${extras.lastSentAt?.let(::jst) ?: "まだありません"}\n最終取り込み: ${extras.lastFeedAt?.let(::jst) ?: "まだありません"}", style = MaterialTheme.typography.bodyMedium)
       val held = extras.held
       listOf("商品" to held.products, "写真" to held.images, "在庫" to held.stock, "レジ記録" to held.sessions).filter { it.second > 0 }.takeIf { it.isNotEmpty() }?.let { rows ->
-        Text("送信できなかった" + rows.joinToString("・") { "${it.first} ${it.second}件" } + "（端末に保持しています）", color = MaterialTheme.colorScheme.error)
+        Text("送信できなかった" + rows.joinToString("・") { "${it.first} ${it.second}件" } + "", color = MaterialTheme.colorScheme.error)
       }
-      if (held.conflicts > 0) Text("競合で保留中の会計 ${held.conflicts}件。自動では送信しません。「今すぐ送信」で1回再送します。", color = MaterialTheme.colorScheme.error)
+      if (held.conflicts > 0) Text("競合で保留中の会計 ${held.conflicts}件", color = MaterialTheme.colorScheme.error)
       Action("今すぐ送信", send, Modifier.fillMaxWidth(), enabled && !syncing)
       TextButton(advanced, Modifier.align(Alignment.End)) { Text("詳細設定", style = MaterialTheme.typography.labelMedium) }
     }
@@ -287,26 +290,23 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   var prefix by rememberSaveable(extras.ticketPrefix) { mutableStateOf(extras.ticketPrefix) }
   val target = if (extras.test) AppEnvironment.PRODUCTION else AppEnvironment.TEST
   if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text(if (extras.test) "本番環境に戻します" else "テスト環境に切り替えます") },
-    text = { Text((if (extras.test) "本番の売上・商品・接続に戻ります。" else "テストの売上は本番に入りません。") + "カートなど今の画面の入力は破棄されます。") },
+    text = { Text(if (extras.test) "入力中のカートは破棄されます。" else "テストの売上は本番に入りません。") },
     confirmButton = { TextButton({ confirm = false; onEnvironment(target) }, enabled = enabled) { Text("切り替える") } },
     dismissButton = { TextButton({ confirm = false }) { Text("戻る") } })
   Scaffold(topBar = { TopAppBar(title = { Text("詳細設定") }, navigationIcon = { IconButton(back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "戻る") } }) }) { insets ->
     LazyColumn(Modifier.fillMaxSize().padding(insets), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      item { Info("通常は操作不要です", "同期は自動で行います。接続先の変更や復元が必要なときだけ使ってください。") }
       item { OutlinedButton(onSettings, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("接続設定（URL・トークン）") } }
       item { OutlinedButton(onImport, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("同期設定ファイルを読み込む") } }
       item { OutlinedButton(onBackup, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("商品をバックアップ") } }
       item { OutlinedButton(onRestore, Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled) { Text("クラウドから復元") } }
       if (canContinue) item { Action("売上の続きを復元", onContinue, Modifier.fillMaxWidth(), enabled) }
-      item { Text("復元は最大50会計ずつ取り込み、端末の内容が異なる場合は保持します。", style = MaterialTheme.typography.bodySmall) }
       item { Info("この端末", "端末名: ${extras.deviceLabel}\n端末ID: ${extras.deviceID}") }
       item { Card(shape = RoundedCornerShape(24.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
           Text("整理番号の接頭辞", style = MaterialTheme.typography.titleMedium)
-          Text("端末ごとに英大文字1〜2文字（例: A → 「A-12」）。空欄なら番号だけ。番号は毎日1から始まります。", style = MaterialTheme.typography.bodySmall)
           val clean = prefix.trim().uppercase(Locale.ROOT)
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(prefix, { prefix = it.take(2) }, Modifier.weight(1f), singleLine = true, enabled = enabled, label = { Text("接頭辞") },
+            OutlinedTextField(prefix, { prefix = it.take(2) }, Modifier.weight(1f), singleLine = true, enabled = enabled, label = { Text("英大文字1〜2文字") },
               isError = !Tickets.validPrefix(clean), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters))
             Button({ onTicketPrefix(clean) }, enabled = enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix) { Text("保存") }
           }
@@ -318,7 +318,6 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             Text("環境: ${extras.environment.label}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
             if (extras.test) TestBadge()
           }
-          Text("本番とテストは端末のデータ・写真・接続先が完全に分かれています。同期中は切り替えできません。", style = MaterialTheme.typography.bodySmall)
           OutlinedButton({ confirm = true }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える") }
         }
       } }
@@ -504,7 +503,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   Column(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       item { Text("商品を選択", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.titleMedium) }
-      if (products.isEmpty()) item { Info("商品を登録しましょう", "下の「商品」から、商品名と価格を登録できます。") }
+      if (products.isEmpty()) item { Empty("商品を登録してください") }
       items(products.chunked(2), key = { "products:${it.first().id}" }) { row ->
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
           row.forEach { product ->
@@ -528,7 +527,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         }
       }
       item { Text("カート · ${cart.sumOf { it.quantity }}点", Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium) }
-      if (cart.isEmpty()) item { Info("商品をタップして追加", "会計は通信を待たずに端末へ保存します。") }
+      if (cart.isEmpty()) item { Empty("商品をタップして追加") }
       items(cart, key = { "cart:${it.productID}" }) { line ->
         Card(shape = RoundedCornerShape(24.dp)) {
           Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -631,7 +630,6 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
   fun update(map: Map<String, Int>) { text = Cash.DENOMINATIONS.joinToString(",") { (map[it.toString()] ?: 0).toString() } }
   LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
     if (session == null || summary == null) {
-      item { Info("レジ開け", "釣銭準備金を金種ごとに入力して開始します。レジを開けなくても会計はできます（その会計は締めの計算に入りません）。") }
       item { Counts(counts, enabled, ::update) }
       item { Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), shape = RoundedCornerShape(28.dp)) {
         Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -647,7 +645,6 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
           Text("現金在高（理論値）", style = MaterialTheme.typography.titleMedium)
           Text(yen(expected), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
           Text("開始 ${jst(session.openedAt)}\n準備金 ${yen(session.floatTotal)}\n会計 ${yen(summary.sales)}（${summary.orders}件）\n取消・返金 ${yen(summary.cancels)}")
-          Text("この端末の会計だけを数えます。取消は返金として現金から差し引きます。", style = MaterialTheme.typography.bodySmall)
         }
       } }
       item { Card(shape = RoundedCornerShape(24.dp)) {
@@ -690,8 +687,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         Text("会計 ${paid.size}件 · 取消 ${sales.size - paid.size}件")
       }
     } }
-    item { Text("右上のアイコンで全件をCSVに書き出せます（確認用。復元用バックアップではありません）。", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodySmall) }
-    if (sales.isEmpty()) item { Info("まだ会計はありません", "購入すると、ここに履歴が残ります。") }
+    if (sales.isEmpty()) item { Empty("会計はまだありません") }
     items(sales, key = { it.id }) { sale -> Card(shape = RoundedCornerShape(24.dp)) {
       Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -747,9 +743,8 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
           if (image != null) TextButton({ image = null }, enabled = !busy) { Text("写真を外す", color = MaterialTheme.colorScheme.error) }
         }
       }
-      Row(verticalAlignment = Alignment.CenterVertically) { Text("販売中（オフでレジに表示しない）", Modifier.weight(1f)); Switch(active, { active = it }, enabled = !busy) }
-      Row(verticalAlignment = Alignment.CenterVertically) { Text("在庫0で販売を止める（オフならマイナス在庫でも販売）", Modifier.weight(1f)); Switch(stop, { stop = it }, enabled = !busy) }
-      Text("過去の会計とカートの単価は変わりません。保存すると他の端末にも反映します。", style = MaterialTheme.typography.bodySmall)
+      Row(verticalAlignment = Alignment.CenterVertically) { Text("販売中", Modifier.weight(1f)); Switch(active, { active = it }, enabled = !busy) }
+      Row(verticalAlignment = Alignment.CenterVertically) { Text("在庫0で販売を止める", Modifier.weight(1f)); Switch(stop, { stop = it }, enabled = !busy) }
     }
   }, confirmButton = { TextButton({ if (amount != null) save(name, amount, active, stop, image) }, enabled = !busy && name.isNotBlank() && amount != null) { Text("保存") } },
     dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
@@ -764,7 +759,6 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       OutlinedTextField(quantity, { quantity = it }, label = { Text(if (kind == "set") "数えた在庫数" else "入荷数") }, enabled = !busy, singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = quantity.isNotEmpty() && value == null)
       OutlinedTextField(reason, { reason = it }, label = { Text("メモ（任意）") }, enabled = !busy, singleLine = true)
-      Text("クラウドに送信すると全端末の在庫に反映します。", style = MaterialTheme.typography.bodySmall)
     }
   }, confirmButton = { TextButton({ if (value != null) save(value, reason) }, enabled = !busy && value != null) { Text("記録") } },
     dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
@@ -790,7 +784,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
   var refunded by rememberSaveable(sale.id) { mutableStateOf(false) }
   AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("全額取消") }, text = {
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-      Text("全額 ${yen(sale.total)} を返金してから記録してください。元の会計は残ります。")
+      Text("全額 ${yen(sale.total)} を返金してから記録してください。")
       OutlinedTextField(reason, { reason = it }, enabled = !busy, label = { Text("取消理由") })
       Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(refunded, { refunded = it }, enabled = !busy)
@@ -807,7 +801,6 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       OutlinedTextField(url, { url = it }, label = { Text("https://…workers.dev") }, enabled = !busy, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
       OutlinedTextField(token, { token = it }, label = { Text("端末用トークン") }, supportingText = { Text("空欄なら変更なし") }, enabled = !busy, singleLine = true, visualTransformation = PasswordVisualTransformation())
-      Text("レジ専用トークンを使います。初回設定後は同期先URLを変更できません。", style = MaterialTheme.typography.bodySmall)
     }
   }, confirmButton = { TextButton({ save(url, token) }, enabled = !busy && url.isNotBlank()) { Text("保存") } }, dismissButton = { TextButton(onDismiss, enabled = !busy) { Text("戻る") } })
 }
@@ -818,7 +811,6 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
 @Composable fun CatalogDialog(catalogs: List<Catalog>, hasMore: Boolean, loading: Boolean, more: () -> Unit, dismiss: () -> Unit, select: (Catalog?) -> Unit) {
   AlertDialog(onDismissRequest=dismiss, title={ Text("商品バックアップを選択") }, text={
     Column(Modifier.heightIn(max=400.dp).verticalScroll(rememberScrollState()), verticalArrangement=Arrangement.spacedBy(8.dp)) {
-      Text("商品バックアップは新しい順に表示します。過去の分は「さらに表示」で選べます。売上は現在のクラウド保存内容から復元します。")
       OutlinedButton({ select(null) }, Modifier.fillMaxWidth()) { Text("売上のみ復元") }
       catalogs.forEach { c -> OutlinedButton({ select(c) }, Modifier.fillMaxWidth(), enabled = !loading) { Text("${jst(c.receivedAt)} · 商品${c.productCount}件") } }
       if (hasMore) OutlinedButton(more, Modifier.fillMaxWidth(), enabled = !loading) { Text(if (loading) "読み込み中…" else "さらに表示") }
@@ -827,6 +819,6 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
 }
 @Composable fun RestoreConfirmDialog(catalog: Catalog?, continuation: Boolean, dismiss: () -> Unit, restore: () -> Unit) {
   AlertDialog(onDismissRequest=dismiss, title={ Text(if (continuation) "売上の続きを復元" else "クラウドから復元") },
-    text={ Text((catalog?.let { "${jst(it.receivedAt)} の商品${it.productCount}件と、" } ?: "") + "売上を最大50件取り込みます。端末の既存データは削除せず、内容の異なる商品・会計は保持します。取消済みの会計を元に戻しません。") },
+    text={ Text((catalog?.let { "${jst(it.receivedAt)} の商品${it.productCount}件と、" } ?: "") + "売上を最大50件取り込みます。") },
     confirmButton={ TextButton(restore) { Text("復元する") } }, dismissButton={ TextButton(dismiss) { Text("戻る") } })
 }

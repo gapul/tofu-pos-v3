@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 100 100">
+  <title>笹のひと皿 — foreground</title>
+<path fill="#465640" d="M25 66C34 46 54 31 75 34C66 55 49 68 25 66Z"/>
+<path fill="#72815B" d="M25 66C43 62 58 49 75 34C69 54 50 70 25 66Z"/>
+<path fill="none" d="M26.5 65C43 58 60 46 73 35" stroke="#9CA270" stroke-width="1.2" stroke-linecap="round"/>
+<g transform="rotate(-12 50 49)">
+<rect x="32" y="29" width="36" height="40" rx="5.4" fill="#D18C53"/>
+<rect x="32" y="28" width="36" height="38" rx="5.4" fill="#FFF2CE"/>
+<rect x="35.1" y="31.1" width="29.8" height="31.8" rx="3.3" fill="#2E2018"/>
+<path fill="#503225" d="M38 38Q38 34.5 42 34.5H57Q62 34.5 62 39V52Q61 56 56 56.5L43 58Q38 57.8 38 54Z"/>
+<ellipse cx="42" cy="38.6" rx="1.75" ry="0.91" fill="#B5937B" transform="rotate(-26 42 38.6)"/>
+<ellipse cx="53.8" cy="38.4" rx="2" ry="1.03" fill="#C19D81" transform="rotate(22 53.8 38.4)"/>
+<ellipse cx="59.1" cy="44.9" rx="1.72" ry="0.87" fill="#947664" transform="rotate(-41 59.1 44.9)"/>
+<ellipse cx="46.9" cy="45.2" rx="2.12" ry="1" fill="#A38472" transform="rotate(41 46.9 45.2)"/>
+<ellipse cx="41.1" cy="51.1" rx="1.9" ry="0.91" fill="#947664" transform="rotate(-18 41.1 51.1)"/>
+<ellipse cx="52.8" cy="52" rx="2.12" ry="1" fill="#B5937B" transform="rotate(-28 52.8 52)"/>
+<ellipse cx="47.4" cy="57.4" rx="1.82" ry="0.91" fill="#967865" transform="rotate(29 47.4 57.4)"/>
+<ellipse cx="58.8" cy="56.8" rx="1.84" ry="0.95" fill="#A38472" transform="rotate(31 58.8 56.8)"/>
+</g>
+</svg>

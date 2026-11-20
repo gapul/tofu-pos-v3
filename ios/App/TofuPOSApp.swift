@@ -300,7 +300,6 @@ struct RegisterView: View {
                 .frame(minHeight: 56)
                 .disabled(!canCheckout)
         }
-        Section { Text("会計は端末内に保存し、通信を待ちません。CSVは分析用で、完全な復元用バックアップではありません。").font(.footnote) }
     }
     private func productTile(_ product: Product) -> some View {
         let left = remaining(product)
@@ -409,7 +408,6 @@ struct ProductEditor: View {
                         }
                         PhotosPicker(selection: $pickerItem, matching: .images) { Text("写真を選ぶ") }.disabled(processing)
                         if imageHash != nil { Button("写真を外す", role: .destructive) { imageHash = nil } }
-                        Text("長辺800pxに縮小して保存し、位置情報などは含めません。保存すると他の端末にも配ります。").font(.footnote)
                     }
                     Section {
                         TextField("商品名", text: $name)
@@ -417,7 +415,6 @@ struct ProductEditor: View {
                         Toggle("販売中", isOn: $active)
                         Toggle("在庫0で販売を止める", isOn: $stopAtZero)
                         if let failure { Text(failure).foregroundStyle(.red) }
-                        Text("価格変更前の会計とカートの単価は変わりません。保存すると他の端末にも自動で反映します。").font(.footnote)
                     }
                     if let product {
                         Section("在庫") {
@@ -426,7 +423,6 @@ struct ProductEditor: View {
                             Button("在庫を数えて設定") { adjust(product, kind: "set") }
                             Button("入荷を追加") { adjust(product, kind: "add") }
                             if let notice { Text(notice).font(.footnote) }
-                            Text("在庫はクラウドで集計します。通信後に他の端末の販売分も反映されます。").font(.footnote)
                         }
                     }
                 }.tofuRows()
@@ -540,7 +536,6 @@ struct DrawerView: View {
                             LabeledContent("差額", value: difference(counted - expected)).foregroundColor(counted == expected ? .primary : .red)
                         }
                     }
-                    Section { Text("レジを開けなくても会計できます。その会計はどの締めにも入りません。理論値は準備金＋この端末で期間中に作成した会計−期間中にこの端末で記録した取消です。").font(.footnote) }
                 }.tofuRows()
             }.navigationTitle("締め")
                 .tofuSurface()
@@ -584,7 +579,7 @@ struct DrawerCloseView: View {
                         do { try model.closeDrawer(session.id, counted: counts); dismiss() } catch { failure = error.localizedDescription }
                     }
                     Button("戻る", role: .cancel) {}
-                } message: { Text("実査の枚数・理論値・差額を記録します。確定後は変更できません。") }
+                } message: { Text("確定後は変更できません。") }
         }
     }
 }
@@ -648,7 +643,7 @@ struct CancellationView: View {
         NavigationStack {
             Form {
                 Group {
-                    Text("全額 ¥\(sale.total) を返金してから記録してください。元の会計は履歴に残ります。")
+                    Text("全額 ¥\(Yen.format(sale.total)) を返金してから記録してください。")
                     TextField("取消理由", text: $reason)
                     Toggle(sale.total == 0 ? "0円会計の取消を確認した" : "全額返金を完了した", isOn: $refunded)
                     if let failure { Text(failure).foregroundStyle(.red) }
