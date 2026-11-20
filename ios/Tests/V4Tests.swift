@@ -274,6 +274,13 @@ final class V4Tests: XCTestCase {
         p.stopAtZero = true
         XCTAssertEqual(QuickSale.maxQuantity(p, displayed: 42), 42); XCTAssertEqual(QuickSale.maxQuantity(p, displayed: -1), 0)
         XCTAssertEqual(QuickSale.maxQuantity(p, displayed: nil), 999)
+        XCTAssertEqual(QuickSale.Choice.none.toggled(.exact), .exact); XCTAssertEqual(QuickSale.Choice.exact.toggled(.exact), .none)
+        XCTAssertEqual(QuickSale.Choice.preset(1000).toggled(.preset(5000)), .preset(5000)); XCTAssertEqual(QuickSale.Choice.manual.toggled(.manual), .none)
+        XCTAssertNil(QuickSale.change(total: 1000, choice: .none, manual: ""), "nothing chosen: no purchase")
+        XCTAssertEqual(QuickSale.change(total: 1000, choice: .exact, manual: ""), 0)
+        XCTAssertEqual(QuickSale.change(total: 1000, choice: .preset(5000), manual: ""), 4000)
+        XCTAssertNil(QuickSale.change(total: 1000, choice: .manual, manual: "999"))
+        XCTAssertEqual(QuickSale.change(total: 1000, choice: .manual, manual: "1500"), 500)
         XCTAssertEqual(QuickSale.changeNote(0), "お釣りなし"); XCTAssertEqual(QuickSale.changeNote(4000), "1,000円札×4")
         let store = try SQLiteStore(path: ":memory:")
         let sale = try store.checkout(id: "q", lines: [Line(productID: "p", name: "田楽豆腐", price: 500, quantity: 2)], received: 5000)

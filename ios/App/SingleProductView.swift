@@ -83,9 +83,8 @@ struct CustomerPager: View {
 struct SingleProductView: View {
     @ObservedObject var model: RegisterModel
     let product: Product
-    private enum CashChoice { case exact, preset(Int64), manual }
     @State private var quantity = 1
-    @State private var choice = CashChoice.exact
+    @State private var choice = QuickSale.Choice.none
     @State private var manualText = ""
     @State private var age: CustomerAge?
     @State private var gender: CustomerGender?
@@ -106,17 +105,8 @@ struct SingleProductView: View {
     private var soldOut: Bool { StockMath.soldOut(product, displayed: displayed) }
     private var total: Int64? { try? Money.total([line]) }
     private var line: Line { Line(productID: product.id, name: product.name, price: product.price, quantity: quantity) }
-    private var received: Int64? {
-        switch choice {
-        case .exact: return total
-        case .preset(let value): return value
-        case .manual: return Money.parse(manualText)
-        }
-    }
-    private var change: Int64? {
-        guard let total, let received, received >= total else { return nil }
-        return received - total
-    }
+    private var received: Int64? { choice.received(total: total, manual: manualText) }
+    private var change: Int64? { QuickSale.change(total: total, choice: choice, manual: manualText) }
     private var canConfirm: Bool { !saving && !soldOut && quantity >= 1 && change != nil }
 
     var body: some View {
@@ -164,7 +154,7 @@ struct SingleProductView: View {
             .syncToolbar(model)
             .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("完了") { manualFocused = false } } }
             .overlay(alignment: .bottom) { if let toast { toastView(toast) } }
-            .onChange(of: quantity) { _ in choice = .exact; manualText = "" }
+            .onChange(of: quantity) { _ in choice = .none; manualText = "" }
             .onChange(of: limit) { newLimit in if quantity > max(1, newLimit) { quantity = max(1, newLimit) } }
             .onDisappear { manualFocused = false }
         }
@@ -213,14 +203,16 @@ struct SingleProductView: View {
 
     private var moneyGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-            moneyButton("ちょうど", selected: { if case .exact = choice { return true }; return false }(), enabled: true) { choice = .exact }
+            moneyButton("ちょうど", selected: choice == .exact, enabled: true) { choice = choice.toggled(.exact) }
             ForEach(QuickSale.presets, id: \.self) { value in
-                moneyButton(Yen.format(value), selected: { if case .preset(let v) = choice { return v == value }; return false }(),
-                            enabled: value >= (total ?? 0)) { choice = .preset(value) }
+                moneyButton(Yen.format(value), selected: choice == .preset(value),
+                            enabled: value >= (total ?? 0)) { choice = choice.toggled(.preset(value)) }
             }
-            moneyButton("手入力", selected: { if case .manual = choice { return true }; return false }(), enabled: true) {
+            moneyButton("手入力", selected: choice == .manual, enabled: true) {
                 // Show an empty field and focus it once it exists, which opens the number pad.
-                choice = .manual; manualText = ""
+                manualText = ""
+                choice = choice.toggled(.manual)
+                guard choice == .manual else { manualFocused = false; return }
                 DispatchQueue.main.async { manualFocused = true }
             }
         }
@@ -241,15 +233,16 @@ struct SingleProductView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("お釣り").font(.headline)
                 Spacer()
-                Text(change.map { "¥\(Yen.format($0))" } ?? "不足").font(.system(size: 44, weight: .bold, design: .rounded)).monospacedDigit()
+                Text(change.map { "¥\(Yen.format($0))" } ?? (choice == .none ? "—" : "不足")).font(.system(size: 44, weight: .bold, design: .rounded)).monospacedDigit()
             }
             .foregroundColor(toastDark)
             .padding(16)
             .background(RoundedRectangle(cornerRadius: 14).fill(Color.tofuTop))
             HStack {
-                if change == nil { Text("預り金が合計に足りません").foregroundColor(.red) }
+                if choice == .none { Text("受け取った額を選んでください").foregroundColor(.tofuMuted) }
+                else if change == nil { Text("預り金が合計に足りません").foregroundColor(.red) }
                 Spacer()
-                Text("預り ¥\(Yen.format(received ?? 0))").foregroundColor(.tofuMuted)
+                if let received { Text("預り ¥\(Yen.format(received))").foregroundColor(.tofuMuted) }
             }.font(.footnote).padding(.horizontal, 4)
         }
     }
@@ -280,7 +273,7 @@ struct SingleProductView: View {
             let customer = Customer(age: age, gender: gender, group: group)
             let sale = try model.checkout(id: commandID, lines: [line], received: received, customer: customer)
             commandID = UUID().uuidString
-            quantity = 1; choice = .exact; manualText = ""; age = nil; gender = nil; group = nil; customerPage = 0
+            quantity = 1; choice = .none; manualText = ""; age = nil; gender = nil; group = nil; customerPage = 0
             model.refresh()
             show(sale)
             scrollToTop += 1

@@ -148,6 +148,9 @@ func v4Checks() throws {
     try check(quick.sales()[0].cancelledHere && quick.sales()[0].cancellationReason == "確定直後の取消", "undo right after checkout")
     try check(QuickSale.maxQuantity(Product(id: "x", name: "x", price: 1, stopAtZero: true), displayed: 42) == 42
               && QuickSale.maxQuantity(Product(id: "x", name: "x", price: 1), displayed: -3) == 999 && QuickSale.changeNote(0) == "お釣りなし", "quick sale limits")
+    try check(QuickSale.Choice.exact.toggled(.exact) == .none && QuickSale.Choice.none.toggled(.preset(1000)) == .preset(1000)
+              && QuickSale.change(total: 1000, choice: .none, manual: "") == nil && QuickSale.change(total: 1000, choice: .preset(5000), manual: "") == 4000
+              && QuickSale.change(total: 1000, choice: .manual, manual: "999") == nil, "received amount starts unselected and toggles")
     try rejects("stock on missing product") { try store.addStockEvent(productID: "missing", kind: "add", quantity: 5) }
     try store.addStockEvent(productID: "p2", kind: "add", quantity: 1)
     try check(!StockMath.soldOut(Product(id: "x", name: "x", price: 1), displayed: -3) && StockMath.soldOut(Product(id: "x", name: "x", price: 1, stopAtZero: true), displayed: 0)

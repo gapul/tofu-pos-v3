@@ -120,6 +120,25 @@ public enum QuickSale {
         let count = sale.lines.reduce(0) { $0 + $1.quantity }
         return "¥\(Yen.format(sale.total))（\(count)本）を保存しました・お釣り ¥\(Yen.format(sale.change))"
     }
+    /// Received-amount selection. Starts as `.none` (purchase disabled), returns to `.none` after a quantity
+    /// change or a purchase, and tapping the selected button again clears it.
+    public enum Choice: Equatable {
+        case none, exact, preset(Int64), manual
+        public func toggled(_ tapped: Choice) -> Choice { tapped == self ? .none : tapped }
+        public func received(total: Int64?, manual: String) -> Int64? {
+            switch self {
+            case .none: return nil
+            case .exact: return total
+            case .preset(let value): return value
+            case .manual: return Money.parse(manual)
+            }
+        }
+    }
+    /// Change, or nil while nothing is chosen or the amount is short.
+    public static func change(total: Int64?, choice: Choice, manual: String) -> Int64? {
+        guard let total, let received = choice.received(total: total, manual: manual), received >= total else { return nil }
+        return received - total
+    }
     public static func changeNote(_ amount: Int64) -> String { amount == 0 ? "お釣りなし" : Cash.changeText(amount) }
 }
 

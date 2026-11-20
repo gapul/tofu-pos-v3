@@ -87,20 +87,31 @@ class CashTest {
     assertThrows(Exception::class.java) { CloudJSON.product(JSONObject("""{"id":"p","name":"x","price":1,"active":true,"stop_at_zero":"yes","version":1,"stock":3}""")) }
     assertThrows(IllegalArgumentException::class.java) { CloudJSON.product(JSONObject("""{"id":"p","name":"x","price":1,"active":true,"version":0,"stock":3}""")) }
   }
-  @Test fun singleProductQuantityReselectsExact() {
+  @Test fun singleProductStartsWithNoTenderAndQuantityClearsIt() {
+    assertNull(SingleState().tender); assertNull(SingleState().received(500))
+    assertFalse(SingleState().canConfirm(500, false, null)) // nothing chosen yet
     val paid = SingleState().withQuantity(2).select("5000")
     assertEquals(5000L, paid.received(1000)); assertEquals(1000L, paid.total(500))
     val changed = paid.withQuantity(3)
-    assertEquals(SingleState.EXACT, changed.tender); assertEquals(1500L, changed.received(1500))
-    assertEquals(SingleState.EXACT, paid.select(SingleState.MANUAL).copy(manual = "2000").withQuantity(1).tender)
-    assertEquals("", paid.select(SingleState.MANUAL).copy(manual = "2000").withQuantity(1).manual)
+    assertNull(changed.tender); assertNull(changed.received(1500))
+    val manual = paid.select(SingleState.MANUAL).copy(manual = "2000")
+    assertNull(manual.withQuantity(1).tender); assertEquals("", manual.withQuantity(1).manual)
     assertEquals(1, SingleState().withQuantity(0).quantity); assertEquals(999, SingleState().withQuantity(1000).quantity)
+  }
+  @Test fun singleProductTenderToggles() {
+    val exact = SingleState().select(SingleState.EXACT)
+    assertEquals(SingleState.EXACT, exact.tender); assertNull(exact.select(SingleState.EXACT).tender)
+    val manual = SingleState().select(SingleState.MANUAL).copy(manual = "3000")
+    assertNull(manual.select(SingleState.MANUAL).tender); assertEquals("", manual.select(SingleState.MANUAL).manual)
+    assertEquals("", manual.select("5000").manual); assertEquals("5000", manual.select("5000").tender)
+    assertEquals("", exact.select(SingleState.MANUAL).manual) // manual entry starts empty
   }
   @Test fun singleProductTenderBelowTotalIsDisabled() {
     assertFalse(SingleState.enabled(1000, 1500)); assertTrue(SingleState.enabled(2000, 1500)); assertTrue(SingleState.enabled(1500, 1500))
     assertFalse(SingleState.enabled(1000, null))
     val three = SingleState().withQuantity(3) // 1,500 yen at 500
-    assertTrue(three.canConfirm(500, false, null))
+    assertFalse(three.canConfirm(500, false, null))
+    assertTrue(three.select(SingleState.EXACT).canConfirm(500, false, null))
     assertFalse(three.select("1000").canConfirm(500, false, null))
     assertTrue(three.select("2000").canConfirm(500, false, null))
     assertFalse(three.select(SingleState.MANUAL).copy(manual = "1499").canConfirm(500, false, null))
@@ -112,9 +123,10 @@ class CashTest {
     assertEquals(999, SingleState.maxQuantity(true, null))
     assertEquals(2, SingleState.maxQuantity(true, 2))
     assertEquals(0, SingleState.maxQuantity(true, -1))
-    assertFalse(SingleState().withQuantity(3).canConfirm(500, true, 2))
-    assertTrue(SingleState().withQuantity(3).canConfirm(500, false, -10)) // negative stock keeps selling
-    assertFalse(SingleState().canConfirm(500, true, 0)) // sold out
-    assertFalse(SingleState().withQuantity(999).canConfirm(Money.MAXIMUM, false, null)) // over the order limit
+    val exact = SingleState.EXACT
+    assertFalse(SingleState().withQuantity(3).select(exact).canConfirm(500, true, 2))
+    assertTrue(SingleState().withQuantity(3).select(exact).canConfirm(500, false, -10)) // negative stock keeps selling
+    assertFalse(SingleState().select(exact).canConfirm(500, true, 0)) // sold out
+    assertFalse(SingleState().withQuantity(999).select(exact).canConfirm(Money.MAXIMUM, false, null)) // over the order limit
   }
 }

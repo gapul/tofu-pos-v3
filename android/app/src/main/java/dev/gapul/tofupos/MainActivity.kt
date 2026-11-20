@@ -184,7 +184,7 @@ class MainActivity : ComponentActivity() {
       cash = it.getString("cash").orEmpty()
       tab = it.getInt("selectedTab", 0).coerceIn(0, 3)
       advanced = it.getBoolean("advanced")
-      single = SingleState(it.getInt("singleQuantity", 1).coerceIn(1, 999), it.getString("singleTender") ?: SingleState.EXACT, it.getString("singleManual").orEmpty())
+      single = SingleState(it.getInt("singleQuantity", 1).coerceIn(1, 999), it.getString("singleTender"), it.getString("singleManual").orEmpty())
       age = it.getString("age"); gender = it.getString("gender"); group = it.getString("group")
       val rows = JSONArray(it.getString("cart") ?: "[]")
       for (i in 0 until rows.length()) {

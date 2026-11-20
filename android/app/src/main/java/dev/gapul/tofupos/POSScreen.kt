@@ -458,7 +458,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
                 val colors = if (on) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary)
                   else ButtonDefaults.filledTonalButtonColors()
                 Button({
-                  if (key == SingleState.MANUAL) { onState(state.select(key).copy(manual = "")); if (state.tender == key) runCatching { manualFocus.requestFocus(); keyboard?.show() } }
+                  if (key == SingleState.MANUAL && state.tender != key) onState(state.select(key)) // LaunchedEffect focuses the empty field
                   else { focus.clearFocus(); onState(state.select(key)) }
                 }, Modifier.weight(1f).heightIn(min = 52.dp), enabled = allowed, colors = colors,
                   contentPadding = PaddingValues(horizontal = 4.dp)) { Text(label, maxLines = 1, style = MaterialTheme.typography.titleMedium) }
@@ -477,7 +477,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
             Text(change?.let(::yen) ?: "—", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
           }
           Row {
-            Text(change?.let { if (it == 0L) "お釣りなし" else "" } ?: "預り金が足りません", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            Text(change?.let { if (it == 0L) "お釣りなし" else "" } ?: if (state.tender == null) "受け取った額を選んでください" else "預り金が足りません", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             if (received != null) Text("預り ${yen(received)}", style = MaterialTheme.typography.bodyMedium)
           }
         }

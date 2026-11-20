@@ -67,12 +67,13 @@ object Cash {
 
 data class SessionSummary(val sales: Long, val cancels: Long, val orders: Int, val segments: Map<Pair<String?, String?>, Int>, val groups: Map<String?, Int> = emptyMap())
 
-/** Single-product register: quantity and the tender choice. Changing the quantity always re-selects "exact". */
-data class SingleState(val quantity: Int = 1, val tender: String = EXACT, val manual: String = "") {
+/** Single-product register: quantity and the tender choice. Nothing is tendered until chosen; a quantity change clears it. */
+data class SingleState(val quantity: Int = 1, val tender: String? = null, val manual: String = "") {
   fun withQuantity(value: Int) = SingleState(value.coerceIn(1, 999))
-  fun select(value: String) = copy(tender = value)
+  /** Tapping the chosen button again clears the choice. Manual entry always starts empty. */
+  fun select(value: String) = if (tender == value) copy(tender = null, manual = "") else copy(tender = value, manual = "")
   fun total(price: Long): Long? = runCatching { Money.total(listOf(Line("p", "p", price, quantity))) }.getOrNull()
-  fun received(total: Long): Long? = when (tender) { EXACT -> total; MANUAL -> Money.parse(manual); else -> tender.toLongOrNull() }
+  fun received(total: Long): Long? = when (tender) { null -> null; EXACT -> total; MANUAL -> Money.parse(manual); else -> tender.toLongOrNull() }
   fun canConfirm(price: Long, stopAtZero: Boolean, stock: Long?): Boolean {
     val total = total(price) ?: return false; val received = received(total) ?: return false
     return received in total..Money.MAXIMUM && quantity <= maxQuantity(stopAtZero, stock)
