@@ -294,6 +294,71 @@ function el(tag, attrs = {}, ...kids) {
 function modal(text, title = "UTOS") { $("mdh").textContent = title; $("mdb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
 $("mok").onclick = () => { $("modal").hidden = true; };
 
+// ---------- English mode ----------
+// Pages are written in Japanese; in English mode a translator rewrites UI text in place (exact strings,
+// then patterns for strings with numbers). Content (notices, project text) comes from copy.en instead.
+let lang = (() => { try { const v = localStorage.getItem("utos-lang"); if (v) return v; } catch {} return (navigator.languages?.[0] ?? navigator.language ?? "ja").startsWith("ja") ? "ja" : "en"; })();
+const EN = () => lang === "en";
+const J = (ja, en) => EN() ? en : ja;
+const UI = {
+  "ログイン": "Login", "スマホ版": "Smartphone", "PC版": "PC", "ログアウト": "Logout", "English": "English", "お知らせ": "Notices", "関連リンク": "Links",
+  "新着情報": "What's New", "新着情報があります。": "There is new information.", "よく使うメニュー": "Frequently Used", "前へ": "Previous",
+  "HOME": "HOME", "団体情報": "Organization", "販売時間割": "Timetable", "販売分析": "Sales", "日程・スケジュール": "Schedule", "日程": "Schedule", "商品情報": "Item", "客層分析": "Customers", "掲示": "Bulletin", "リンク": "Links",
+  "企画・団体情報参照": "Project & Organization", "本日の販売時間割": "Today's Timetable", "販売実績参照": "Sales Report", "営業日程": "Opening Days", "日別販売参照": "Sales by Day",
+  "商品情報参照": "Item Information", "客層分析参照": "Customer Analysis", "掲示板": "Bulletin Board", "商品情報参照／商品情報": "Item Information",
+  "企画情報": "Project", "開催情報": "Festival", "企画名": "Project", "団体名": "Organization", "区分": "Category", "場所": "Place", "時間": "Hours", "価格": "Price", "紹介": "Description",
+  "メニュー": "Menu", "企画ページ": "Project page", "略称": "Short name", "概要": "About", "拠点": "Base", "コピー": "Motto", "公式サイト": "Website", "名称": "Name", "テーマ": "Theme",
+  "会期": "Date", "会場": "Venue", "アクセス": "Access", "日付": "Date", "販売数": "Sold", "会計数": "Orders", "500円/1個": "¥500 each", "未登録": "",
+  "月曜日": "Mon", "火曜日": "Tue", "水曜日": "Wed", "木曜日": "Thu", "金曜日": "Fri", "土曜日": "Sat", "日曜日": "Sun",
+  "1限": "Period 1", "2限": "Period 2", "3限": "Period 3", "4限": "Period 4", "5限": "Period 5", "6限": "Period 6",
+  "※1時間ごとの集計を時限に割り振った概算です（30秒ごとに自動更新）。": "*Hourly totals assigned to class periods; approximate (updates every 30 seconds).",
+  "本日": "Today", "全期間": "All days", "純売上": "Net sales", "客単価": "Avg. order", "1会計あたり\n本数": "Pieces\nper order", "取消": "Cancelled", "残り在庫": "In stock", "在庫\n消化率": "Stock\nsold",
+  "■販売ペース": "■ Pace", "■時間帯別販売": "■ Sales by hour", "ピーク時間帯": "Peak hour", "ピーク時の販売数": "Sold at peak", "直近2時間の\n平均販売数": "Avg. per hour\n(last 2 h)",
+  "売り切れ見込み": "Expected sell-out", "販売時間帯の数": "Hours with sales", "No": "No", "時間帯": "Hour", "売上": "Sales", "構成比": "Share", "データがありません": "No data",
+  "販売数は売上を単価で割った値です。売り切れ見込みは、直近2時間の平均ペースが続いた場合の目安です。": "Pieces sold = sales ÷ unit price. Expected sell-out assumes the average pace of the last 2 hours continues.",
+  "年代×性別（会計数）": "Age × gender (orders)", "年代＼性別": "Age \\ Gender", "男性": "Male", "女性": "Female", "その他": "Other", "未設定": "Not set", "計": "Total",
+  "子ども": "Child", "学生": "Student", "大人": "Adult", "シニア": "Senior", "集団": "Party", "関係": "Relationship", "一人": "Alone", "友人": "Friends", "家族": "Family", "カップル": "Couple", "グループ": "Group",
+  "知り合い": "Acquaintance", "親族": "Relative", "メンバー": "Member", "豆腐狂": "Tofu fan", "一般人": "General",
+  "開場時間": "Hours", "状況": "Status", "終了": "Finished", "本日開催": "Open today", "開催予定": "Upcoming",
+  "最新の情報に更新": "Refresh", "今週に戻る": "This week", "販売あり": "Sales", "販売なし": "No sales", "<<<月": "<<<Month", "<<週": "<<Week", "週>>": "Week>>", "月>>>": "Month>>>",
+  "豆腐田楽": "Tofu dengaku", "商品情報／Item Information": "Item Information", "基本情報／Basic Information": "Basic Information", "写真／Photo": "Photo",
+  "基本情報/Basic Information": "Basic Information", "写真/Photo": "Photo", "写真はありません。": "No photo.", "閉じる/Close": "Close", "関連リンク/Links": "Links",
+  "商品名\n／Item": "Item", "価格\n／Price": "Price", "メニュー\n／Menu": "Menu", "販売場所\n／Place": "Place", "販売時間\n／Hours": "Hours", "企画名\n／Project": "Project",
+  "団体名\n／Organization": "Organization", "紹介\n／Description": "Description", "購入方法\n／How to buy": "How to buy", "店頭のみ": "At the stall only",
+  "分類": "Category", "件名": "Subject", "発信元": "From", "URL": "URL", "企画紹介": "About the stall", "TOPへ ⇧": "Back to top ⇧", "読み込み中…": "Loading…",
+  "販売状況を取得しています。": "Loading sales…", "データを取得できませんでした。しばらくしてから再度お試しください。": "Could not load the data. Please try again shortly.",
+  "セッションタイムアウト": "Session timeout", "Help": "Help", "OK": "OK", "Information": "Information", "Link": "Link",
+  "[販売状況]　【Are you Tofu? / Sales】": "[Sales]　【Are you Tofu? / Sales】", "本日の豆腐田楽　販売数": "Tofu dengaku today: sold", "本　／　残り在庫": "pcs / in stock", "本": "pcs", "豆腐田楽の写真": "Photo of tofu dengaku",
+};
+const WD = { "日": "Sun", "月": "Mon", "火": "Tue", "水": "Wed", "木": "Thu", "金": "Fri", "土": "Sat" };
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const PATTERNS = [
+  [/^本日（(\d+)月(\d+)日）の販売数は(.+?)本、残り在庫は(.+?)本です。$/, (m, mo, d, a, b) => `Today (${MON[mo - 1]} ${d}): ${a} sold, ${b} left in stock.`],
+  [/^会計(.+?)件・在庫消化率(\d+)%（30秒ごとに自動更新）$/, (m, a, b) => `${a} orders · ${b}% of stock sold (updates every 30 seconds)`],
+  [/^本日の販売数は(.+?)本です。$/, (m, a) => `${a} sold today.`], [/^残り在庫は(.+?)本です。$/, (m, a) => `${a} left in stock.`],
+  [/^最新の会計は(.+?)です。$/, (m, a) => `Latest order at ${a}.`], [/^本日のピークは(\d+)時台です。$/, (m, a) => `Today's peak: ${a}:00.`], [/^本日のピークは—です。$/, () => "Today's peak: —"],
+  [/^残り約(\d+)分$/, (m, a) => `About ${a} min left`], [/^残り\n約(\d+)分$/, (m, a) => `Left\n~${a} min`],
+  [/^(\d+)時台$/, (m, a) => `${a}:00`], [/^(\d+)月(\d+)日 \((.)\)$/, (m, mo, d, w) => `${MON[mo - 1]} ${d} (${WD[w]})`],
+  [/^([\d,.]+)本$/, (m, a) => `${a} ${a === "1" ? "pc" : "pcs"}`], [/^([\d,]+)件$/, (m, a) => a], [/^([\d.]+)本\/時$/, (m, a) => `${a} pcs/h`], [/^(\d+)時間$/, (m, a) => `${a} h`],
+  [/^(\d\d:\d\d) 頃$/, (m, a) => `around ${a}`], [/^■販売実績（(.+)）$/, (m, a) => `■ Sales (${UI[a] ?? a})`],
+  [/^対象：会計(.+?)件（.*）$/, (m, a) => `Based on ${a} orders (customer fields are optional, so "Not set" is included)`],
+  [/^(\d+)年$/, (m, a) => a], [/^<<　(.+)（ 最終更新日： (\d+)年(\d+)月(\d+)日 ）　>>$/, (m, n, y, mo, d) => `<<　${n} (last updated: ${MON[mo - 1]} ${d}, ${y})　>>`],
+  [/^(\d+)\/(\d+)$/, null],
+];
+function tr(text) {
+  const key = text.trim(); if (!key) return text;
+  if (Object.hasOwn(UI, key)) return text.replace(key, UI[key]);
+  for (const [re, fn] of PATTERNS) { const m = re.exec(key); if (m) return fn ? text.replace(key, fn(...m)) : text; }
+  return text;
+}
+function localize(root) {
+  if (!EN() || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) { if (n.parentElement?.closest("script,style,[data-raw]")) continue; const t = tr(n.nodeValue); if (t !== n.nodeValue) n.nodeValue = t; }
+  root.querySelectorAll?.("[alt],[placeholder],[title]").forEach(e => { for (const a of ["alt", "placeholder", "title"]) if (e.hasAttribute(a)) { const v = tr(e.getAttribute(a)); if (v !== e.getAttribute(a)) e.setAttribute(a, v); } });
+}
+new MutationObserver(list => { if (!EN()) return; for (const r of list) for (const n of r.addedNodes) n.nodeType === 3 ? (n.nodeValue = tr(n.nodeValue)) : n.nodeType === 1 && localize(n); }).observe(document.documentElement, { childList: true, subtree: true });
+
 // ---------- icons: colourful 48px for the PC tabs, white line icons for the smart tiles ----------
 // Hand-drawn look-alikes of the portal's glossy icon set. "ID" is replaced per instance so gradient ids stay unique.
 let iconSeq = 0;
@@ -400,7 +465,7 @@ const hhmm = iso => { if (!iso) return "—"; const t = jst(Date.parse(iso)); re
 const bar = (v, max, color = "#4694d1") => el("span", { style: `display:inline-block;height:9px;vertical-align:middle;background:${color};width:${Math.max(2, Math.round(v / Math.max(1, max) * 160))}px` });
 
 // ---------- pages ----------
-const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal("ご不明な点は店頭（" + copy.project.place + "）のスタッフにお尋ねください。", "Help") }, "Help"));
+const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal(J("ご不明な点は店頭（" + copy.project.place + "）のスタッフにお尋ねください。", "Please ask our staff at the stall (" + copy.project.place + ")."), "Help") }, "Help"));
 const wrapPortlet = (head, ...body) => el("div", { class: "portlet" }, head, ...body);
 const phead = title => el("div", { class: "ph" }, el("i", {}, "i"), title);
 const ext = (label, url) => el("a", { href: url, target: "_blank", rel: "noopener" }, label);
@@ -418,7 +483,7 @@ function homePage() {
   return wrapPortlet(phead("お知らせ"),
     el("div", { class: "notice" }, el("div", { class: "nh" }, "[販売状況]　【Are you Tofu? / Sales】"), ...liveLines,
       el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, first.title), el("p", { style: "font-size:13px" }, first.body),
-      ...rest.flatMap(n => [hr(), el("b", {}, "【" + n.category + "】" + n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]),
+      ...rest.flatMap(n => [hr(), el("b", {}, J("【" + n.category + "】", "[" + n.category + "] ") + n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, J("（" + n.from + "）", "(" + n.from + ")"))]),
       hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　Are you Tofu?（dp9）`)),
     el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), "‹", el("a", { onclick: () => go("board") }, "前へ")));
 }
@@ -432,7 +497,7 @@ function orgPage() {
   const links = el("div", { class: "gk-links", style: "grid-template-columns:repeat(3,1fr)" }, ...SUBS.map(([l, k]) => el("a", { class: k === sub ? "chk" : null, onclick: () => { state.sub = k; render(); } }, l)));
   const kv = (caption, rows) => el("table", { class: "gk" }, el("caption", {}, caption), ...rows.map(r => el("tr", {}, ...r.flatMap(([k, v], i) => [el("th", {}, k), el("td", r.length === 1 ? { colspan: 3, style: "width:auto" } : {}, v ?? "")]))));
   const body = {
-    project: [kv("企画情報", [[["企画名", P.name], ["団体名", P.org]], [["区分", P.category], ["場所", P.place]], [["時間", P.time], ["価格", P.price]], [["紹介", P.intro + "。" + P.intro2]], [["メニュー", P.menu]], [["企画ページ", ext(P.url, P.url)]]])],
+    project: [kv("企画情報", [[["企画名", P.name], ["団体名", P.org]], [["区分", P.category], ["場所", P.place]], [["時間", P.time], ["価格", P.price]], [["紹介", P.intro + J("。", " ") + P.intro2]], [["メニュー", P.menu]], [["企画ページ", ext(P.url, P.url)]]])],
     circle: [kv("団体情報", [[["団体名", C.name], ["略称", C.short]], [["概要", C.about]], [["拠点", C.base]], [["コピー", C.copy]], [["公式サイト", ext(C.url, C.url)]]])],
     festival: [kv("開催情報", [[["名称", F.name], ["テーマ", F.theme]], ...F.days.map(([, l, h]) => [["会期", l], ["時間", h]]), [["会場", F.venue], ["アクセス", F.access]], [["公式サイト", ext(F.url, F.url)]]])],
   }[sub];
@@ -497,7 +562,7 @@ function schedulePage() {
   return wrapPortlet(fbar("営業日程", "book"), el("div", { class: "f" },
     el("table", { class: "rs rs-head", style: "width:700px" }, el("tr", {}, ...["日付", "開場時間", "場所", "状況"].map(h => el("th", {}, h))),
       ...F.days.map(([d, l, h]) => el("tr", {}, el("td", { style: "text-align:center" }, l), el("td", { style: "text-align:center" }, h), el("td", { style: "text-align:center" }, P.place), el("td", { style: "text-align:center" + (d === today ? ";background:#ffcc99;font-weight:bold" : "") }, d < today ? "終了" : d === today ? "本日開催" : "開催予定")))),
-    el("p", { style: "margin-top:12px" }, F.name + "（テーマ「" + F.theme + "」）　" + F.venue + "　" + F.access), el("p", {}, "企画の時間：" + P.time)));
+    el("p", { style: "margin-top:12px" }, J(F.name + "（テーマ「" + F.theme + "」）", F.name + " (theme: \"" + F.theme + "\")") + "　" + F.venue + "　" + F.access), el("p", {}, J("企画の時間：", "Stall hours: ") + P.time)));
 }
 async function kyukoPage() {
   const t = jst(), off = state.menu ?? 0, monday = new Date(t.getTime() - ((t.getUTCDay() + 6) % 7) * 864e5 + off * 7 * 864e5);
@@ -523,8 +588,8 @@ async function kyukoPage() {
 }
 function productPage() {
   const P = copy.project, F = copy.festival;
-  const rows = [["商品名\n／Item", "豆腐田楽"], ["価格\n／Price", P.price], ["メニュー\n／Menu", P.menu], ["販売場所\n／Place", P.place], ["販売時間\n／Hours", P.time + "（" + F.days.map(([, l, h]) => l + " " + h).join("、") + "）"],
-    ["企画名\n／Project", P.name], ["団体名\n／Organization", P.org + "（" + copy.circle.name + "）"], ["紹介\n／Description", P.intro + "。" + P.intro2], ["購入方法\n／How to buy", "店頭のみ"]];
+  const rows = [["商品名\n／Item", "豆腐田楽"], ["価格\n／Price", P.price], ["メニュー\n／Menu", P.menu], ["販売場所\n／Place", P.place], ["販売時間\n／Hours", P.time + J("（", " (") + F.days.map(([, l, h]) => l + " " + h).join(J("、", ", ")) + J("）", ")")],
+    ["企画名\n／Project", P.name], ["団体名\n／Organization", P.org + J("（", " (") + copy.circle.name + J("）", ")")], ["紹介\n／Description", P.intro + J("。", " ") + P.intro2], ["購入方法\n／How to buy", "店頭のみ"]];
   const tab = state.menu === "photo" ? "photo" : "basic";
   const T = [["basic", "基本情報／Basic Information"], ["photo", "写真／Photo"]];
   const body = tab === "basic"
@@ -561,7 +626,7 @@ addEventListener("popstate", () => { const h = location.hash.slice(1); if (PAGE_
 function openTab(id) { const t = TABS.find(x => x[0] === id); if (sp() && t[2].length > 1) { state.tab = id; state.spMenu = id; state.page = null; render(); window.scrollTo(0, 0); return; } go(t[2][0][1]); }
 function paintChrome() {
   const name = "Are you Tofu?", left = Math.max(0, Math.ceil((deadline - Date.now()) / 60e3));
-  $("sys").replaceChildren(...[["user", name, () => go("org")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
+  $("sys").replaceChildren(...[["user", name, () => go("org")], ["smart", "スマホ版", () => setMode("sp")], ["english", J("English", "日本語"), () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
     .map(([k, l, fn]) => el("button", { onclick: fn }, icon(SYS_ICON, k, "0 0 24 24"), l)));
   $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("button", { type: "button", class: "tabcell" + (id === state.tab ? " sel" : ""), "aria-current": id === state.tab ? "page" : null, onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
   $("menubar").replaceChildren(...TABS.find(t => t[0] === state.tab)[2].map(([l, p]) => el("a", { class: p === state.page ? "cur" : null, onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)));
@@ -573,7 +638,7 @@ function paintChrome() {
   for (const id of ["newsHead", "spNewsHead"]) { const h = $(id); if (h && !h.dataset.ic) { h.dataset.ic = 1; h.querySelector("i")?.remove(); h.prepend(icon(SMALL, "find", "0 0 16 16")); } }
   { const h = $("spFavHead"); if (!h.dataset.ic) { h.dataset.ic = 1; h.prepend(icon(SMALL, "info", "0 0 16 16")); } }
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
-  $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
+  $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], [J("English", "日本語"), () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
     [`残り\n約${left}分`, () => poke(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
     .map(([l, fn, ic]) => el("button", { onclick: fn, style: "white-space:pre-line" }, svgOf("0 0 24 24", ic), l)));
 }
@@ -625,18 +690,37 @@ function setMode(mode) {
   try { localStorage.setItem("utos-mode", mode); } catch {}
   if (!$("portal").hidden) { if (mode === "sp" && state.page === "home") state.page = "spHome"; if (mode === "pc" && (!state.page || state.page === "spHome")) state.page = "home"; state.spMenu = null; render(); }
 }
-const act = { english: () => modal("Are you Tofu? — Tofu dengaku (miso-glazed, charcoal-grilled tofu), 500 yen each. At Center Court A1 during the 77th Komaba Festival, Nov 21–23.", "English"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
+const act = { english: () => setLang(EN() ? "ja" : "en"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b) { e.preventDefault(); act[b.dataset.act](); } const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); if ($("portal").hidden) enter(); go(g.dataset.goto); } });
 let saved = null; try { saved = localStorage.getItem("utos-mode"); } catch {}
 document.body.classList.toggle("sp", (saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc")) === "sp");
 
-fetch("copy.json").then(r => r.json()).then(c => {
-  copy = c;
+let copyJa = null;
+function localizedCopy() {
+  if (!EN()) return copyJa;
+  const e = copyJa.en;
+  return { ...copyJa, ...e, festival: { ...copyJa.festival, ...e.festival, days: e.festival.days.map(([d, l, h]) => [d, l, h.replace("〜", "–")]) },
+    project: { ...copyJa.project, ...e.project }, circle: { ...copyJa.circle, ...e.circle } };
+}
+function setLang(l) {
+  lang = l; try { localStorage.setItem("utos-lang", l); } catch {}
+  // Japanese text is the page source; going back to it is simplest with a reload (the URL keeps the page).
+  if (!EN()) { location.reload(); return; }
+  copy = localizedCopy(); fillStatic(); localize(document.body); if (!$("portal").hidden) render();
+}
+function fillStatic() {
+  const c = copy;
+  document.documentElement.lang = lang;
   document.querySelectorAll("[data-copy]").forEach(n => { n.textContent = c[n.dataset.copy] ?? ""; });
+  document.querySelectorAll('[data-act="english"]').forEach(b => { b.textContent = J("English", "日本語"); });
   document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = "Are you Tofu?"; });
-  $("certBody").replaceChildren(el("p", {}, c.project.intro + "。" + c.project.intro2), el("p", {}, c.project.menu), el("p", {}, "場所：" + c.project.place + "（" + c.festival.name + "・" + c.festival.venue + "）"));
-  $("priceLine").textContent = c.project.price + "　ご購入は店頭のみです。";
+  $("certBody").replaceChildren(el("p", {}, c.project.intro + J("。", " ") + c.project.intro2), el("p", {}, c.project.menu),
+    el("p", {}, J("場所：" + c.project.place + "（" + c.festival.name + "・" + c.festival.venue + "）", "Place: " + c.project.place + " (" + c.festival.name + ", " + c.festival.venue + ")")));
+  $("priceLine").textContent = c.project.price + J("　ご購入は店頭のみです。", " — available at the stall only.");
   $("links").replaceChildren(...c.links.map(([t, u]) => el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener" }, t))));
+}
+fetch("copy.json").then(r => r.json()).then(c => {
+  copyJa = c; copy = localizedCopy(); fillStatic(); localize(document.body);
   load(); setInterval(() => { if (!document.hidden) load(); }, 30000);
   const h = location.hash.slice(1);
   if (PAGE_KEYS().includes(h)) { enter(false); go(h, null, false); }

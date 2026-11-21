@@ -97,5 +97,99 @@
   }
  ],
  "footer": "© 2026 Are you Tofu? / dp9 (designing plus nine). All Rights Reserved.",
- "timeout": "一定時間操作が行われなかったため、UTOSのセッションが自動切断されました。最新の販売数および在庫状況を確認する場合は、再度ログインを行ってください。"
+ "timeout": "一定時間操作が行われなかったため、UTOSのセッションが自動切断されました。最新の販売数および在庫状況を確認する場合は、再度ログインを行ってください。",
+ "en": {
+  "festival": {
+   "name": "77th Komaba Festival",
+   "theme": "Mahoroba",
+   "venue": "The University of Tokyo, Komaba Campus",
+   "access": "1-minute walk from Komaba-todaimae Station (Keio Inokashira Line)",
+   "days": [
+    [
+     "2026-11-21",
+     "Nov 21 (Sat)",
+     "9:00〜18:00"
+    ],
+    [
+     "2026-11-22",
+     "Nov 22 (Sun)",
+     "9:00〜18:00"
+    ],
+    [
+     "2026-11-23",
+     "Nov 23 (Mon, Holiday)",
+     "9:00〜17:00"
+    ]
+   ]
+  },
+  "project": {
+   "category": "Food & Drink / Meals",
+   "place": "Center Court A1",
+   "time": "All day, every day",
+   "intro": "A tofu shop run by devoted tofu-loving members with the goal of \"seriously designing the ultimate tofu shop.\"",
+   "intro2": "Please check out not only our product, but also the many creative details crafted with care.",
+   "menu": "Our sole menu item is miso dengaku—tofu brushed with carefully selected miso and grilled boldly over charcoal. We grill it right in front of you on a shichirin grill.",
+   "price": "tofu dengaku: ¥500 each"
+  },
+  "circle": {
+   "copy": "\"Design for everyone.\"",
+   "about": "designing plus nine is a design circle founded in 2007, composed primarily of students from the University of Tokyo and Tokyo University of the Arts.",
+   "base": "We are currently based at The University of Tokyo, Komaba Campus."
+  },
+  "links": [
+   [
+    "Instagram (Are you Tofu? Official)",
+    "https://www.instagram.com/are_you_tofu_dp9/"
+   ],
+   [
+    "designing plus nine Official Website",
+    "http://www.designingplusnine.com/"
+   ],
+   [
+    "77th Komaba Festival Official Website",
+    "https://www.komabasai.net/77/"
+   ],
+   [
+    "Komaba Festival Project Page: \"Are you Tofu?\"",
+    "https://www.komabasai.net/77/project/315/"
+   ],
+   [
+    "X (dp9)",
+    "https://x.com/DP9_Official"
+   ],
+   [
+    "note (dp9)",
+    "https://note.com/dp9"
+   ]
+  ],
+  "login_info": "At the 77th Komaba Festival (theme: \"Mahoroba\"), dp9 presents \"Are you Tofu?\" from Nov 21 (Sat) to Nov 23 (Mon, Holiday), 2026 (9:00–18:00; until 17:00 on the final day). We are located at The University of Tokyo, Komaba Campus, Center Court A1, and open all day, every day. Purchases are available in-person at the stall only; please use this website to view real-time public updates on items sold, remaining stock, and hourly sales status.",
+  "notices": [
+   {
+    "category": "Stall Info",
+    "title": "77th Komaba Festival: \"Are you Tofu?\" Stall Announcement",
+    "body": "Founded in 2007 and composed primarily of students from the University of Tokyo and Tokyo University of the Arts, the design circle \"dp9 (designing plus nine)\" will open \"Are you Tofu?\" at the 77th Komaba Festival (theme: \"Mahoroba\"). It is a tofu shop run by devoted tofu-loving members with the goal of \"seriously designing the ultimate tofu shop.\" Hours are 9:00–18:00 (until 17:00 on the final day) from Nov 21 (Sat) to Nov 23 (Mon, Holiday), 2026, operating all day, every day at Center Court A1.",
+    "from": "Are you Tofu? (dp9)"
+   },
+   {
+    "category": "Products",
+    "title": "Menu, How to Buy, and Live Stock Updates",
+    "body": "Our sole menu item is miso dengaku—tofu brushed with carefully selected miso, charcoal-grilled, and cooked right in front of you on a shichirin grill (tofu dengaku: ¥500 each). Purchases are available in-person at the stall only. This website provides real-time public updates on items sold, remaining stock, and hourly sales status.",
+    "from": "Are you Tofu? Team"
+   },
+   {
+    "category": "Access",
+    "title": "Venue Access and Visitor Guidelines",
+    "body": "The venue is The University of Tokyo, Komaba Campus, a 1-minute walk from Komaba-todaimae Station on the Keio Inokashira Line. Our stall, \"Are you Tofu?\", is located at Center Court A1. Please note that visiting by car, motorcycle, bicycle, kick scooter, or similar vehicles is not permitted.",
+    "from": "Are you Tofu? Team"
+   },
+   {
+    "category": "Updates",
+    "title": "Updates on Our Official Accounts",
+    "body": "We share updates on Instagram (are_you_tofu_dp9), X (DP9_Official), and note (dp9). Please check each account for updates from both \"Are you Tofu?\" and dp9.",
+    "from": "Are you Tofu? (dp9)"
+   }
+  ],
+  "footer": "© 2026 Are you Tofu? / dp9 (designing plus nine). All Rights Reserved.",
+  "timeout": "Your UTOS session was automatically disconnected due to inactivity. Please log in again to check the latest sales count and stock status."
+ }
 }
