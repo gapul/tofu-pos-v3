@@ -5,7 +5,7 @@
     <linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f2e3c4"/></linearGradient>
     <linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cfa4"/><stop offset="1" stop-color="#d1b07a"/></linearGradient>
   </defs>
-  <g transform="translate(32 33) rotate(14) scale(1.12) translate(-32 -33)">
+  <g transform="translate(32 33) rotate(30) scale(1.08) translate(-32 -33)">
   <path d="M10 21 33 7 55 19 32 33z" fill="url(#t)"/>
   <path d="M10 21 32 33 30 58 9 45z" fill="url(#l)"/>
   <path d="M32 33 55 19 53 44 30 58z" fill="url(#r)"/>
