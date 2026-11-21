@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOFAS - Are you Tofu?</title>
+<meta name="description" content="豆腐田楽の模擬店 Are you Tofu? の販売状況をリアルタイムで公示する、学務システム風のパロディサイト。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#d4e0f1;--bar:#4c95d4;--bar-dark:#2f74b5;--ink:#333;--link:#2b3fd0;--red:#e00;--line:#9fb7d6;--cell:#fff;--th:#e3ecf7;--miso:#8a4b1f;--tofu:#fbf1d9;--glow:#ffe8a9}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.7 "ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","Hiragino Sans","メイリオ",Meiryo,"MS Pゴシック",Osaka,Arial,sans-serif}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;color:inherit}
+.frame{max-width:1180px;margin:0 auto;min-height:100vh;border-left:1px solid #b9c9df;border-right:1px solid #b9c9df}
+/* top strip with the slanted white tab */
+.strip{height:24px;background:var(--bar);position:relative}
+.strip .tab{position:absolute;left:0;top:0;height:24px;padding:0 34px 0 4px;background:#fff;font:bold 11px/24px Arial,sans-serif;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 100%,0 100%);white-space:nowrap}
+.strip .clock{position:absolute;right:8px;top:0;color:#fff;font:11px/24px Arial,sans-serif}
+/* login page */
+.hero{display:flex;flex-wrap:wrap;align-items:center;gap:24px 60px;padding:28px 24px 36px}
+.logo{width:min(440px,100%);aspect-ratio:440/300;position:relative}
+.logo::before{content:"";position:absolute;inset:-10% -8%;background:radial-gradient(closest-side,var(--glow) 0%,rgba(255,232,169,.55) 45%,rgba(212,224,241,0) 100%)}
+.logo svg{position:relative;width:100%;height:100%;overflow:visible}
+.logo text{font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;font-weight:900;font-size:150px;fill:var(--tofu);stroke:var(--miso);stroke-width:16px;paint-order:stroke;stroke-linejoin:round}
+.logo .seed{fill:#2e2018}
+.side{display:flex;flex-direction:column;align-items:center;gap:30px}
+.side .row{display:flex;gap:16px}
+.gbtn{background:linear-gradient(#fafafa,#e4e4e4);border:1px solid #8c8c8c;border-radius:2px;padding:7px 12px;cursor:pointer;font-size:14px}
+.gbtn:hover{background:linear-gradient(#fff,#ececec)}
+.gbtn:active{background:#ddd}
+.gbtn.tri::before{content:"";display:inline-block;border:4px solid transparent;border-left:5px solid #333;margin-right:6px;vertical-align:1px}
+.gbtn.big{font-size:20px;padding:12px 40px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,420px));gap:24px 20px;padding:0 10px 30px}
+.pl-h{display:flex;align-items:center;gap:8px;height:25px;padding:0 10px;border-radius:12px;background:linear-gradient(#5fa3dd,var(--bar) 55%,#3f87c9);color:#fff;font-size:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.pl-h i{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bfe0ff 45%,#4c95d4 100%);border:1px solid #fff;display:inline-grid;place-items:center;font:bold 10px/1 Georgia,serif;font-style:normal;color:#2f74b5}
+.pl-b{padding:14px 0 0}
+.pl-b p{margin:0 0 1.4em}
+.pl-b h3{font-size:15px;margin:2.2em 0 1.2em}
+.red{color:var(--red)}
+.links{list-style:none;margin:0;padding:22px 0 0 56px}
+.links li{margin:0 0 9px}
+.live-inline{border:1px solid var(--line);background:#fff;padding:8px 10px;margin:0 0 1.4em}
+.live-inline b{font-size:16px}
+.foot{border-top:2px solid var(--bar);padding:8px 10px 40px;color:#555;font-size:11px}
+/* portal */
+.ph{display:flex;align-items:center;gap:16px;padding:8px 14px;background:linear-gradient(#fff,#eef3fa);border-bottom:1px solid #b9c9df;flex-wrap:wrap}
+.ph .mini{width:120px;height:46px}
+.ph .who{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.ph .who small{color:#666}
+.tabs{display:flex;gap:3px;padding:8px 10px 0;background:linear-gradient(#e9f0f9,#cddbee);border-bottom:3px solid var(--bar);overflow-x:auto}
+.tabs button{border:1px solid #8fb0d6;border-bottom:0;border-radius:6px 6px 0 0;background:linear-gradient(#fdfdfd,#d9e5f3);padding:6px 16px;cursor:pointer;white-space:nowrap;font-size:13px}
+.tabs button[aria-selected=true]{background:var(--bar);color:#fff;border-color:var(--bar);font-weight:bold}
+.tabs button .ic{display:inline-block;width:12px;height:11px;margin-right:5px;vertical-align:-1px;background:linear-gradient(currentColor,currentColor) 50% 100%/8px 6px no-repeat;clip-path:polygon(50% 0,100% 50%,85% 50%,85% 100%,15% 100%,15% 50%,0 50%)}
+.crumb{padding:6px 14px;font-size:11px;color:#555}
+.crumb::before{content:"現在位置："}
+.view{padding:6px 14px 30px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.box{background:#fff;border:1px solid var(--line);border-top:0;padding:12px;border-radius:0 0 4px 4px}
+.title{font-size:16px;font-weight:bold;border-left:6px solid var(--bar);padding:2px 0 2px 8px;margin:6px 0 12px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0))}
+table{border-collapse:collapse;width:100%;background:var(--cell)}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--th);font-weight:normal;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.syl th{width:9.5em}
+.notice-list td:first-child{white-space:nowrap;width:1%}
+.notice-list button{background:none;border:0;padding:0;color:var(--link);cursor:pointer;text-align:left}
+.notice-list button:hover{text-decoration:underline}
+.cat{display:inline-block;border:1px solid #c66;color:#c33;background:#fff4f4;font-size:11px;padding:0 5px;border-radius:2px}
+.cat.normal{border-color:#7a9cc6;color:#2f5f99;background:#f2f7fd}
+.detail{background:#fbfbf3;border:1px solid #ddd;padding:8px 10px;margin:6px 0 2px}
+.detail small{display:block;color:#666;text-align:right}
+.msg{border:1px solid #e0a0a0;background:#fff0f0;color:var(--red);padding:8px 10px;margin:10px 0}
+.info{border:1px solid #9cc0e6;background:#f3f8fe;padding:8px 10px;margin:0 0 12px}
+.big{font-size:28px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.kpi div{border:1px solid var(--line);background:#fff;padding:8px 10px}
+.kpi span{display:block;font-size:11px;color:#555}
+.meter{height:14px;border:1px solid #8fb0d6;background:#fff;position:relative}
+.meter i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(45deg,#c98a4f 0 6px,#b66427 6px 12px)}
+.tt td{height:46px;text-align:center;vertical-align:middle;font-size:12px}
+.tt td.on{background:#fff6dc}
+.tt td.now{outline:3px solid #f0a020;outline-offset:-3px}
+.tt th{text-align:center}
+.hb{display:inline-block;height:9px;background:var(--bar);vertical-align:middle;margin-right:6px}
+.sylwrap{display:flex;gap:12px;align-items:flex-start}.sylwrap table{flex:1}
+.photo{width:200px;max-width:100%;border:1px solid var(--line);background:#eee;flex:none}
+.muted{color:#666}
+.blink{animation:bl 1s steps(2,start) infinite}@keyframes bl{to{visibility:hidden}}
+.marquee{overflow:hidden;white-space:nowrap;border:1px solid #e3c36b;background:#fffbe6;padding:3px 0;margin:0 0 12px}
+.marquee span{display:inline-block;padding-left:100%;animation:mq 22s linear infinite}@keyframes mq{to{transform:translateX(-100%)}}
+.modal{position:fixed;inset:0;background:rgba(40,60,90,.45);display:grid;place-items:center;padding:16px;z-index:10}
+.modal>div{background:#fff;border:2px solid var(--bar);max-width:440px;width:100%}
+.modal .mh{background:var(--bar);color:#fff;padding:4px 10px;font-weight:bold}
+.modal .mb{padding:16px}
+.modal .mf{text-align:center;padding:0 0 16px}
+[hidden]{display:none!important}
+@media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap{flex-direction:column-reverse;align-items:center}.ph .who{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.blink,.marquee span{animation:none}.marquee span{padding-left:0}}
+</style>
+</head>
+<body>
+<div class="frame">
+<div class="strip"><span class="tab">TOFAS（Tofu Academic affairs System）</span><span class="clock" id="clock"></span></div>
+
+<!-- Login page (parody of the public top page) -->
+<section id="login">
+  <div class="hero">
+    <div class="logo" aria-label="TOFAS">
+      <svg viewBox="0 0 440 300" role="img" aria-hidden="true">
+        <g class="seed"><ellipse cx="40" cy="70" rx="4" ry="8" transform="rotate(25 40 70)"/><ellipse cx="190" cy="40" rx="4" ry="8" transform="rotate(-30 190 40)"/><ellipse cx="420" cy="80" rx="4" ry="8" transform="rotate(40 420 80)"/><ellipse cx="120" cy="268" rx="4" ry="8" transform="rotate(-60 120 268)"/><ellipse cx="340" cy="270" rx="4" ry="8" transform="rotate(15 340 270)"/></g>
+        <text transform="translate(8 205) rotate(-6)">T</text>
+        <text transform="translate(92 228) rotate(4)">O</text>
+        <text transform="translate(198 178) rotate(-8)">F</text>
+        <text transform="translate(268 222) rotate(8)">A</text>
+        <text transform="translate(352 196) rotate(-3)">S</text>
+      </svg>
+    </div>
+    <div class="side">
+      <div class="row"><button class="gbtn tri" id="english">English</button><button class="gbtn tri" id="sp">スマホ版</button></div>
+      <button class="gbtn big" id="enter">ログイン</button>
+    </div>
+  </div>
+  <div class="cols">
+    <div>
+      <div class="pl-h"><i>i</i>Information</div>
+      <div class="pl-b">
+        <p data-copy="login_info"></p>
+        <div class="live-inline">本日の豆腐田楽　販売数 <b data-live="sold">—</b> 本　／　残り在庫 <b data-live="stock">—</b> 本 <small class="muted" data-live="updated"></small></div>
+        <h3 data-copy="cert_title"></h3>
+        <div id="certBody"></div>
+        <p class="red" data-copy="cert_warning"></p>
+      </div>
+    </div>
+    <div>
+      <div class="pl-h"><i>i</i>Link</div>
+      <ul class="links" id="links"></ul>
+    </div>
+  </div>
+  <div class="foot" data-copy="footer"></div>
+</section>
+
+<!-- Portal (after "login") -->
+<section id="portal" hidden>
+  <div class="ph">
+    <svg class="mini" viewBox="0 0 440 170" aria-label="TOFAS"><text x="0" y="135" style="font:900 130px 'M PLUS Rounded 1c',sans-serif;fill:#fbf1d9;stroke:#8a4b1f;stroke-width:14px;paint-order:stroke;stroke-linejoin:round">TOFAS</text></svg>
+    <div class="who"><span>ようこそ <b data-copy="welcome"></b> さん</span><small id="lastLogin"></small><button class="gbtn" id="logout">ログアウト</button></div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="crumb" id="crumb"></div>
+  <div class="view" id="view-home">
+    <div class="marquee"><span id="marquee"></span></div>
+    <div class="grid">
+      <div><div class="pl-h"><i>i</i>販売状況（リアルタイム）</div><div class="box">
+        <div class="kpi"><div><span>本日の販売数</span><b class="big" data-live="sold">—</b> 本</div><div><span>残り在庫</span><b class="big" data-live="stock">—</b> 本</div><div><span>本日の会計数</span><b class="big" data-live="orders">—</b> 件</div></div>
+        <p style="margin:10px 0 4px">在庫消化率 <b data-live="ratio">—</b></p><div class="meter"><i id="meter" style="width:0"></i></div>
+        <p class="muted" style="margin:8px 0 0">最終更新 <span data-live="updated">—</span>（30秒ごとに自動更新）</p>
+      </div></div>
+      <div><div class="pl-h"><i>i</i>掲示（新着）</div><div class="box"><table class="notice-list"><tbody id="noticeTop"></tbody></table><p style="margin:8px 0 0;text-align:right"><a href="#" data-goto="notices">掲示一覧へ ▸</a></p></div></div>
+      <div><div class="pl-h"><i>i</i>時間帯別 販売推移（本日）</div><div class="box"><table><tbody id="hours"></tbody></table></div></div>
+    </div>
+  </div>
+  <div class="view" id="view-register" hidden>
+    <div class="title" data-copy="register_title"></div>
+    <div class="info" data-copy="register_body"></div>
+    <table><thead><tr><th>選択</th><th>時間割コード</th><th>科目名</th><th class="num">単位（円）</th><th class="num">残り在庫</th><th>担当</th></tr></thead>
+      <tbody><tr><td><input type="checkbox" id="pick" aria-label="豆腐田楽を選択"></td><td data-syl="code"></td><td>豆腐田楽</td><td class="num">500</td><td class="num" data-live="stock">—</td><td data-syl="teacher"></td></tr></tbody></table>
+    <p style="text-align:center;margin:16px 0"><button class="gbtn big" id="register">登録</button></p>
+    <div class="msg" id="regErr" hidden></div>
+  </div>
+  <div class="view" id="view-grades" hidden>
+    <div class="title">成績照会</div>
+    <div class="info" data-copy="grades_note"></div>
+    <table><thead><tr><th>科目名</th><th class="num">取得単位（販売数）</th><th class="num">残り在庫</th><th>評語</th><th>所見</th></tr></thead>
+      <tbody><tr><td>豆腐田楽</td><td class="num" data-live="sold">—</td><td class="num" data-live="stock">—</td><td><b id="gradeLabel">—</b></td><td id="gradeComment">—</td></tr></tbody></table>
+    <p style="margin:14px 0 4px">GPA（Gross Profit Amount）</p>
+    <div class="big" data-live="sales">—</div>
+    <p class="muted">本日の純売上。評語は在庫消化率で自動判定する。</p>
+  </div>
+  <div class="view" id="view-syllabus" hidden>
+    <div class="title">シラバス参照</div>
+    <div class="sylwrap"><table class="syl"><tbody id="syl"></tbody></table><img class="photo" id="photo" alt="豆腐田楽の写真" hidden></div>
+  </div>
+  <div class="view" id="view-timetable" hidden>
+    <div class="title">時間割表（本日の販売実績）</div>
+    <div class="info" data-copy="timetable_note"></div>
+    <table class="tt"><thead><tr><th>時限</th><th>時間</th><th>本日（<span id="today"></span>）</th></tr></thead><tbody id="tt"></tbody></table>
+    <p class="muted">各時限に会計された件数（1時間ごとの集計を時限に割り振った概算）。現在の時限は橙の枠。</p>
+  </div>
+  <div class="view" id="view-notices" hidden>
+    <div class="title">掲示板</div>
+    <table class="notice-list"><thead><tr><th>分類</th><th>件名</th><th>発信元</th></tr></thead><tbody id="noticeAll"></tbody></table>
+  </div>
+  <div class="foot" data-copy="footer"></div>
+</section>
+</div>
+
+<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mh"><div class="mh" id="mh">TOFAS</div><div class="mb" id="mb"></div><div class="mf"><button class="gbtn" id="mok">OK</button></div></div></div>
+
+<script>
+"use strict";
+const API = "https://tofu-pos-v3-sync.gapul.workers.dev";
+const $ = id => document.getElementById(id);
+const TABS = [["home", "ホーム"], ["register", "履修登録"], ["grades", "成績"], ["syllabus", "シラバス"], ["timetable", "時間割"], ["notices", "掲示"]];
+// Komaba periods, used to bucket today's hourly sales into 時限.
+const PERIODS = [["1限", 8, 30, 10, 15], ["2限", 10, 25, 12, 10], ["昼休み", 12, 10, 13, 0], ["3限", 13, 0, 14, 45], ["4限", 14, 55, 16, 40], ["5限", 16, 50, 18, 35], ["6限", 18, 45, 20, 30]];
+let copy = null, live = null, idle = null;
+const num = n => n == null ? "—" : Number(n).toLocaleString("ja-JP");
+const jstNow = () => new Date(Date.now() + 9 * 3600e3);
+const pad = n => String(n).padStart(2, "0");
+function el(tag, attrs = {}, ...kids) { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) k === "class" ? n.className = v : n.setAttribute(k, v); n.append(...kids.map(k => k instanceof Node ? k : document.createTextNode(String(k)))); return n; }
+function modal(text, title = "TOFAS") { $("mh").textContent = title; $("mb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
+$("mok").onclick = () => { $("modal").hidden = true; };
+
+function fillCopy() {
+  document.querySelectorAll("[data-copy]").forEach(n => { n.textContent = copy[n.dataset.copy] ?? ""; });
+  $("certBody").replaceChildren(...copy.cert_body.map(p => el("p", {}, p)));
+  $("links").replaceChildren(...copy.links.map((t, i) => el("li", {}, el("a", { href: "#", "data-goto": ["syllabus", "home", "syllabus", "register", "syllabus"][i] ?? "home" }, t))));
+  const s = copy.syllabus;
+  document.querySelectorAll("[data-syl]").forEach(n => { n.textContent = s[n.dataset.syl]; });
+  const rows = [["時間割コード", s.code], ["授業科目名", s.title], ["担当教員", s.teacher], ["単位数", s.credits], ["開講学期", s.term], ["授業の目標・概要", s.goal],
+    ["授業計画", el("ol", { style: "margin:0;padding-left:1.4em" }, ...s.plan.map(p => el("li", {}, p.replace(/^第\d+回：/, ""))))], ["成績評価方法", s.evaluation], ["教科書", s.textbook], ["履修上の注意", s.notes], ["キーワード", s.keywords.join("、")]];
+  $("syl").replaceChildren(...rows.map(([k, v]) => el("tr", {}, el("th", {}, k), el("td", {}, v))));
+  const item = (n, i) => {
+    const tr = el("tr", {}, el("td", {}, el("span", { class: n.category === "重要" ? "cat" : "cat normal" }, n.category)), el("td", {}, el("button", { type: "button", "aria-expanded": "false" }, n.title)));
+    const btn = tr.querySelector("button"), box = el("div", { class: "detail", hidden: "" }, n.body, el("small", {}, "発信元：" + n.from));
+    btn.after(box); btn.onclick = () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); };
+    return tr;
+  };
+  $("noticeTop").replaceChildren(...copy.notices.slice(0, 3).map(item));
+  $("noticeAll").replaceChildren(...copy.notices.map(n => { const tr = item(n); tr.append(el("td", {}, n.from)); return tr; }));
+  $("marquee").textContent = copy.notices.map(n => "【" + n.category + "】" + n.title).join("　　◆　　");
+}
+
+function grade(ratio) {
+  const g = copy.grade_labels, i = Math.min(g.length - 1, Math.floor(ratio * g.length));
+  return g[Math.max(0, i)];
+}
+function renderLive() {
+  if (!live) return;
+  const p = live.stock.find(x => x.active) ?? live.stock[0], sold = live.by_product.reduce((a, x) => a + x.quantity, 0);
+  const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0), ratio = total ? sold / total : 0;
+  const t = jstNow(), updated = pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds());
+  const vals = { sold: num(sold), stock: stock == null ? "—" : num(stock), orders: num(live.totals.orders), sales: "¥" + num(live.totals.net_sales), ratio: Math.round(ratio * 100) + "%", updated };
+  document.querySelectorAll("[data-live]").forEach(n => { n.textContent = vals[n.dataset.live]; });
+  $("meter").style.width = Math.round(ratio * 100) + "%";
+  const g = grade(ratio); $("gradeLabel").textContent = g.label; $("gradeComment").textContent = g.comment;
+  const max = Math.max(1, ...live.by_hour.map(h => h.orders));
+  const open = live.by_hour.filter(h => h.orders > 0);
+  $("hours").replaceChildren(...(open.length ? open : [{ hour: t.getUTCHours(), orders: 0 }]).map(h => el("tr", {}, el("th", {}, h.hour + "時台"),
+    el("td", {}, Object.assign(el("span", { class: "hb" }), { style: "width:" + Math.max(2, Math.round(h.orders / max * 160)) + "px" }), h.orders + " 件"))));
+  const mins = t.getUTCHours() * 60 + t.getUTCMinutes();
+  $("today").textContent = (t.getUTCMonth() + 1) + "/" + t.getUTCDate();
+  $("tt").replaceChildren(...PERIODS.map(([name, h1, m1, h2, m2]) => {
+    // Hourly buckets only: an hour counts toward the period that contains its start.
+    const n = live.by_hour.filter(h => h.hour * 60 >= h1 * 60 + m1 - 30 && h.hour * 60 < h2 * 60 + m2 - 30).reduce((a, h) => a + h.orders, 0);
+    const now = mins >= h1 * 60 + m1 && mins < h2 * 60 + m2;
+    return el("tr", {}, el("th", {}, name), el("td", { class: "muted" }, h1 + ":" + pad(m1) + "–" + h2 + ":" + pad(m2)),
+      el("td", { class: (n ? "on" : "") + (now ? " now" : "") }, n ? "豆腐田楽　" + n + " 件" : "—"));
+  }));
+  if (p && p.image_hash && $("photo").hidden) { $("photo").src = API + "/v1/images/" + p.image_hash; $("photo").hidden = false; }
+}
+async function load() {
+  try {
+    const t = jstNow(), day = t.getUTCFullYear() + "-" + pad(t.getUTCMonth() + 1) + "-" + pad(t.getUTCDate());
+    const r = await fetch(API + "/v1/dashboard?date=" + day, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    live = await r.json(); renderLive();
+  } catch { document.querySelectorAll('[data-live="updated"]').forEach(n => { n.textContent = "（接続しづらい状態です。時間をおいて自動で再試行します）"; }); }
+}
+
+function show(name) {
+  TABS.forEach(([k]) => { $("view-" + k).hidden = k !== name; });
+  $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  $("crumb").textContent = "ホーム" + (name === "home" ? "" : " ＞ " + TABS.find(t => t[0] === name)[1]);
+  history.replaceState(null, "", "#" + name);
+}
+function enter(tab = "home") {
+  $("login").hidden = true; $("portal").hidden = false;
+  const t = jstNow(); $("lastLogin").textContent = "前回ログイン：" + t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes());
+  show(tab); poke(); window.scrollTo(0, 0);
+}
+function leave() { $("portal").hidden = true; $("login").hidden = false; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
+// Ten idle minutes end the "session", like the real thing.
+function poke() { clearTimeout(idle); if (!$("portal").hidden) idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); }
+["click", "keydown", "scroll", "touchstart"].forEach(e => addEventListener(e, poke, { passive: true }));
+
+$("tabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { role: "tab", type: "button", "data-tab": k }); if (k === "home") b.append(el("span", { class: "ic" })); b.append(label); b.onclick = () => show(k); return b; }));
+document.addEventListener("click", e => { const a = e.target.closest("[data-goto]"); if (!a) return; e.preventDefault(); $("portal").hidden ? enter(a.dataset.goto) : show(a.dataset.goto); });
+$("enter").onclick = () => enter();
+$("logout").onclick = leave;
+$("english").onclick = () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English");
+$("sp").onclick = () => modal("スマホ版は、この画面をスマホで開くことで提供しています。", "スマホ版");
+$("register").onclick = () => { $("regErr").textContent = $("pick").checked ? copy.register_error : "科目が選択されていません。選択欄にチェックを入れてから［登録］を押してください。"; $("regErr").hidden = false; };
+setInterval(() => { const t = jstNow(); $("clock").textContent = t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds()) + " JST"; }, 1000);
+
+fetch("copy.json").then(r => r.json()).then(c => {
+  copy = c; fillCopy();
+  const tab = location.hash.slice(1); if (TABS.some(t => t[0] === tab)) enter(tab);
+  load(); setInterval(() => { if (!document.hidden) load(); }, 30000);
+});
+</script>
+</body>
+</html>

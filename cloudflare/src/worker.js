@@ -380,6 +380,13 @@ const DEVICE_ROUTES = new Map([["POST /v1/sync", sync], ["GET /v1/catalogs", cat
   ["GET /v1/restore", restore], ["POST /v1/products", products], ["POST /v1/stock", stock], ["POST /v1/sessions", sessions], ["GET /v1/feed", feed], ["POST /v1/images", uploadImage]]);
 const PAGE_HEADERS = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer", "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data: blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" };
+// Public read-only responses may be read by other sites (the TOFAS page).
+function cors(response) {
+  const r = new Response(response.body, response);
+  r.headers.set("Access-Control-Allow-Origin", "*");
+  return r;
+}
+
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname, key = request.method + " " + path;
@@ -396,11 +403,11 @@ export default {
         const ok = publicDashboard || (env.DEVICE_TOKEN_SHA256 && await authorized(request, env.DEVICE_TOKEN_SHA256)) ||
           (env.DASHBOARD_TOKEN_SHA256 && await authorized(request, env.DASHBOARD_TOKEN_SHA256));
         if (!ok) return json({ error: "unauthorized" }, 401);
-        return await getImage(request, env, image);
+        return publicDashboard ? cors(await getImage(request, env, image)) : await getImage(request, env, image);
       }
       if (!route) {
         // DASHBOARD_PUBLIC="true" opens the read-only aggregate to anyone with the URL.
-        if (publicDashboard && env.SHOP_ID) return await dashboard(request, env);
+        if (publicDashboard && env.SHOP_ID) return cors(await dashboard(request, env));
         // Separate secret: device tokens cannot read the dashboard, the dashboard token cannot write.
         if (!env.DASHBOARD_TOKEN_SHA256 || !env.SHOP_ID || env.DASHBOARD_TOKEN_SHA256 === env.DEVICE_TOKEN_SHA256) return json({ error: "not configured" }, 503);
         if (!await authorized(request, env.DASHBOARD_TOKEN_SHA256)) return json({ error: "unauthorized" }, 401);

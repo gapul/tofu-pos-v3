@@ -1,0 +1,8 @@
+{
+  "name": "tofas",
+  "account_id": "38e092dee9c904784d58cc1b7f0096b8",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  // Static only: the page reads live numbers from the public dashboard API of tofu-pos-v3-sync.
+  "assets": { "directory": "./public" }
+}

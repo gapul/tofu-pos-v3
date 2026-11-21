@@ -654,8 +654,10 @@ test("customer_relation: optional, validated, hashed; existing hashes unchanged;
 test("DASHBOARD_PUBLIC opens the dashboard and photos without a token but never the device routes", async () => {
   const env = { ...(await v4env()), DASHBOARD_PUBLIC: "true" }, body = jpeg();
   const hash = (await (await upload(env, body)).json()).hash;
-  assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard"), env)).status, 200);
+  const open = await worker.fetch(new Request("https://test.example/v1/dashboard"), env);
+  assert.equal(open.status, 200); assert.equal(open.headers.get("Access-Control-Allow-Origin"), "*");
   assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard"), { ...env, DASHBOARD_TOKEN_SHA256: undefined })).status, 200);
+  assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard", { headers: { Authorization: "Bearer " + dashboardToken } }), { ...env, DASHBOARD_PUBLIC: undefined })).headers.get("Access-Control-Allow-Origin"), null);
   assert.equal((await getImage(env, hash, "wrong")).status, 200);
   const writes = env.DB.writes;
   assert.equal((await backupCall(env, "/v1/sync", { schema_version: 1, orders: [order()] }, "wrong")).status, 401);
