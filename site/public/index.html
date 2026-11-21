@@ -9,431 +9,611 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#d4e0f1;--bar:#4c95d4;--bar-dark:#2f74b5;--ink:#333;--link:#2b3fd0;--red:#e00;--line:#9fb7d6;--cell:#fff;--th:#e3ecf7;--miso:#8a4b1f;--tofu:#fbf1d9;--glow:#ffe8a9}
+/* Colours and sizes are taken from the real screens (StyleSheet.css, portal_*.css, smart_style.css). */
+:root{--page:#d3def1;--body:#a3bce2;--blue:#4694d1;--shadow:#4b4e55;--link:#2a3fd5;--red:#f00;--miso:#8a4b1f;--tofu:#fbf1d9;--glow:#ffe8a9}
 *{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.7 "ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","Hiragino Sans","メイリオ",Meiryo,"MS Pゴシック",Osaka,Arial,sans-serif}
-a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
-button{font:inherit;color:inherit}
-.frame{max-width:1180px;margin:0 auto;min-height:100vh;border-left:1px solid #b9c9df;border-right:1px solid #b9c9df}
-/* top strip with the slanted white tab */
-.strip{height:24px;background:var(--bar);position:relative}
+html{background:var(--page)}
+body{margin:0;background:var(--page);color:#333;font:12px/1.25 "ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","Hiragino Sans","メイリオ",Meiryo,"MS Pゴシック",Osaka,Arial,sans-serif;word-break:normal}
+a{color:var(--link);text-decoration:none;cursor:pointer}a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:#333}
+[hidden]{display:none!important}
+.chunky{font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;font-weight:900;fill:var(--tofu);stroke:var(--miso);paint-order:stroke;stroke-linejoin:round}
+/* ---------- login page (PC): the public top page ---------- */
+#login{min-height:100vh}
+.strip{height:24px;background:var(--blue);position:relative}
 .strip .tab{position:absolute;left:0;top:0;height:24px;padding:0 34px 0 4px;background:#fff;font:bold 11px/24px Arial,sans-serif;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 100%,0 100%);white-space:nowrap}
-.strip .clock{position:absolute;right:8px;top:0;color:#fff;font:11px/24px Arial,sans-serif}
-/* login page */
+.lg-wrap{max-width:1180px;margin:0 auto;border-left:1px solid #b9c9df;border-right:1px solid #b9c9df;min-height:calc(100vh - 24px)}
 .hero{display:flex;flex-wrap:wrap;align-items:center;gap:24px 60px;padding:28px 24px 36px}
-.logo{width:min(440px,100%);aspect-ratio:440/300;position:relative}
-.logo::before{content:"";position:absolute;inset:-10% -8%;background:radial-gradient(closest-side,var(--glow) 0%,rgba(255,232,169,.55) 45%,rgba(212,224,241,0) 100%)}
-.logo svg{position:relative;width:100%;height:100%;overflow:visible}
-.logo text{font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;font-weight:900;font-size:150px;fill:var(--tofu);stroke:var(--miso);stroke-width:16px;paint-order:stroke;stroke-linejoin:round}
-.logo .seed{fill:#2e2018}
+.biglogo{width:min(440px,100%);aspect-ratio:440/300;position:relative}
+.biglogo::before{content:"";position:absolute;inset:-10% -8%;background:radial-gradient(closest-side,var(--glow) 0%,rgba(255,232,169,.55) 45%,rgba(211,222,241,0) 100%)}
+.biglogo svg{position:relative;width:100%;height:100%;overflow:visible}
+.biglogo text{font-size:150px;stroke-width:16px}
+.biglogo .seed{fill:#2e2018}
 .side{display:flex;flex-direction:column;align-items:center;gap:30px}
 .side .row{display:flex;gap:16px}
 .gbtn{background:linear-gradient(#fafafa,#e4e4e4);border:1px solid #8c8c8c;border-radius:2px;padding:7px 12px;cursor:pointer;font-size:14px}
 .gbtn:hover{background:linear-gradient(#fff,#ececec)}
-.gbtn:active{background:#ddd}
-.gbtn.tri::before{content:"";display:inline-block;border:4px solid transparent;border-left:5px solid #333;margin-right:6px;vertical-align:1px}
+.tri::before{content:"";display:inline-block;border:4px solid transparent;border-left:5px solid #333;margin-right:6px;vertical-align:1px}
 .gbtn.big{font-size:20px;padding:12px 40px}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,420px));gap:24px 20px;padding:0 10px 30px}
-.pl-h{display:flex;align-items:center;gap:8px;height:25px;padding:0 10px;border-radius:12px;background:linear-gradient(#5fa3dd,var(--bar) 55%,#3f87c9);color:#fff;font-size:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-.pl-h i{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bfe0ff 45%,#4c95d4 100%);border:1px solid #fff;display:inline-grid;place-items:center;font:bold 10px/1 Georgia,serif;font-style:normal;color:#2f74b5}
-.pl-b{padding:14px 0 0}
-.pl-b p{margin:0 0 1.4em}
-.pl-b h3{font-size:15px;margin:2.2em 0 1.2em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,420px));gap:24px 20px;padding:0 10px 30px;font-size:13px;line-height:1.7}
+.pl-h{display:flex;align-items:center;gap:8px;height:25px;padding:0 10px;border-radius:12px;background:linear-gradient(#5fa3dd,var(--blue) 55%,#3f87c9);color:#fff;font-size:13px}
+.pl-h i,.ph i{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bfe0ff 45%,#4c95d4 100%);border:1px solid #fff;display:inline-grid;place-items:center;font:bold 10px/1 Georgia,serif;font-style:normal;color:#2f74b5;flex:none}
+.pl-b{padding:14px 0 0}.pl-b p{margin:0 0 1.4em}.pl-b h3{font-size:15px;margin:2.2em 0 1.2em}
 .red{color:var(--red)}
-.links{list-style:none;margin:0;padding:22px 0 0 56px}
-.links li{margin:0 0 9px}
-.live-inline{border:1px solid var(--line);background:#fff;padding:8px 10px;margin:0 0 1.4em}
-.live-inline b{font-size:16px}
-.foot{border-top:2px solid var(--bar);padding:8px 10px 40px;color:#555;font-size:11px}
-/* portal */
-.ph{display:flex;align-items:center;gap:16px;padding:8px 14px;background:linear-gradient(#fff,#eef3fa);border-bottom:1px solid #b9c9df;flex-wrap:wrap}
-.ph .mini{width:120px;height:46px}
-.ph .who{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
-.ph .who small{color:#666}
-.tabs{display:flex;gap:3px;padding:8px 10px 0;background:linear-gradient(#e9f0f9,#cddbee);border-bottom:3px solid var(--bar);overflow-x:auto}
-.tabs button{border:1px solid #8fb0d6;border-bottom:0;border-radius:6px 6px 0 0;background:linear-gradient(#fdfdfd,#d9e5f3);padding:6px 16px;cursor:pointer;white-space:nowrap;font-size:13px}
-.tabs button[aria-selected=true]{background:var(--bar);color:#fff;border-color:var(--bar);font-weight:bold}
-.tabs button .ic{display:inline-block;width:12px;height:11px;margin-right:5px;vertical-align:-1px;background:linear-gradient(currentColor,currentColor) 50% 100%/8px 6px no-repeat;clip-path:polygon(50% 0,100% 50%,85% 50%,85% 100%,15% 100%,15% 50%,0 50%)}
-.crumb{padding:6px 14px;font-size:11px;color:#555}
-.crumb::before{content:"現在位置："}
-.view{padding:6px 14px 30px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
-.box{background:#fff;border:1px solid var(--line);border-top:0;padding:12px;border-radius:0 0 4px 4px}
-.title{font-size:16px;font-weight:bold;border-left:6px solid var(--bar);padding:2px 0 2px 8px;margin:6px 0 12px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0))}
-table{border-collapse:collapse;width:100%;background:var(--cell)}
-th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
-th{background:var(--th);font-weight:normal;white-space:nowrap}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.syl th{width:9.5em}
-.notice-list td:first-child{white-space:nowrap;width:1%}
-.notice-list button{background:none;border:0;padding:0;color:var(--link);cursor:pointer;text-align:left}
-.notice-list button:hover{text-decoration:underline}
-.cat{display:inline-block;border:1px solid #c66;color:#c33;background:#fff4f4;font-size:11px;padding:0 5px;border-radius:2px}
-.cat.normal{border-color:#7a9cc6;color:#2f5f99;background:#f2f7fd}
-.detail{background:#fbfbf3;border:1px solid #ddd;padding:8px 10px;margin:6px 0 2px}
-.detail small{display:block;color:#666;text-align:right}
-.msg{border:1px solid #e0a0a0;background:#fff0f0;color:var(--red);padding:8px 10px;margin:10px 0}
-.info{border:1px solid #9cc0e6;background:#f3f8fe;padding:8px 10px;margin:0 0 12px}
-.big{font-size:28px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.2}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-.kpi div{border:1px solid var(--line);background:#fff;padding:8px 10px}
-.kpi span{display:block;font-size:11px;color:#555}
-.meter{height:14px;border:1px solid #8fb0d6;background:#fff;position:relative}
-.meter i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(45deg,#c98a4f 0 6px,#b66427 6px 12px)}
-.tt td{height:46px;text-align:center;vertical-align:middle;font-size:12px}
-.tt td.on{background:#fff6dc}
-.tt td.now{outline:3px solid #f0a020;outline-offset:-3px}
-.tt th{text-align:center}
-.hb{display:inline-block;height:9px;background:var(--bar);vertical-align:middle;margin-right:6px}
-.sylwrap{display:flex;gap:12px;align-items:flex-start}.sylwrap table{flex:1}
-.photo{width:200px;max-width:100%;border:1px solid var(--line);background:#eee;flex:none}
-.muted{color:#666}
-.blink{animation:bl 1s steps(2,start) infinite}@keyframes bl{to{visibility:hidden}}
-.marquee{overflow:hidden;white-space:nowrap;border:1px solid #e3c36b;background:#fffbe6;padding:3px 0;margin:0 0 12px}
-.marquee span{display:inline-block;padding-left:100%;animation:mq 22s linear infinite}@keyframes mq{to{transform:translateX(-100%)}}
-.modal{position:fixed;inset:0;background:rgba(40,60,90,.45);display:grid;place-items:center;padding:16px;z-index:10}
-.modal>div{background:#fff;border:2px solid var(--bar);max-width:440px;width:100%}
-.modal .mh{background:var(--bar);color:#fff;padding:4px 10px;font-weight:bold}
-.modal .mb{padding:16px}
-.modal .mf{text-align:center;padding:0 0 16px}
-/* student info: heading row + column-oriented tables, like the real thing */
-.stu{display:flex;gap:16px;align-items:flex-start}.stu .tables{flex:1;min-width:0}
-.sec{background:linear-gradient(#f4f8fd,#dfe9f6);border:1px solid var(--line);border-bottom:0;padding:4px 10px;font-weight:bold;margin-top:14px}
-.colt{overflow-x:auto}.colt table th{text-align:center}.colt table td{text-align:center;min-width:8em}
-.idcard{flex:none;width:200px;text-align:center;position:relative}
-.idcard img{width:200px;height:240px;object-fit:cover;border:1px solid var(--line);background:#eee;display:block}
-.idcard small{display:block;font-size:11px;color:#555;margin-top:4px;text-align:left}
-.hanko{position:absolute;right:-8px;top:170px;width:74px;height:74px;border:3px solid #d8352a;border-radius:50%;color:#d8352a;display:grid;place-items:center;font:bold 13px/1.1 serif;transform:rotate(-14deg);background:rgba(255,255,255,.55);text-align:center}
-/* スマホ版: a separate look, not just a narrow PC page */
+.links{list-style:none;margin:0;padding:22px 0 0 56px}.links li{margin:0 0 9px}
+.live-inline{border:1px solid #9fb7d6;background:#fff;padding:8px 10px;margin:0 0 1.4em}.live-inline b{font-size:16px}
+.lg-foot{border-top:2px solid var(--blue);padding:8px 10px 40px;color:#555;font-size:11px}
+/* ---------- portal (PC) ---------- */
+#portal{min-width:1000px}
+.hd{display:flex;align-items:flex-start;padding:4px 18px 6px;height:76px}
+.logo{display:flex;align-items:center;gap:4px;position:relative;width:270px}
+.logo::after{content:"";position:absolute;left:150px;top:-4px;width:120px;height:72px;background:radial-gradient(closest-side,rgba(214,236,120,.9),rgba(214,236,120,0));z-index:0}
+.logo svg{width:150px;height:62px;position:relative;z-index:1}
+.logo .t{position:relative;z-index:1;font:bold 15px/1.05 "Arial Narrow","Helvetica Neue",Arial,sans-serif;transform:scaleX(.82);transform-origin:left;color:#17561f;letter-spacing:-.2px}
+.sys{display:flex;gap:6px;margin-left:190px;margin-top:0}
+.sys button{background:none;border:0;padding:0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#333;min-width:52px}
+.sys svg{width:24px;height:24px}
+.tabbar{background:var(--body);padding:2px 0 0 10px;display:flex;flex-wrap:wrap;min-height:74px}
+.tabcell{width:79px;margin-right:0;padding:4px 2px 4px;text-align:center;cursor:pointer;font-size:11px;line-height:1.15;border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none}
+.tabcell svg{width:34px;height:34px}
+.tabcell.sel{background:var(--blue);border-color:#fff;color:#111}
+.menubar{background:var(--blue);display:flex;flex-wrap:wrap;gap:0 4px;padding:6px 10px 5px;min-height:28px}
+.menubar a{color:#111;display:inline-flex;align-items:center;gap:6px;padding:0 18px 0 6px;font-size:12px}
+.menubar a.cur{text-decoration:underline}
+.menubar svg,.mi svg{width:16px;height:16px;flex:none}
+.pbody{display:flex;align-items:flex-start;gap:6px;padding:10px 18px 0 18px}
+.lcol{width:212px;flex:none}
+.portlet{background:var(--body);border-radius:7px;box-shadow:3px 3px 0 var(--shadow);border:1px solid #8aa6cf;padding:3px 4px 8px;margin:4px 6px 14px 4px}
+.ph{display:flex;align-items:center;gap:8px;height:22px;padding:0 8px;border-radius:11px;background:linear-gradient(#5aa2db,var(--blue) 60%,#3d89c8);color:#111;font-size:12px;margin-bottom:4px}
+.ph i{width:14px;height:14px}
+.news{padding:0 4px;font-size:12px}.news p{margin:0 0 1px;text-align:center}
+.news a{display:block;padding-left:20px;position:relative}.news a::before{content:"";position:absolute;left:4px;top:2px;width:12px;height:11px;background:linear-gradient(#f6f2d8,#e8dfa8);border:1px solid #b9a768}
+.mlist{list-style:none;margin:6px 0 0;padding:0 4px}.mlist li{margin:0 0 8px;padding-left:34px;position:relative;line-height:1.25}
+.mlist svg{position:absolute;left:10px;top:0;width:16px;height:16px}
+.main{flex:1;min-width:0}
+.main .portlet{margin-right:0}
+.fbar{display:flex;align-items:center;gap:8px;height:22px;padding:0 6px 0 8px;border-radius:11px;background:linear-gradient(#5aa2db,var(--blue) 60%,#3d89c8);color:#111;margin:0 0 5px}
+.fbar svg{width:16px;height:16px}
+.help{margin-left:auto;background:linear-gradient(#fff,#ddd);border:1px solid #888;font:bold 11px/14px Verdana,sans-serif;padding:0 8px 0 4px;letter-spacing:1px;cursor:pointer}
+.help::before{content:"?";display:inline-block;width:11px;height:13px;background:#e6a000;color:#fff;font-size:9px;line-height:13px;text-align:center;margin-right:5px}
+.ft{text-align:right;font-size:10px;color:#333;padding:16px 22px 30px}
+.info-text{padding:0 4px 2px}
+/* お知らせ */
+.notice{font-size:13px;line-height:1.3;padding:0 4px 4px}
+.notice .nh{display:flex;align-items:center;gap:6px;font-size:14px;margin:0 0 6px;padding-left:6px;border-left:8px solid #8f8fd1;line-height:20px}
+.notice .hr{color:#333;margin:18px 0;letter-spacing:-1px;overflow:hidden;white-space:nowrap;max-width:860px}
+.notice b.big{font-size:15px;display:block;margin-bottom:2px}
+.notice .ind{padding-left:12px;margin:6px 0}
+.notice .sign{text-align:right;margin:20px 6px 8px}
+.pager{display:flex;align-items:center;gap:6px;font-size:12px;padding:6px}.pager svg{width:16px;height:16px}
+/* function page tables (StyleSheet.css) */
+.f{padding:0 2px 6px;font-size:12px}
+.gk-links{display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr 1.6fr 1fr;gap:0;margin:0 0 20px}
+.gk-links a{display:flex;align-items:center;gap:8px;background:#99ccff;padding:1px 4px;color:#00f}
+.gk-links a::before{content:"";width:9px;height:9px;background:#fff;border:1px solid #bbb;flex:none}
+.gk-links a.chk{background:#cccccc;color:#333}
+.gk-wrap{display:flex;align-items:flex-start;gap:2px;margin-left:50px}
+.gk-photo{width:134px;height:175px;object-fit:cover;background:#ddd;flex:none;margin-top:2px}
+table.gk{border-collapse:collapse;font-size:12px;line-height:16px;margin-bottom:16px}
+table.gk td,table.gk th{border:1px solid #fff;padding:4px 2px;font-weight:normal}
+table.gk caption{background:#ccc;text-align:left;padding:5px 2px;border:1px solid #fff;border-bottom:0}
+table.gk th{background:#99ccff;text-align:center;width:102px}
+table.gk td{background:#ddd;width:104px}
+table.gk.wide th,table.gk.wide td{width:102px;text-align:center;height:24px}
+.gk-stack{display:flex;flex-direction:column}
+/* 履修登録 */
+table.rs{border-collapse:collapse}table.rs td,table.rs th{border:1px solid #fff;padding:6px;font-weight:normal}
+.rs-head{width:970px}.rs-head th{background:#ffcc66;width:136px}.rs-head td{background:#ddd}
+.rs-note{color:#f00;font-weight:bold;font-size:11px;margin:40px 0 50px}
+.rs-tabs{display:flex;gap:1px;margin-left:0}.rs-tabs span{width:99px;text-align:center;background:#ffcc66;color:#2a3fd5;font-size:13px;padding:1px 0;clip-path:polygon(0 0,96% 0,100% 30%,100% 100%,0 100%)}
+.rs-tabs span.sel{background:#ff9966;color:#000;font-weight:bold}
+table.rsk{border-collapse:collapse;width:888px}table.rsk td,table.rsk th{border:1px solid #fff;font-weight:normal}
+table.rsk th{background:#ff9966;font-size:12px;padding:2px}
+table.rsk td.k{background:#ff9966;width:40px;text-align:center}
+table.rsk td.c{background:#ddd;vertical-align:top;height:64px;padding:2px 3px;font-size:13px;line-height:1.3;width:141px}
+table.rsk td.c.on{background:#ffcc99}
+.rs-etc{width:660px;margin-top:16px}.rs-etc caption{background:#ffcc66;text-align:left;padding:3px;border:1px solid #fff}
+.rs-etc th{background:#ff9966}.rs-etc td{background:#ddd;text-align:center}
+/* 成績 */
+table.ss{border-collapse:collapse}table.ss td,table.ss th{border:1px solid #fff;padding:4px 3px;font-weight:normal}
+table.ss th{background:#99cc33}table.ss td{background:#ddd}
+.ss-sel p{margin:14px 0 10px 4px}.ss-sel .q{background:#555;color:#fff;font-weight:bold;font-size:13px;display:inline-block;padding:0 2px}
+.ss-notes{margin:16px 0;line-height:1.3;white-space:pre-line}
+.ubtn{background:linear-gradient(#fff,#e6e6e6);border:1px solid #aaa;border-radius:3px;padding:1px 8px;cursor:pointer;font-size:12px}
+/* 休講 */
+.ky-cond{background:#e4dac6;padding:6px 8px;margin:6px 0 3px}
+.ky-legend{display:flex;justify-content:space-around;width:780px;margin:0 0 12px 330px}
+.ky-legend span{border:1px solid #333;font-size:10px;padding:5px 10px;text-align:center;box-shadow:1px 1px 0 #333}
+.ky-nav{display:flex;justify-content:space-between;font-size:12px;margin:6px 4px 2px}
+table.ky{border-collapse:collapse}table.ky td,table.ky th{border:1px solid #222;font-weight:normal}
+table.ky th{background:#ffcc99;padding:2px 4px;text-align:right;width:102px;font-size:12px}
+table.ky th.j{width:42px;text-align:center}
+table.ky td{background:#ddd;height:101px;width:102px;vertical-align:top;padding:2px 3px;font-size:12px;line-height:1.2}
+table.ky td.kaiko{background:#ffcccc}
+/* シラバス */
+.sy-panel{background:#fff;border:1px solid #aaa;border-radius:4px;width:660px;padding:5px 5px 30px}
+.sy-tabs{background:linear-gradient(#ddd,#c8c8c8);border:1px solid #aaa;border-radius:4px;padding:4px 4px 0;display:flex;gap:2px}
+.sy-tabs span{background:#fff;border:1px solid #aaa;border-bottom:0;border-radius:4px 4px 0 0;padding:6px 12px;font-size:12px;cursor:pointer}
+.sy-tabs span.off{background:linear-gradient(#eee,#ddd);color:#555}
+.sy-form{padding:30px 18px 0;font-size:12px}.sy-form table td{padding:3px 4px;vertical-align:top}
+table.syl{border-collapse:collapse;font-size:12px}table.syl th,table.syl td{border:1px solid #fff;padding:4px}
+table.syl.list th{background:#99ccff;font-weight:normal}table.syl.list td{background:#ddd}
+.sy-h1{font-size:16px;font-weight:bold;border-left:6px solid #c9a0ac;padding:8px 12px;margin:12px 0 10px;border-bottom:1px dashed #c9a0ac;width:780px}
+.sy-h2{font-size:16px;font-weight:bold;border-left:6px solid #c9a0ac;padding:8px 12px;margin:24px 0 16px;border-bottom:1px dashed #c9a0ac}
+table.syd th{background:#9c6b7b;color:#fff;font-weight:bold;width:206px;text-align:center;line-height:1.25}
+table.syd td{background:#d5ddbb;width:502px}
+/* ---------- スマホ版 (smart_style.css) ---------- */
 .sp-only{display:none}
 body.sp .pc-only{display:none!important}
 body.sp .sp-only{display:block}
-body.sp{font-size:15px;color:#333;word-break:break-all}
-body.sp .frame{border:0;max-width:none}
-body.sp .strip{height:2px;background:var(--bar)}body.sp .strip *{display:none}
-body.sp button,body.sp .gbtn{background:#ccc;border:0;border-radius:0;padding:10px;font-size:100%;box-shadow:none}
-body.sp .gbtn:hover{background:#ddd}
-body.sp .gbtn.tri::before{border-left-color:#333}
+body.sp #portal{min-width:0}
+body.sp .strip{height:2px}body.sp .strip *{display:none}
+body.sp .lg-wrap{border:0}
+body.sp .gbtn{background:#ccc;border:0;border-radius:0;padding:10px;font-size:100%}
 body.sp .hero{flex-direction:column;gap:0;padding:12px 5px 0}
-body.sp .logo{width:min(300px,80%)}
+body.sp .biglogo{width:min(300px,80%)}
 body.sp .side{display:none}
-.sp-title{margin:8px 5px;padding:4px 10px;border-radius:10px;background:#a6bfe3;font:bold 15px "Courier New",Courier,monospace;text-align:center}
-.sp-panel{background:#a6bfe3;margin:10px 5px;padding:24px 10px;text-align:center}
+.sp-title{margin:8px 5px;padding:4px 10px;border-radius:10px;background:var(--body);font:bold 15px "Courier New",Courier,monospace;text-align:center}
+.sp-panel{background:var(--body);margin:10px 5px;padding:24px 10px;text-align:center}
 .sp-panel .row{display:flex;justify-content:center;gap:14px;margin-bottom:30px}
 .sp-panel .gbtn.big{font-size:20px;padding:12px 40px}
-body.sp .cols{display:block;padding:0 5px}
-body.sp .cols>div{background:#a6bfe3;padding:16px 4px 4px;margin-bottom:10px}
+body.sp .cols{display:block;padding:0 5px;font-size:15px}
+body.sp .cols>div{background:var(--body);padding:16px 4px 4px;margin-bottom:10px}
 body.sp .cols>div:last-child{background:transparent;padding:6px}
 body.sp .cols .pl-h{display:none}
-body.sp .links{background:#a6bfe3;padding:20px 20px 20px 60px;margin:0}
-body.sp .live-inline{background:#fff;border:0}
-body.sp .foot{border-top:0;text-align:center}
-/* smart portal: user bar, flat system menu, 4-column icon tabs, dark crumbs */
-.sp-user{background:#ccc;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:13px}
-.sp-user i{width:28px;height:28px;background:#555;display:grid;place-items:center;flex:none}
-.sp-sys{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0}
-.sp-sys button,.sp-tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;color:#fff;background:#4694d1!important;font-size:11px!important;padding:8px 2px!important;min-width:0}
-.sp-sys button:hover,.sp-tabs button:hover{background:#3a85c0!important}
-.sp-sys button.dark{background:#555!important}
-.sp-sys svg{width:24px;height:24px}
-.sp-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:5px}
-.sp-tabs svg{width:40px;height:40px}
-.sp-tabs button[aria-current=true]{outline:3px solid #f0a020;outline-offset:-3px}
-body.sp .crumb{padding:5px 10px}
-body.sp .crumb::before{content:none}
-.crumb .bc{display:inline-block;background:#555;color:#fff;padding:8px 20px;margin:0 6px 4px 0;font-size:13px}
-.crumb .bc::after{content:" >"}
-body.sp .view{padding:6px 5px 24px}
-body.sp .grid{display:block}body.sp .grid>div{margin-bottom:10px}
-body.sp .marquee{display:none}
-body.sp .title{border-left:0;background:none;padding:0;font-size:150%}
-body.sp table{font-size:14px}
-body.sp .stu{flex-direction:column-reverse;align-items:center}
-.rowt th{width:7.5em;text-align:left!important}.rowt td{text-align:left!important}
-.sp-timer{font-variant-numeric:tabular-nums}
-body.sp .notice-list button{background:none!important;padding:0!important;text-align:left}
-body.sp .pl-h{border-radius:0;background:#4694d1;box-shadow:none;height:32px}
-body.sp .pl-h i{display:none}
-body.sp .box{border-radius:0}
-
-[hidden]{display:none!important}
-@media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap,.stu{flex-direction:column-reverse;align-items:center}.idcard{margin-bottom:6px}.ph .who{margin-left:0}}
-@media (prefers-reduced-motion:reduce){.blink,.marquee span{animation:none}.marquee span{padding-left:0}}
+body.sp .links{background:var(--body);padding:20px 20px 20px 60px;margin:0}
+body.sp .live-inline{border:0}
+body.sp .lg-foot{border-top:0;text-align:center}
+.sp-hd{display:flex;align-items:flex-start;justify-content:space-between;padding:6px 5px 0}
+.sp-hd .logo{width:auto}.sp-hd .logo svg{width:150px;height:62px}
+.sp-user{background:#ccc;min-width:130px;display:flex;align-items:center;gap:6px;font-size:14px;margin-top:4px}
+.sp-user i{width:20px;height:20px;background:#555;display:grid;place-items:center}
+.sp-sys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:310px;margin:10px 0 0 0}
+.sp-sys button,.sp-tiles button{border:0;border-radius:0;background:var(--blue);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:10px;padding:8px 2px;line-height:1.2}
+.sp-sys svg{width:18px;height:18px}
+.sp-crumbs{display:flex;flex-wrap:wrap;padding:18px 6px 6px}
+.sp-crumbs a{background:#555;color:#fff;padding:8px 20px;margin:0 20px 6px 5px;font-size:14px;text-decoration:none}
+.sp-crumbs a::after{content:" >"}
+.sp-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px 5px;padding:14px 5px}
+.sp-tiles button{aspect-ratio:91/76;font-size:10px;gap:10px;padding:10px 2px 8px;min-width:0;overflow-wrap:anywhere}
+.sp-tiles svg{width:44px;height:36px}
+.sp-menu{margin:4px 5px 0}
+.sp-menu .mh{background:#34495e;color:#fff;font-weight:bold;text-align:center;padding:10px;font-size:14px}
+.sp-menu a{display:flex;align-items:center;gap:6px;background:#ccddee;color:#333;padding:9px 12px;border-top:1px solid #fff;font-size:14px;text-decoration:none;position:relative}
+.sp-menu a::after{content:"";position:absolute;right:6px;border:5px solid transparent;border-left:7px solid #888}
+.sp-menu .top{display:block;background:#34495e;color:#fff;text-align:center;font-weight:bold;padding:9px;margin-bottom:6px;font-size:14px}
+.sp-menu .top::after{content:none}
+.sp-panel2{margin:10px 5px}
+.sp-panel2 .h{display:flex;align-items:center;gap:8px;padding:8px 10px;color:#fff;font-size:14px}
+.sp-panel2 .b{padding:4px 10px 10px;font-size:14px}
+.sp-news{background:#ddeebb}.sp-news .h{background:#336622}
+.sp-fav{background:#ffbbaa}.sp-fav .h{background:#663333}
+body.sp .mlist li{padding-left:40px;margin-bottom:12px;font-size:14px}
+body.sp .news a{font-size:14px}
+.sp-ft{text-align:right;font-size:11px;padding:20px 0 40px}
+body.sp .f{overflow-x:auto;padding:4px}
+.modal{position:fixed;inset:0;background:rgba(40,60,90,.45);display:grid;place-items:center;padding:16px;z-index:10}
+.modal>div{background:#fff;border:2px solid var(--blue);max-width:440px;width:100%;font-size:13px;line-height:1.6}
+.modal .mh{background:var(--blue);color:#fff;padding:4px 10px;font-weight:bold}
+.modal .mb{padding:16px}.modal .mf{text-align:center;padding:0 0 16px}
+@media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}}
 </style>
 </head>
 <body>
-<div class="frame">
-<div class="strip"><span class="tab">TOFAS（Tofu Academic affairs System）</span><span class="clock" id="clock"></span></div>
 
-<!-- Login page (parody of the public top page) -->
+<!-- ===== Login page (the public top page, PC and smart) ===== -->
 <section id="login">
-  <div class="hero">
-    <div class="logo" aria-label="TOFAS">
-      <svg viewBox="0 0 440 300" role="img" aria-hidden="true">
-        <g class="seed"><ellipse cx="40" cy="70" rx="4" ry="8" transform="rotate(25 40 70)"/><ellipse cx="190" cy="40" rx="4" ry="8" transform="rotate(-30 190 40)"/><ellipse cx="420" cy="80" rx="4" ry="8" transform="rotate(40 420 80)"/><ellipse cx="120" cy="268" rx="4" ry="8" transform="rotate(-60 120 268)"/><ellipse cx="340" cy="270" rx="4" ry="8" transform="rotate(15 340 270)"/></g>
-        <text transform="translate(8 205) rotate(-6)">T</text>
-        <text transform="translate(92 228) rotate(4)">O</text>
-        <text transform="translate(198 178) rotate(-8)">F</text>
-        <text transform="translate(268 222) rotate(8)">A</text>
-        <text transform="translate(352 196) rotate(-3)">S</text>
-      </svg>
-    </div>
-    <div class="side">
-      <div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">スマホ版</button></div>
-      <button class="gbtn big" id="enter">ログイン</button>
-    </div>
-  </div>
-  <div class="sp-only">
-    <div class="sp-title">TOFAS（Tofu Academic affairs System)</div>
-    <div class="sp-panel"><div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">PC版</button></div>
-      <button class="gbtn big" data-act="enter">ログイン</button></div>
-  </div>
-  <div class="cols">
-    <div>
-      <div class="pl-h"><i>i</i>Information</div>
-      <div class="pl-b">
-        <p data-copy="login_info"></p>
-        <div class="live-inline">本日の豆腐田楽　販売数 <b data-live="sold">—</b> 本　／　残り在庫 <b data-live="stock">—</b> 本 <small class="muted" data-live="updated"></small></div>
-        <h3 data-copy="cert_title"></h3>
-        <div id="certBody"></div>
-        <p class="red" data-copy="cert_warning"></p>
+  <div class="strip"><span class="tab">TOFAS（Tofu Academic affairs System）</span></div>
+  <div class="lg-wrap">
+    <div class="hero">
+      <div class="biglogo" aria-label="TOFAS">
+        <svg viewBox="0 0 440 300" aria-hidden="true">
+          <g class="seed"><ellipse cx="40" cy="70" rx="4" ry="8" transform="rotate(25 40 70)"/><ellipse cx="190" cy="40" rx="4" ry="8" transform="rotate(-30 190 40)"/><ellipse cx="420" cy="80" rx="4" ry="8" transform="rotate(40 420 80)"/><ellipse cx="120" cy="268" rx="4" ry="8" transform="rotate(-60 120 268)"/><ellipse cx="340" cy="270" rx="4" ry="8" transform="rotate(15 340 270)"/></g>
+          <text class="chunky" transform="translate(8 205) rotate(-6)">T</text><text class="chunky" transform="translate(92 228) rotate(4)">O</text><text class="chunky" transform="translate(198 178) rotate(-8)">F</text><text class="chunky" transform="translate(268 222) rotate(8)">A</text><text class="chunky" transform="translate(352 196) rotate(-3)">S</text>
+        </svg>
+      </div>
+      <div class="side">
+        <div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">スマホ版</button></div>
+        <button class="gbtn big" data-act="enter">ログイン</button>
       </div>
     </div>
-    <div>
-      <div class="pl-h"><i>i</i>Link</div>
-      <ul class="links" id="links"></ul>
+    <div class="sp-only">
+      <div class="sp-title">TOFAS（Tofu Academic affairs System)</div>
+      <div class="sp-panel"><div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">PC版</button></div>
+        <button class="gbtn big" data-act="enter">ログイン</button></div>
     </div>
+    <div class="cols">
+      <div>
+        <div class="pl-h"><i>i</i>Information</div>
+        <div class="pl-b">
+          <p data-copy="login_info"></p>
+          <div class="live-inline">本日の豆腐田楽　販売数 <b data-live="sold">—</b> 本　／　残り在庫 <b data-live="stock">—</b> 本</div>
+          <h3 data-copy="cert_title"></h3>
+          <div id="certBody"></div>
+          <p class="red" data-copy="cert_warning"></p>
+        </div>
+      </div>
+      <div><div class="pl-h"><i>i</i>Link</div><ul class="links" id="links"></ul></div>
+    </div>
+    <div class="lg-foot" data-copy="footer"></div>
   </div>
-  <div class="foot" data-copy="footer"></div>
 </section>
 
-<!-- Portal (after "login") -->
+<!-- ===== Portal ===== -->
 <section id="portal" hidden>
-  <div class="ph pc-only">
-    <svg class="mini" viewBox="0 0 440 170" aria-label="TOFAS"><text x="0" y="135" style="font:900 130px 'M PLUS Rounded 1c',sans-serif;fill:#fbf1d9;stroke:#8a4b1f;stroke-width:14px;paint-order:stroke;stroke-linejoin:round">TOFAS</text></svg>
-    <div class="who"><span>ようこそ <b data-ps="name"></b> さん　<small class="muted">学籍番号 <span data-ps="id"></span></small></span><small id="lastLogin"></small><button class="gbtn" id="logout">ログアウト</button></div>
-  </div>
-  <div class="tabs pc-only" role="tablist" id="tabs"></div>
-  <div class="sp-only">
-    <div class="sp-user"><i><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></i><span><b data-ps="name"></b> さん</span></div>
-    <div class="sp-sys" id="spSys"></div>
-    <div class="sp-tabs" id="spTabs"></div>
-  </div>
-  <div class="crumb" id="crumb"></div>
-  <div class="view" id="view-home">
-    <div class="marquee"><span id="marquee"></span></div>
-    <div class="grid">
-      <div><div class="pl-h"><i>i</i>販売状況（リアルタイム）</div><div class="box">
-        <div class="kpi"><div><span>本日の販売数</span><b class="big" data-live="sold">—</b> 本</div><div><span>残り在庫</span><b class="big" data-live="stock">—</b> 本</div><div><span>本日の会計数</span><b class="big" data-live="orders">—</b> 件</div></div>
-        <p style="margin:10px 0 4px">在庫消化率 <b data-live="ratio">—</b></p><div class="meter"><i id="meter" style="width:0"></i></div>
-        <p class="muted" style="margin:8px 0 0">最終更新 <span data-live="updated">—</span>（30秒ごとに自動更新）</p>
-      </div></div>
-      <div><div class="pl-h"><i>i</i>掲示（新着）</div><div class="box"><table class="notice-list"><tbody id="noticeTop"></tbody></table><p style="margin:8px 0 0;text-align:right"><a href="#" data-goto="notices">掲示一覧へ ▸</a></p></div></div>
-      <div><div class="pl-h"><i>i</i>時間帯別 販売推移（本日）</div><div class="box"><table><tbody id="hours"></tbody></table></div></div>
+  <!-- PC chrome -->
+  <div class="pc-only">
+    <div class="hd">
+      <div class="logo"><svg viewBox="0 0 600 240" aria-label="TOFAS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">TOFAS</text></svg><div class="t">Tofu<br>Academic affairs<br>System</div></div>
+      <div class="sys" id="sys"></div>
     </div>
+    <div class="tabbar" id="tabbar"></div>
+    <div class="menubar" id="menubar"></div>
+    <div class="pbody">
+      <div class="lcol">
+        <div class="portlet"><div class="ph"><i>i</i>新着情報</div><div class="news" id="news"></div></div>
+        <div class="portlet"><div class="ph"><i>i</i>よく使うメニュー</div><ul class="mlist" id="fav"></ul></div>
+      </div>
+      <div class="main" id="main"></div>
+    </div>
+    <div class="ft">Copyright(c) 2001- Are you Tofu? All rights reserved.</div>
   </div>
-  <div class="view" id="view-register" hidden>
-    <div class="title" data-copy="register_title"></div>
-    <div class="info" data-copy="register_body"></div>
-    <table><thead><tr><th>選択</th><th>時間割コード</th><th>科目名</th><th class="num">単位（円）</th><th class="num">残り在庫</th><th>担当</th></tr></thead>
-      <tbody><tr><td><input type="checkbox" id="pick" aria-label="豆腐田楽を選択"></td><td data-syl="code"></td><td>豆腐田楽</td><td class="num">500</td><td class="num" data-live="stock">—</td><td data-syl="teacher"></td></tr></tbody></table>
-    <p style="text-align:center;margin:16px 0"><button class="gbtn big" id="register">登録</button></p>
-    <div class="msg" id="regErr" hidden></div>
+  <!-- Smart chrome -->
+  <div class="sp-only">
+    <div class="sp-hd"><div class="logo"><svg viewBox="0 0 600 240" aria-label="TOFAS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">TOFAS</text></svg></div>
+      <div class="sp-user"><i><svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></i><span data-ps="name"></span></div></div>
+    <div class="sp-sys" id="spSys"></div>
+    <div class="sp-crumbs" id="spCrumbs"></div>
+    <div id="spMain"></div>
+    <div id="spPanels">
+      <div class="sp-panel2 sp-news"><div class="h">新着情報</div><div class="b news" id="spNews"></div></div>
+      <div class="sp-panel2 sp-fav"><div class="h">よく使うメニュー</div><div class="b"><ul class="mlist" id="spFav"></ul></div></div>
+    </div>
+    <div class="sp-crumbs" id="spCrumbs2"></div>
+    <div class="sp-ft">Copyright(c) 2001- Are you Tofu? All rights reserved.</div>
   </div>
-  <div class="view" id="view-grades" hidden>
-    <div class="title">成績照会</div>
-    <div class="info" data-copy="grades_note"></div>
-    <table class="syl" style="margin-bottom:14px"><tbody>
-      <tr><th>学生所属</th><td data-pg="affiliation"></td><th>学年</th><td data-pg="year"></td></tr>
-      <tr><th>修得単位数</th><td><span data-live="sold">—</span> 本</td><th>対象単位数</th><td><span data-live="total">—</span> 本</td></tr>
-      <tr><th>GPA</th><td data-live="sales">—</td><th>平均成績順位率</th><td data-live="ratio">—</td></tr>
-    </tbody></table>
-    <table><thead><tr><th>科目名</th><th class="num">取得単位（販売数）</th><th class="num">残り在庫</th><th>評語</th><th>所見</th></tr></thead>
-      <tbody><tr><td>豆腐田楽</td><td class="num" data-live="sold">—</td><td class="num" data-live="stock">—</td><td><b id="gradeLabel">—</b></td><td id="gradeComment">—</td></tr></tbody></table>
-    <p style="margin:14px 0 4px">GPA（Gross Profit Amount）</p>
-    <div class="big" data-live="sales">—</div>
-    <p class="muted">本日の純売上。評語は在庫消化率で自動判定する。</p>
-  </div>
-  <div class="view" id="view-syllabus" hidden>
-    <div class="title">シラバス参照</div>
-    <div class="sylwrap"><table class="syl"><tbody id="syl"></tbody></table><img class="photo" id="photo" alt="豆腐田楽の写真" hidden></div>
-  </div>
-  <div class="view" id="view-timetable" hidden>
-    <div class="title">時間割表（本日の販売実績）</div>
-    <div class="info" data-copy="timetable_note"></div>
-    <table class="tt"><thead><tr><th>時限</th><th>時間</th><th>本日（<span id="today"></span>）</th></tr></thead><tbody id="tt"></tbody></table>
-    <p class="muted">各時限に会計された件数（1時間ごとの集計を時限に割り振った概算）。現在の時限は橙の枠。</p>
-  </div>
-  <div class="view" id="view-student" hidden>
-    <div class="title">学生情報参照</div>
-    <div class="info" data-p="info_notice"></div>
-    <div class="stu"><div class="tables colt" id="stuTables"></div>
-      <div class="idcard"><img id="idphoto" alt="証明写真"><span class="hanko">本人<br>確認済</span><small data-p="photo_caption"></small></div></div>
-  </div>
-  <div class="view" id="view-notices" hidden>
-    <div class="title">掲示板</div>
-    <table class="notice-list"><thead><tr><th>分類</th><th>件名</th><th>発信元</th></tr></thead><tbody id="noticeAll"></tbody></table>
-  </div>
-  <div class="foot"><span data-copy="footer"></span><br><a href="#" data-act="mode" id="modeLink">スマホ版</a></div>
 </section>
-</div>
 
-<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mh"><div class="mh" id="mh">TOFAS</div><div class="mb" id="mb"></div><div class="mf"><button class="gbtn" id="mok">OK</button></div></div></div>
+<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mdh"><div class="mh" id="mdh">TOFAS</div><div class="mb" id="mdb"></div><div class="mf"><button class="gbtn" id="mok">OK</button></div></div></div>
 
 <script>
 "use strict";
 const API = "https://tofu-pos-v3-sync.gapul.workers.dev";
 const $ = id => document.getElementById(id);
-const TABS = [["home", "ホーム"], ["register", "履修登録"], ["grades", "成績"], ["syllabus", "シラバス"], ["timetable", "時間割"], ["student", "学生情報"], ["notices", "掲示"]];
-// Komaba periods, used to bucket today's hourly sales into 時限.
-const PERIODS = [["1限", 8, 30, 10, 15], ["2限", 10, 25, 12, 10], ["昼休み", 12, 10, 13, 0], ["3限", 13, 0, 14, 45], ["4限", 14, 55, 16, 40], ["5限", 16, 50, 18, 35], ["6限", 18, 45, 20, 30]];
-let copy = null, live = null, idle = null;
-const num = n => n == null ? "—" : Number(n).toLocaleString("ja-JP");
-const jstNow = () => new Date(Date.now() + 9 * 3600e3);
 const pad = n => String(n).padStart(2, "0");
-function el(tag, attrs = {}, ...kids) { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) k === "class" ? n.className = v : n.setAttribute(k, v); n.append(...kids.map(k => k instanceof Node ? k : document.createTextNode(String(k)))); return n; }
-function modal(text, title = "TOFAS") { $("mh").textContent = title; $("mb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
+const num = n => n == null ? "—" : Number(n).toLocaleString("ja-JP");
+const jst = (ms = Date.now()) => new Date(ms + 9 * 3600e3);
+const ymd = t => t.getUTCFullYear() + "-" + pad(t.getUTCMonth() + 1) + "-" + pad(t.getUTCDate());
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null) k === "class" ? n.className = v : k === "html" ? n.innerHTML = v : k.startsWith("on") ? n[k] = v : n.setAttribute(k, v);
+  n.append(...kids.flat().filter(k => k != null).map(k => k instanceof Node ? k : document.createTextNode(String(k))));
+  return n;
+}
+function modal(text, title = "TOFAS") { $("mdh").textContent = title; $("mdb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
 $("mok").onclick = () => { $("modal").hidden = true; };
 
-function fillCopy() {
-  document.querySelectorAll("[data-copy]").forEach(n => { n.textContent = copy[n.dataset.copy] ?? ""; });
-  $("certBody").replaceChildren(...copy.cert_body.map(p => el("p", {}, p)));
-  $("links").replaceChildren(...copy.links.map((t, i) => el("li", {}, el("a", { href: "#", "data-goto": ["syllabus", "home", "syllabus", "register", "syllabus"][i] ?? "home" }, t))));
-  const s = copy.syllabus;
-  document.querySelectorAll("[data-syl]").forEach(n => { n.textContent = s[n.dataset.syl]; });
-  const rows = [["時間割コード", s.code], ["授業科目名", s.title], ["担当教員", s.teacher], ["単位数", s.credits], ["開講学期", s.term], ["授業の目標・概要", s.goal],
-    ["授業計画", el("ol", { style: "margin:0;padding-left:1.4em" }, ...s.plan.map(p => el("li", {}, p.replace(/^第\d+回：/, ""))))], ["成績評価方法", s.evaluation], ["教科書", s.textbook], ["履修上の注意", s.notes], ["キーワード", s.keywords.join("、")]];
-  $("syl").replaceChildren(...rows.map(([k, v]) => el("tr", {}, el("th", {}, k), el("td", {}, v))));
-  const item = (n, i) => {
-    const tr = el("tr", {}, el("td", {}, el("span", { class: n.category === "重要" ? "cat" : "cat normal" }, n.category)), el("td", {}, el("button", { type: "button", "aria-expanded": "false" }, n.title)));
-    const btn = tr.querySelector("button"), box = el("div", { class: "detail", hidden: "" }, n.body, el("small", {}, "発信元：" + n.from));
-    btn.after(box); btn.onclick = () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); };
-    return tr;
-  };
-  $("noticeTop").replaceChildren(...copy.notices.slice(0, 3).map(item));
-  $("noticeAll").replaceChildren(...copy.notices.map(n => { const tr = item(n); tr.append(el("td", {}, n.from)); return tr; }));
-  const P = copy.personal, st = P.student;
-  document.querySelectorAll("[data-p]").forEach(n => { n.textContent = P[n.dataset.p] ?? ""; });
-  document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = st[n.dataset.ps] ?? ""; });
-  document.querySelectorAll("[data-pg]").forEach(n => { n.textContent = P.grades_summary[n.dataset.pg] ?? ""; });
-  // Column-oriented tables: one label row and one value row per section.
-  const SECTIONS = [["学生基本情報", [["学籍番号", "id"], ["氏名", "name"], ["氏名（カナ）", "kana"], ["氏名（英字）", "roman"], ["学籍状態", "status"]]],
-    ["所属情報", [["所属", "faculty"], ["学年", "year"], ["入学年度", "admission"], ["クラス", "class"], ["指導教員", "advisor"]]],
-    ["個人情報", [["生年月日", "birthday"], ["性別", "gender"], ["国籍", "nationality"]]],
-    ["連絡先情報", [["現住所", "address"], ["電話番号", "phone"], ["メールアドレス", "email"]]],
-    ["保証人情報", [["保証人氏名", "guardian"], ["続柄", "guardian_relation"], ["保証人住所", "guardian_address"]]],
-    ["その他", [["所属サークル", "club"], ["奨学金", "scholarship"], ["健康診断", "health"], ["備考", "notes"]]]];
-  STUDENT = [SECTIONS, st]; renderStudent();
-  $("marquee").textContent = copy.notices.map(n => "【" + n.category + "】" + n.title).join("　　◆　　");
-}
-
-// PC: label row + value row per section. スマホ: one row per item.
-let STUDENT = null;
-function renderStudent() {
-  if (!STUDENT) return;
-  const [SECTIONS, st] = STUDENT, sp = document.body.classList.contains("sp");
-  $("stuTables").replaceChildren(...SECTIONS.flatMap(([h, cols]) => [el("div", { class: "sec" }, h), sp
-    ? el("table", { class: "rowt" }, ...cols.map(([l, k]) => el("tr", {}, el("th", {}, l), el("td", {}, st[k] ?? ""))))
-    : el("table", {}, el("tr", {}, ...cols.map(([l]) => el("th", {}, l))), el("tr", {}, ...cols.map(([, k]) => el("td", {}, st[k] ?? ""))))]));
-}
-function grade(ratio) {
-  const g = copy.grade_labels, i = Math.min(g.length - 1, Math.floor(ratio * g.length));
-  return g[Math.max(0, i)];
-}
-function renderLive() {
-  if (!live) return;
-  const p = live.stock.find(x => x.active) ?? live.stock[0], sold = live.by_product.reduce((a, x) => a + x.quantity, 0);
-  const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0), ratio = total ? sold / total : 0;
-  const t = jstNow(), updated = pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds());
-  const vals = { total: num(total), sold: num(sold), stock: stock == null ? "—" : num(stock), orders: num(live.totals.orders), sales: "¥" + num(live.totals.net_sales), ratio: Math.round(ratio * 100) + "%", updated };
-  document.querySelectorAll("[data-live]").forEach(n => { n.textContent = vals[n.dataset.live]; });
-  $("meter").style.width = Math.round(ratio * 100) + "%";
-  const g = grade(ratio); $("gradeLabel").textContent = g.label; $("gradeComment").textContent = g.comment;
-  const max = Math.max(1, ...live.by_hour.map(h => h.orders));
-  const open = live.by_hour.filter(h => h.orders > 0);
-  $("hours").replaceChildren(...(open.length ? open : [{ hour: t.getUTCHours(), orders: 0 }]).map(h => el("tr", {}, el("th", {}, h.hour + "時台"),
-    el("td", {}, Object.assign(el("span", { class: "hb" }), { style: "width:" + Math.max(2, Math.round(h.orders / max * 160)) + "px" }), h.orders + " 件"))));
-  const mins = t.getUTCHours() * 60 + t.getUTCMinutes();
-  $("today").textContent = (t.getUTCMonth() + 1) + "/" + t.getUTCDate();
-  $("tt").replaceChildren(...PERIODS.map(([name, h1, m1, h2, m2]) => {
-    // Hourly buckets only: an hour counts toward the period that contains its start.
-    const n = live.by_hour.filter(h => h.hour * 60 >= h1 * 60 + m1 - 30 && h.hour * 60 < h2 * 60 + m2 - 30).reduce((a, h) => a + h.orders, 0);
-    const now = mins >= h1 * 60 + m1 && mins < h2 * 60 + m2;
-    return el("tr", {}, el("th", {}, name), el("td", { class: "muted" }, h1 + ":" + pad(m1) + "–" + h2 + ":" + pad(m2)),
-      el("td", { class: (n ? "on" : "") + (now ? " now" : "") }, n ? "豆腐田楽　" + n + " 件" : "—"));
-  }));
-  if (p && p.image_hash && $("photo").hidden) { $("photo").src = $("idphoto").src = API + "/v1/images/" + p.image_hash; $("photo").hidden = false; }
-}
-async function load() {
-  try {
-    const t = jstNow(), day = t.getUTCFullYear() + "-" + pad(t.getUTCMonth() + 1) + "-" + pad(t.getUTCDate());
-    const r = await fetch(API + "/v1/dashboard?date=" + day, { cache: "no-store" });
-    if (!r.ok) throw new Error(r.status);
-    live = await r.json(); renderLive();
-  } catch { document.querySelectorAll('[data-live="updated"]').forEach(n => { n.textContent = "（接続しづらい状態です。時間をおいて自動で再試行します）"; }); }
-}
-
-function show(name) {
-  TABS.forEach(([k]) => { $("view-" + k).hidden = k !== name; });
-  $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
-  const label = TABS.find(t => t[0] === name)[1];
-  $("crumb").replaceChildren(document.body.classList.contains("sp")
-    ? el("span", {}, Object.assign(el("a", { href: "#", class: "bc", "data-goto": "home" }, "ホーム")), ...(name === "home" ? [] : [el("span", { class: "bc" }, label)]))
-    : "ホーム" + (name === "home" ? "" : " ＞ " + label));
-  $("spTabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-current", String(b.dataset.tab === name)));
-  current = name;
-  history.replaceState(null, "", "#" + name);
-}
-function enter(tab = "home") {
-  $("login").hidden = true; $("portal").hidden = false;
-  const t = jstNow(); $("lastLogin").textContent = "前回ログイン：" + t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes());
-  show(tab); poke(); window.scrollTo(0, 0);
-}
-function leave() { $("portal").hidden = true; $("login").hidden = false; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
-// Ten idle minutes end the "session", like the real thing.
-let deadline = 0, current = "home";
-function poke() { clearTimeout(idle); if (!$("portal").hidden) { deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); } }
-["click", "keydown", "scroll", "touchstart"].forEach(e => addEventListener(e, poke, { passive: true }));
-
-$("tabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { role: "tab", type: "button", "data-tab": k }); if (k === "home") b.append(el("span", { class: "ic" })); b.append(label); b.onclick = () => show(k); return b; }));
-document.addEventListener("click", e => { const a = e.target.closest("[data-goto]"); if (!a) return; e.preventDefault(); $("portal").hidden ? enter(a.dataset.goto) : show(a.dataset.goto); });
-$("enter").onclick = () => enter();
-$("logout").onclick = leave;
-// White line icons for the smart menus.
-const ICON = {
-  home: '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>', register: '<path d="M5 19l1-4 9-9 3 3-9 9zM14 7l3 3"/>', grades: '<path d="M5 20V10M10 20V5M15 20v-8M20 20V8"/>',
-  syllabus: '<path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM17 20h2V6"/>', timetable: '<path d="M4 5h16v15H4zM4 10h16M9 5v15M14 5v15"/>', student: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
-  notices: '<path d="M12 3v4M7 7h10l-1 7H8zM12 14v7"/>', pc: '<path d="M3 5h18v11H3zM8 20h8M12 16v4"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 3h6"/>', key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>', logout: '<path d="M10 4H4v16h6M14 8l4 4-4 4M18 12H9"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/>'
+// ---------- icons: colourful 48px for the PC tabs, white line icons for the smart tiles ----------
+const svgOf = (vb, body) => { const d = document.createElement("div"); d.innerHTML = `<svg viewBox="${vb}" aria-hidden="true">${body}</svg>`; return d.firstChild; };
+const PC_ICON = {
+  home: '<circle cx="24" cy="24" r="21" fill="#3d8be0"/><circle cx="24" cy="18" r="16" fill="#8cc4ff" opacity=".6"/><path d="M12 25 24 14l12 11h-4v10h-6v-7h-4v7h-6V25z" fill="#fff"/>',
+  student: '<rect x="6" y="10" width="34" height="28" rx="3" fill="#5aa0e6"/><circle cx="24" cy="18" r="5" fill="#ffd21e" stroke="#7a5b00"/><path d="M14 40l6-14h8l6 14" fill="#ffd21e" stroke="#7a5b00"/><path d="M20 30l-6 4M28 30l6-6" stroke="#7a5b00" stroke-width="2"/>',
+  rishu: '<path d="M10 8h24l6 6v28H10z" fill="#fff" stroke="#9a9a9a"/><path d="M14 18h20M14 24h20M14 30h14" stroke="#b9c8e0"/><path d="M18 40 40 12l4 3-22 28-6 2z" fill="#f2c94c" stroke="#8a6d1a"/>',
+  seiseki: '<rect x="8" y="8" width="26" height="32" fill="#fff" stroke="#aaa"/><path d="M12 34v-8M18 34V18M24 34v-12" stroke="#e05a2a" stroke-width="4"/><circle cx="34" cy="32" r="10" fill="#f7b500"/><path d="M34 32V22a10 10 0 0 1 9 6z" fill="#3cb043"/>',
+  kyuho: '<path d="M6 12l18-4 18 4v28l-18-4-18 4z" fill="#c98a3c" stroke="#7a4d17"/><path d="M24 8v28" stroke="#7a4d17"/><path d="M10 18l10-2M10 24l10-2M28 16l10 2M28 22l10 2" stroke="#f4e3c4"/>',
+  syllabus: '<rect x="6" y="8" width="30" height="32" fill="#e86f2b"/><path d="M10 8v32M16 8v32M22 8v32M28 8v32" stroke="#ffd29b" stroke-width="2"/><circle cx="32" cy="30" r="8" fill="#fff" stroke="#555" stroke-width="3"/><path d="M38 36l6 6" stroke="#555" stroke-width="4"/>',
+  enquete: '<rect x="10" y="8" width="26" height="34" rx="2" fill="#efd9b0" stroke="#a78a55"/><rect x="18" y="5" width="10" height="6" rx="2" fill="#cfa86a"/><path d="M15 20h16M15 26h16M15 32h10" stroke="#a78a55"/>',
+  keiji: '<rect x="5" y="10" width="38" height="26" rx="2" fill="#4f9a53" stroke="#6b4a1e" stroke-width="3"/><path d="M12 18h18M12 24h12" stroke="#d9f0d0" stroke-width="2"/><path d="M14 36l-4 8M34 36l4 8" stroke="#6b4a1e" stroke-width="3"/>',
+  jugyoryo: '<rect x="8" y="18" width="32" height="16" rx="3" fill="#333"/><rect x="13" y="8" width="22" height="12" fill="#fff" stroke="#888"/><rect x="13" y="30" width="22" height="12" fill="#fff" stroke="#888"/><circle cx="34" cy="24" r="2" fill="#5f5"/>',
+  kaigai: '<path d="M4 28l40-14-4 6-14 6 6 16-4 2-8-14-10 4-2 6-3 1z" fill="#8ab0e6" stroke="#3a5f9a"/>',
+  sonota: '<path d="M8 34c6-2 10-8 16-8h10l6 6-14 8H12z" fill="#f7c9a0" stroke="#a66a3a"/><rect x="22" y="6" width="18" height="22" fill="#fff" stroke="#999" transform="rotate(10 31 17)"/><path d="M26 12l10 2M25 18l10 2" stroke="#e33"/>',
+  lms: '<rect x="8" y="18" width="32" height="22" fill="#9fd08f" stroke="#3c7a33"/><path d="M6 18 24 8l18 10z" fill="#5aa94c"/><rect x="21" y="28" width="6" height="12" fill="#3c7a33"/><path d="M12 24h5M31 24h5" stroke="#fff" stroke-width="3"/>',
+  ugip: '<path d="M4 28l40-14-4 6-14 6 6 16-4 2-8-14-10 4-2 6-3 1z" fill="#6fbf5f" stroke="#2f6f2a"/>',
+  cert: '<rect x="8" y="20" width="30" height="16" rx="3" fill="#777"/><rect x="12" y="8" width="22" height="14" fill="#fff" stroke="#888"/><rect x="12" y="32" width="22" height="10" fill="#eee" stroke="#888"/><circle cx="38" cy="10" r="7" fill="#1f3fae"/><path d="M38 6v6l-2-2M38 12l2-2" stroke="#fff" stroke-width="1.6"/>',
 };
-const svg = k => { const d = document.createElement("div"); d.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + "</svg>"; return d.firstChild; };
-$("spTabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { type: "button", "data-tab": k }, svg(k), label); b.onclick = () => show(k); return b; }));
-const SYS = [["pc", "PC版", () => setMode("pc")], ["globe", "English", () => act.english()], ["timer", "10:00", () => modal("残り時間が0になると、自動でログアウトします。操作すると10分に戻ります。", "タイマー")],
-  ["key", "合言葉", () => modal("合言葉はありません。ログインはボタンを押すだけです。", "合言葉の変更")], ["logout", "ログアウト", () => leave()], ["gear", "設定", () => modal("設定できる項目はありません。豆腐は焼き加減を選べません。", "設定")]];
-$("spSys").replaceChildren(...SYS.map(([k, label, fn], i) => { const b = el("button", { type: "button", class: i === 5 ? "dark" : "" }, svg(k), el("span", k === "timer" ? { class: "sp-timer", id: "spTimer" } : {}, label)); b.onclick = fn; return b; }));
-setInterval(() => { const left = Math.max(0, deadline - Date.now()), m = Math.floor(left / 60e3), sec = Math.floor(left / 1e3) % 60; $("spTimer").textContent = m + ":" + pad(sec); }, 1000);
-// Mode: remembered per viewer; first visit follows the screen width.
+const SYS_ICON = {
+  user: '<circle cx="12" cy="8" r="5" fill="#7fb2e8" stroke="#3d6fae"/><path d="M3 23c0-6 4-9 9-9s9 3 9 9z" fill="#7fb2e8" stroke="#3d6fae"/>',
+  smart: '<rect x="6" y="2" width="12" height="20" rx="2" fill="#666"/><rect x="8" y="5" width="8" height="12" fill="#cde"/>',
+  english: '<path d="M3 4h18v12H11l-5 5v-5H3z" fill="#8cc4f5" stroke="#3a7fc4"/><circle cx="12" cy="10" r="3" fill="#fff"/>',
+  timer: '<circle cx="12" cy="12" r="10" fill="#cfe3fa" stroke="#3a7fc4" stroke-width="1.6"/><path d="M12 6v6l4 3" stroke="#3a7fc4" stroke-width="2" fill="none"/>',
+  logout: '<rect x="2" y="2" width="20" height="20" rx="4" fill="#e23b2e"/><path d="M12 5v7M7.5 8.5a6 6 0 1 0 9 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>',
+};
+const LINE = {
+  home: '<path d="M6 22 24 6l18 16h-5v18H11V22z" fill="#fff"/>', student: '<rect x="4" y="8" width="40" height="30" rx="2" fill="none" stroke="#fff" stroke-width="3"/><circle cx="16" cy="20" r="5" fill="#fff"/><path d="M8 34c0-5 4-7 8-7s8 2 8 7zM28 16h12M28 23h12M28 30h8" fill="#fff" stroke="#fff" stroke-width="2.5"/>',
+  rishu: '<path d="M10 4h20l8 8v32H10z" fill="#fff"/><path d="M16 20h16M16 27h16M16 34h10" stroke="#4694d1" stroke-width="2.5"/>', seiseki: '<path d="M8 40V24M16 40V14M24 40V20" stroke="#fff" stroke-width="4"/><circle cx="34" cy="30" r="9" fill="#fff"/><path d="M34 30V21a9 9 0 0 1 9 9z" fill="#4694d1"/>',
+  kyuho: '<rect x="6" y="6" width="36" height="34" rx="2" fill="none" stroke="#fff" stroke-width="3"/><path d="M6 14h36M24 6v34M10 22h10M28 22h10M10 30h10" stroke="#fff" stroke-width="2.5"/>', syllabus: '<rect x="6" y="8" width="8" height="32" fill="#fff"/><rect x="16" y="8" width="8" height="32" fill="#fff"/><circle cx="34" cy="20" r="7" fill="none" stroke="#fff" stroke-width="3"/><path d="M34 27v13" stroke="#fff" stroke-width="3"/>',
+  enquete: '<circle cx="16" cy="18" r="7" fill="#fff"/><path d="M4 40c0-8 5-12 12-12s12 4 12 12z" fill="#fff"/><path d="M26 6h18v12h-8l-4 4v-4h-6z" fill="#fff"/>', keiji: '<rect x="6" y="6" width="36" height="28" fill="#fff"/><rect x="18" y="12" width="12" height="16" fill="#4694d1"/><path d="M14 34l-4 8M34 34l4 8" stroke="#fff" stroke-width="3"/>',
+  jugyoryo: '<rect x="6" y="18" width="36" height="16" rx="2" fill="#fff"/><rect x="12" y="6" width="24" height="12" fill="#fff"/><rect x="12" y="30" width="24" height="12" fill="#fff" stroke="#4694d1" stroke-width="2"/>', sonota: '<text x="24" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#fff" font-family="Arial">etc.</text>',
+  cert: '<path d="M12 4h18l8 8v32H12z" fill="#fff"/><path d="M18 20h14M18 26h14M18 32h10" stroke="#4694d1" stroke-width="2.5"/>',
+};
+const SMALL = {
+  info: '<circle cx="8" cy="8" r="7" fill="#5aa0e6" stroke="#fff"/><text x="8" y="12" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff" font-family="Georgia">i</text>',
+  person: '<rect x="1" y="2" width="14" height="12" fill="#6aa8e6"/><circle cx="8" cy="6" r="2.5" fill="#ffd21e"/><path d="M4 14l2-5h4l2 5" fill="#ffd21e"/>',
+  find: '<circle cx="6.5" cy="6.5" r="4.5" fill="#fff" stroke="#999" stroke-width="1.6"/><path d="M10 10l5 5" stroke="#999" stroke-width="2"/>',
+  book: '<path d="M1 3l7-1 7 1v11l-7-1-7 1z" fill="#c98a3c"/><path d="M8 2v11" stroke="#7a4d17"/>',
+  pen: '<path d="M2 14l1-4 9-9 3 3-9 9z" fill="#5fbf3f" stroke="#2f6f2a"/>',
+  board: '<rect x="1" y="3" width="14" height="9" fill="#d8e8a8" stroke="#8a7a3a"/>',
+  doc: '<path d="M3 1h7l3 3v11H3z" fill="#f4ecd4" stroke="#b9a768"/>',
+};
+const icon = (set, k, vb) => svgOf(vb, set[k] ?? "");
+
+// ---------- menu structure (names follow the real portal) ----------
+const TABS = [
+  ["home", "HOME", [["お知らせ", "home"], ["FAQ", "faq"]]],
+  ["student", "学生情報", [["保護者等の連絡先の変更について", "hogosha"], ["学生情報参照", "student"], ["現住所等変更入力", "jusho"], ["メール受信設定", "mail"]]],
+  ["rishu", "履修", [["お知らせ", "rishu_oshirase"], ["履修登録", "register"]]],
+  ["seiseki", "成績･定期試験", [["個人成績参照", "grades"]]],
+  ["kyuho", "休補・スケジュール", [["スケジュール管理", "schedule"], ["休講・補講・教室変更参照", "kyuko"], ["授業曜日振替え参照", "furikae"], ["カレンダー連携", "calendar"]]],
+  ["syllabus", "シラバス", [["シラバスフリーワード検索（シラバス参照）", "syllabus"]]],
+  ["enquete", "アンケート", [["アンケート回答・集計結果参照", "enquete"]]],
+  ["keiji", "掲示", [["新着掲示", "board"], ["掲示板", "board"]]],
+  ["jugyoryo", "授業料債権", [["授業料債権参照", "jugyoryo"]]],
+  ["kaigai", "海外派遣", [["海外派遣", "kaigai"]]],
+  ["sonota", "その他", [["ダウンロードセンター", "sonota"]]],
+  ["lms", "LMS", [["LMS", "lms"]]],
+  ["ugip", "UGIP", [["UGIP", "ugip"]]],
+  ["cert", "証明書発行サービス", [["証明書発行サービス", "cert"]]],
+];
+const SP_TILES = ["home", "student", "rishu", "seiseki", "kyuho", "syllabus", "enquete", "keiji", "jugyoryo", "sonota", "cert"];
+const SP_LABEL = { seiseki: "成績", kyuho: "休補・スケジュール" };
+const FAV = [["学生情報参照", "student", "person"], ["現住所等変更入力", "jusho", "person"], ["個人成績参照", "grades", "find"], ["MYスケジュール", "schedule", "book"],
+  ["休講・補講・教室変更参照", "kyuko", "find"], ["シラバスフリーワード検索（シラバス参照）", "syllabus", "find"], ["新着掲示", "board", "board"]];
+const PAGE_ICON = { student: "person", hogosha: "info", jusho: "person", mail: "doc", register: "pen", grades: "find", kyuko: "find", schedule: "book", syllabus: "find", board: "board", home: "info", faq: "info" };
+const tabOf = page => TABS.find(t => t[2].some(m => m[1] === page)) ?? TABS[0];
+const titleOf = page => tabOf(page)[2].find(m => m[1] === page)?.[0] ?? page;
+
+// ---------- live numbers ----------
+const PERIODS = [["1限", 8, 30, 10, 15], ["2限", 10, 25, 12, 10], ["3限", 13, 0, 14, 45], ["4限", 14, 55, 16, 40], ["5限", 16, 50, 18, 35], ["6限", 18, 45, 20, 30]];
+// Hourly buckets only: an hour counts toward the period that contains most of it (the lunch hour goes to 2限).
+const periodOf = h => { const m = h * 60 + 30; let best = 0; PERIODS.forEach(([, h1, m1], i) => { if (m >= h1 * 60 + m1 - 50) best = i; }); return best; };
+let copy = null, live = null, week = null, state = { tab: "home", page: "home", sub: null, menu: null };
+function stats() {
+  if (!live) return null;
+  const p = live.stock.find(x => x.active) ?? live.stock[0], sold = live.by_product.reduce((a, x) => a + x.quantity, 0);
+  const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0);
+  return { p, sold, stock, total, ratio: total ? sold / total : 0, orders: live.totals.orders, sales: live.totals.net_sales };
+}
+async function getDay(date) { const r = await fetch(API + "/v1/dashboard?date=" + date, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function load() {
+  try { live = await getDay(ymd(jst())); paintLive(); if (!$("portal").hidden && ["home", "register", "grades"].includes(state.page)) render(); } catch { /* keep the last numbers */ }
+}
+function paintLive() {
+  const s = stats(); if (!s) return;
+  document.querySelectorAll("[data-live]").forEach(n => { n.textContent = { sold: num(s.sold), stock: s.stock == null ? "—" : num(s.stock) }[n.dataset.live] ?? ""; });
+}
+const photoUrl = () => { const s = stats(); return s?.p?.image_hash ? API + "/v1/images/" + s.p.image_hash : ""; };
+
+// ---------- pages ----------
+const st = () => copy.personal.student, more = () => copy.more;
+const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal("ヘルプは店頭のスタッフが口頭で提供しています。", "Help") }, "Help"));
+const wrapPortlet = (head, ...body) => el("div", { class: "portlet" }, head, ...body);
+function infoPage(page) {
+  const text = more().pages[page] ?? copy.personal[page] ?? "";
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), titleOf(page)), el("div", { class: "info-text" }, text));
+}
+function homePage() {
+  const s = stats(), t = jst();
+  const hr = () => el("div", { class: "hr" }, "-".repeat(160));
+  const live = s ? [el("b", { class: "big" }, `本日（${t.getUTCMonth() + 1}月${t.getUTCDate()}日）の豆腐田楽は、${num(s.sold)}本が履修（販売）済み、残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`),
+    el("b", { class: "big" }, `会計${num(s.orders)}件、在庫消化率${Math.round(s.ratio * 100)}%。この表示は30秒ごとに自動で更新されます。`)] : [el("b", { class: "big" }, "販売状況を取得しています。")];
+  const items = copy.notices.slice(1).flatMap(n => [hr(), el("b", {}, n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]);
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "お知らせ"),
+    el("div", { class: "notice" }, el("div", { class: "nh" }, "[500]　【販売状況 / Sales】"), ...live,
+      el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, copy.notices[0].title), el("p", { class: "red", style: "font-size:14px;font-weight:bold" }, copy.notices[0].body),
+      ...items, hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　模擬店運営本部学務課`)),
+    el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), "‹", el("a", { onclick: () => modal("これより前のお知らせはありません。", "前へ") }, "前へ")));
+}
+function studentPage() {
+  const S = st(), M = more();
+  const SUBS = [["指導教員・クラス情報", "class"], ["学生個人属性", "attr"], ["出身校情報", "school"], ["連絡先情報", "contact"], ["卒留区分・TA/RA情報", "tara"], ["留学生情報", "ryugaku"], ["授業料免除・学費納入状況情報", "gakuhi"]];
+  const sub = state.sub ?? "class";
+  const links = el("div", { class: "gk-links" }, ...SUBS.map(([l, k]) => el("a", { class: k === sub ? "chk" : null, onclick: () => { state.sub = k; render(); } }, l)));
+  const kv = (caption, rows) => el("table", { class: "gk" }, el("caption", {}, caption), ...rows.map(r => el("tr", {}, ...r.flatMap(([k, v]) => [el("th", {}, k), el("td", {}, v ?? "")]))));
+  const grid = (caption, head, row) => el("table", { class: "gk wide" }, el("caption", {}, caption), el("tr", {}, ...head.map(h => el("th", {}, h))), el("tr", {}, ...row.map(v => el("td", {}, v ?? ""))));
+  const basic = kv("学生基本情報", [[["学籍番号", S.id], ["学生氏名", S.name]], [["学生氏名(カナ)", S.kana], ["英字氏名", S.roman]], [["所属", S.faculty], ["学年", S.year]], [["現況区分", M.genkyo], ["学生身分", M.mibun]], [["共通ID", M.kyotsu_id], ["", ""]]]);
+  const A = M.advisor_row, C = M.class_row;
+  const detail = {
+    class: [grid("教員情報", ["年度", "学期", "指導教員", "教員名", "所属", "役職"], [A.year, A.term, A.kind, A.name, A.dept, A.title]), grid("クラス情報", ["年度", "学期", "クラス名", "出席番号"], [C.year, C.term, C.class, C.no])],
+    attr: [kv("学生個人属性", [[["生年月日", S.birthday], ["性別", S.gender]], [["国籍", S.nationality], ["入学年度", S.admission]]])],
+    school: [kv("出身校情報", [[["出身校", M.school], ["卒業年月", M.school_grad]]])],
+    contact: [kv("連絡先情報", [[["現住所", S.address], ["電話番号", S.phone]], [["メールアドレス", S.email], ["", ""]]]), kv("保証人情報", [[["保証人氏名", S.guardian], ["続柄", S.guardian_relation]], [["保証人住所", S.guardian_address], ["", ""]]])],
+    tara: [kv("卒留区分・TA/RA情報", [[["状況", M.tara]]])], ryugaku: [kv("留学生情報", [[["状況", M.ryugaku]]])],
+    gakuhi: [kv("授業料免除・学費納入状況情報", [[["状況", M.gakuhi], ["奨学金", S.scholarship]]])],
+  }[sub];
+  return wrapPortlet(fbar("学生情報参照／学籍情報", "person"), el("div", { class: "f" }, links,
+    el("div", { class: "gk-wrap" }, el("img", { class: "gk-photo", src: photoUrl(), alt: "証明写真" }), el("div", { class: "gk-stack" }, basic, ...detail))));
+}
+function registerPage() {
+  const S = st(), syl = copy.syllabus, t = jst(), wd = (t.getUTCDay() + 6) % 7; // 0 = Monday
+  const per = [0, 0, 0, 0, 0, 0]; (live?.by_hour ?? []).forEach(h => { if (h.orders) per[periodOf(h.hour)] += h.orders; });
+  const count = per.filter(Boolean).length;
+  const head = el("table", { class: "rs rs-head" },
+    el("tr", {}, el("th", {}, "氏名"), el("td", { colspan: 3 }, S.name), el("th", {}, "学籍番号"), el("td", { style: "text-align:center" }, S.id)),
+    el("tr", {}, el("th", {}, "所属"), el("td", { colspan: 3 }, S.faculty), el("th", {}, "学年"), el("td", { style: "text-align:center" }, S.year)),
+    el("tr", {}, el("th", {}, "年度・学期"), el("td", { style: "text-align:center" }, t.getUTCFullYear() + "年度　学園祭"), el("th", {}, "履修登録期間"), el("td", { style: "text-align:center" }, "店頭にて随時"), el("th", {}, "件数"), el("td", { style: "text-align:center" }, count + "件")));
+  const days = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", ...(wd === 6 ? ["日曜日"] : [])];
+  const grid = el("table", { class: "rsk" }, el("tr", {}, el("th", {}, ""), ...days.map(d => el("th", {}, d))),
+    ...PERIODS.map(([name], i) => el("tr", {}, el("td", { class: "k" }, name), ...days.map((_, d) => d === wd && per[i]
+      ? el("td", { class: "c on" }, syl.code, el("br"), "豆腐田楽", el("br"), num(per[i]) + ".0", el("br"), "焼き場責任者")
+      : el("td", { class: "c" }, "未登録")))));
+  const etc = el("table", { class: "rs rs-etc" }, el("caption", {}, "集中講義など"), el("tr", {}, ...["曜日", "時限", "時間割コード", "科目", "単位数", "担当教員名"].map(h => el("th", {}, h))),
+    el("tr", {}, el("td", {}, "随時"), el("td", {}, "店頭"), el("td", {}, syl.code), el("td", {}, "豆腐田楽（1本500円）"), el("td", {}, "1.0"), el("td", {}, "焼き場責任者")));
+  return wrapPortlet(fbar("履修登録", "pen"), el("div", { class: "f" }, head, el("p", { class: "rs-note" }, "※" + copy.register_body),
+    el("div", { class: "rs-tabs" }, ...["S１", "S２", "学園祭", "A２", "W"].map(x => el("span", { class: x === "学園祭" ? "sel" : null }, x))), grid, etc,
+    el("p", { style: "margin-top:24px" }, el("button", { class: "ubtn", onclick: () => modal(copy.register_error, "履修科目控出力") }, "履修科目控出力"))));
+}
+function gradesPage() {
+  const S = st(), M = more(), s = stats();
+  if (state.sub !== "result") {
+    return wrapPortlet(fbar("個人成績参照／範囲・出力先指示"), el("div", { class: "f ss-sel" }, el("p", {}, el("span", { class: "q" }, "表示対象とする所属を選択して下さい")),
+      el("p", {}, el("label", {}, el("input", { type: "checkbox", id: "ssPick" }), " " + S.faculty + "（本年度入学 学籍番号" + S.id + "）")),
+      el("button", { class: "ubtn", onclick: () => { if (!$("ssPick").checked) return modal("所属を選択してください。", "個人成績参照"); state.sub = "result"; render(); } }, "画面に表示する"), " ",
+      el("button", { class: "ubtn", onclick: () => { $("ssPick").checked = false; } }, "クリア")));
+  }
+  const hours = (live?.by_hour ?? []).filter(h => h.orders), max = Math.max(1, ...hours.map(h => h.orders));
+  const label = n => { const g = copy.grade_labels; return g[Math.min(g.length - 1, Math.floor(n / max * g.length - 1e-9))]; };
+  const sumHead = ["修得単位数", "対象単位数", "GPA", "平均\n成績順位率"], semHead = ["年度・学期", "GPA\n(学期)", "平均\n成績順位率", "対象単位数", "計算日"];
+  const today = jst();
+  return wrapPortlet(fbar("個人成績参照"), el("div", { class: "f" },
+    el("p", { style: "margin:16px 0 4px 610px" }, "TOFAS"),
+    el("table", { class: "ss" }, el("tr", {}, el("th", { style: "width:100px" }, "学生氏名"), el("td", { style: "width:360px" }, S.name), el("th", { style: "width:100px" }, "学籍番号"), el("td", { style: "width:100px" }, S.id)),
+      el("tr", {}, el("th", {}, "学生所属"), el("td", {}, S.faculty), el("th", {}, "学年"), el("td", {}, S.year))),
+    el("p", { style: "font-weight:bold;margin:56px 0 10px" }, "■" + S.faculty + "（本年度入学 学籍番号" + S.id + "）"),
+    el("div", { style: "display:flex;gap:8px;align-items:flex-start" },
+      el("table", { class: "ss" }, el("tr", {}, ...sumHead.map(h => el("th", { style: "white-space:pre-line" }, h))), el("tr", {}, ...[num(s?.sold), num(s?.total), "¥" + num(s?.sales), Math.round((s?.ratio ?? 0) * 100) + "%"].map(v => el("td", { style: "text-align:center" }, v)))),
+      el("table", { class: "ss" }, el("tr", {}, ...semHead.map(h => el("th", { style: "white-space:pre-line;width:82px" }, h))), el("tr", {}, el("td", { colspan: 5 }, `${today.getUTCFullYear()}年度 学園祭：GPA ¥${num(s?.sales)}（${today.getUTCMonth() + 1}/${today.getUTCDate()} 計算）`)))),
+    el("div", { class: "ss-notes" }, copy.grades_note + "\n\n【各項目の説明】\n" + M.grades_notes.map(x => "・ " + x).join("\n")),
+    el("table", { class: "ss" }, el("tr", {}, ...["No", "時間割コード", "開講科目名", "教員名", "履修\n年度", "学期", "単位数", "評語", "科目区分", "科目\nGP", "科目成績順位率", "履修者\n数", "合否"].map(h => el("th", { style: "white-space:pre-line" }, h))),
+      ...(hours.length ? hours : [{ hour: jst().getUTCHours(), orders: 0 }]).map((h, i) => { const g = label(h.orders); return el("tr", {},
+        el("td", { style: "text-align:center;width:40px" }, i + 1), el("td", {}, copy.syllabus.code), el("td", { style: "width:170px" }, `豆腐田楽（${h.hour}時台）`), el("td", {}, "焼き場責任者"),
+        el("td", { style: "text-align:center" }, today.getUTCFullYear()), el("td", { style: "text-align:center" }, "学園祭"), el("td", { style: "text-align:center" }, num(h.orders) + ".0"),
+        el("td", { style: "text-align:center" }, h.orders ? g.label.replace(/（.*）/, "") : "履修中"), el("td", {}, "[模擬店科目] [必修]"), el("td", { style: "text-align:center" }, "*"),
+        el("td", { style: "text-align:center" }, Math.round(h.orders / max * 100) + "%"), el("td", { style: "text-align:center" }, num(h.orders)), el("td", { style: "text-align:center" }, h.orders ? "合" : "")); }))));
+}
+async function kyukoPage() {
+  const t = jst(), monday = new Date(t.getTime() - ((t.getUTCDay() + 6) % 7) * 864e5);
+  const days = [...Array(7)].map((_, i) => new Date(monday.getTime() + i * 864e5)), W = "日月火水木金土";
+  if (!week || week.key !== ymd(monday)) {
+    week = { key: ymd(monday), data: {} };
+    await Promise.all(days.filter(d => d <= t).map(async d => { try { week.data[ymd(d)] = await getDay(ymd(d)); } catch {} }));
+  }
+  const L = more().kyuko_legend, label = d => `${d.getUTCMonth() + 1}月${d.getUTCDate()}日 (${W[d.getUTCDay()]})`;
+  const dayRow = el("tr", {}, el("th", { class: "j" }, ""), ...days.map(d => el("th", {}, label(d))), el("th", { class: "j" }, ""));
+  const per = d => { const out = [0, 0, 0, 0, 0, 0]; (week.data[ymd(d)]?.by_hour ?? []).forEach(h => { if (h.orders) out[periodOf(h.hour)] += h.orders; }); return out; };
+  const counts = days.map(per);
+  return wrapPortlet(fbar("休講・補講・教室変更参照"), el("div", { class: "f" },
+    el("div", { class: "ky-cond" }, el("select", {}, el("option", {}, "コマ形式")), " で ", el("select", {}, el("option", {}, "販売情報のみ表示")), el("br"), el("button", { class: "ubtn", style: "margin-top:6px", onclick: () => { week = null; render(); } }, "表 示 す る")),
+    el("div", { class: "ky-legend" }, el("span", { style: "background:#f0f0f0" }, L.kaiko), el("span", { style: "background:#ffffcc" }, L.kyoshitsu), el("span", { style: "background:#ffcccc" }, L.kyuko), el("span", { style: "background:#ccffcc" }, L.hoko)),
+    el("div", { class: "ky-nav", style: "width:798px" }, el("span", {}, el("a", {}, "<<<月"), " ", el("a", {}, "<<週"), "　", el("a", {}, "<日")), el("b", {}, el("a", {}, "<<<"), " " + t.getUTCFullYear() + "年 ", el("a", {}, ">>>")), el("span", {}, el("a", {}, "日>"), "　", el("a", {}, "週>>"), "　", el("a", {}, "月>>>"))),
+    el("table", { class: "ky" }, dayRow, ...PERIODS.map(([name], i) => el("tr", {}, el("th", { class: "j" }, name),
+      ...days.map((d, di) => counts[di][i] ? el("td", { class: "kaiko" }, copy.syllabus.code, el("br"), "店頭", el("br"), "焼き場責任者", el("br"), "豆腐田楽 " + num(counts[di][i]) + "件", el("div", { style: "text-align:right;margin-top:4px" }, el("a", { onclick: () => go("syllabus", "detail") }, "詳細"))) : el("td", {})),
+      el("th", { class: "j" }, name))), dayRow)));
+}
+function syllabusPage() {
+  const s = copy.syllabus;
+  if (state.sub === "detail") {
+    const rows = [["開講科目名\n／Course Title", s.title + "／Tofu Dengaku"], ["時間割コード\n／Course Code", s.code], ["共通科目コード\n／Common Course Code", "TOFU-DNGK500"], ["学部/大学院\n／Undergraduate or Graduate", "模擬店課程／Festival Stall"],
+      ["開講所属\n／Course Offered by", "大豆学部 田楽学科／Faculty of Soybean, Dept. of Dengaku"], ["曜限\n／Day, Period", "随時／Anytime"], ["開講区分(ﾀｰﾑ･ｾﾒｽﾀｰ)\n／Offering Period (Term or Semester)", s.term], ["単位数\n／Credits", s.credits],
+      ["学年\n／Year", "全学年／All years"], ["他学部履修\n／Cross-Departmental Enrollment", "可"], ["備考\n／Notes", s.notes], ["主担当教員\n／Lead Instructor", s.teacher], ["キャンパス\n／Campus", "模擬店"], ["教室\n／Classroom", "店頭"]];
+    const tab = state.menu ?? "basic";
+    const T = [["basic", "基本情報／Basic Information"], ["detail", "詳細情報／Detailed Information"], ["plan", "授業計画詳細情報／Class Schedule Details"]];
+    const body = {
+      basic: [el("div", { class: "sy-h2" }, "基本情報/Basic Information"), el("table", { class: "syl syd" }, ...rows.map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v))))],
+      detail: [el("div", { class: "sy-h2" }, "詳細情報/Detailed Information"), el("table", { class: "syl syd" }, ...[["授業の目標・概要\n／Course Objectives", s.goal], ["成績評価方法\n／Grading", s.evaluation], ["教科書\n／Textbooks", s.textbook], ["履修上の注意\n／Notes on Taking the Course", s.notes], ["キーワード\n／Keywords", s.keywords.join("、")]].map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v)))),
+        photoUrl() ? el("img", { src: photoUrl(), alt: "豆腐田楽の写真", style: "width:220px;margin-top:12px;border:1px solid #ccc" }) : null],
+      plan: [el("div", { class: "sy-h2" }, "授業計画詳細情報/Class Schedule Details"), el("table", { class: "syl syd" }, ...s.plan.map(p => { const [k, v] = p.split("："); return el("tr", {}, el("th", {}, k), el("td", {}, v ?? p)); }))],
+    }[tab];
+    return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／授業情報参照"), el("div", { class: "f" },
+      el("div", { class: "sy-h1" }, "授業情報／Class Information"),
+      el("p", { style: "margin:0 0 6px 390px" }, "<<　" + jst().getUTCFullYear() + "年度シラバス（ 最終更新日： 本日 ）　>>"),
+      el("div", { class: "sy-panel", style: "width:760px" }, el("div", { class: "sy-tabs" }, ...T.map(([k, l]) => el("span", { class: k === tab ? null : "off", onclick: () => { state.menu = k; render(); } }, l))), el("div", { style: "padding:0 16px" }, ...body)),
+      el("p", {}, el("button", { class: "ubtn", onclick: () => { state.sub = "list"; state.menu = null; render(); } }, "閉じる/Close"), " ", el("button", { class: "ubtn", onclick: () => modal(copy.register_error, "履修登録") }, "履修登録/Course registration"))));
+  }
+  if (state.sub === "list") {
+    const head = ["No.", "開講", "曜日・時限", "学部/大学院", "開講所属", "教室名", "時間割コード", "科目大区分", "開講科目名", "担当", "参照"];
+    return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／検索結果"), el("div", { class: "f" }, el("p", {}, el("b", {}, "1件目"), " から ", el("b", {}, "1件目"), "の検索結果を表示しています（全部で 1件あります）"),
+      el("table", { class: "syl list" }, el("tr", {}, ...head.map(h => el("th", {}, h))), el("tr", {}, ...["1", "学園祭", "随時", "模擬店課程", "大豆学部 田楽学科", "店頭", s.code, "模擬店科目", s.title, "焼き場責任者"].map(v => el("td", {}, v)),
+        el("td", {}, el("button", { class: "ubtn", onclick: () => { state.sub = "detail"; render(); } }, "参照")))),
+      el("p", {}, el("button", { class: "ubtn", onclick: () => { state.sub = null; render(); } }, "戻る"))));
+  }
+  const sel = (o = "指示なし") => el("select", {}, el("option", {}, o));
+  return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／条件入力画面"), el("div", { class: "f" }, el("div", { class: "sy-panel" }, el("div", { class: "sy-tabs" }, el("span", {}, "フリーワード検索")),
+    el("div", { class: "sy-form" }, el("b", {}, "詳細な条件で検索する場合は、学部／研究科を選択してください"),
+      el("table", {}, ...[["年度", el("input", { value: String(jst().getUTCFullYear()), size: 4 })], ["学部／研究科\n（開講学部）", sel()], ["学科／専攻\n（開講学部）", sel()], ["コース等\n（開講学部）", sel()], ["学期", sel()], ["開講区分", sel()]].map(([k, v], i) => el("tr", {}, el("td", { style: "white-space:pre-line;width:130px" + (i ? "" : ";color:#c0103c") }, k), el("td", {}, "："), el("td", {}, v)))),
+      el("p", { style: "margin-top:30px" }, "・フリーキーワード"), el("textarea", { rows: 4, style: "width:590px", id: "syKw", placeholder: "豆腐田楽" }),
+      el("div", {}, "複数のキーワードを指定する場合は、半角スペースで区切ってください。", el("br"), "指定したすべてのキーワードを含むシラバスが検索されます。"),
+      el("p", {}, "ソート順：", sel()), el("p", {}, "検索結果表示件数：", sel("100"), " 件"),
+      el("button", { class: "ubtn", onclick: () => { state.sub = "list"; render(); } }, "検索"), " ", el("button", { class: "ubtn", onclick: () => { $("syKw").value = ""; } }, "ク リ ア")))));
+}
+function boardPage() {
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "掲示板"), el("div", { class: "f" },
+    el("table", { class: "syl list", style: "width:100%" }, el("tr", {}, ...["分類", "件名", "発信元"].map(h => el("th", {}, h))),
+      ...copy.notices.map(n => el("tr", {}, el("td", { style: "white-space:nowrap" }, n.category), el("td", {}, el("details", {}, el("summary", { style: "color:var(--link);cursor:pointer" }, n.title), el("div", { style: "padding:6px 0" }, n.body))), el("td", {}, n.from))))));
+}
+function certPage() {
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "証明書発行サービス"), el("div", { class: "info-text" }, el("b", {}, copy.cert_title), ...copy.cert_body.map(p => el("p", {}, p)), el("p", { class: "red" }, copy.cert_warning)));
+}
+async function pageNode(page) {
+  if (page === "home") return homePage();
+  if (page === "student") return studentPage();
+  if (page === "register") return registerPage();
+  if (page === "grades") return gradesPage();
+  if (page === "kyuko") return kyukoPage();
+  if (page === "syllabus") return syllabusPage();
+  if (page === "board") return boardPage();
+  if (page === "cert") return certPage();
+  return infoPage(page);
+}
+
+// ---------- chrome ----------
+const sp = () => document.body.classList.contains("sp");
+let deadline = 0, idle = null;
+function go(page, sub = null) { state.page = page; state.tab = tabOf(page)[0]; state.sub = sub; state.menu = null; state.spMenu = null; render(); poke(); window.scrollTo(0, 0); }
+function openTab(id) { const t = TABS.find(x => x[0] === id); if (sp()) { state.tab = id; state.spMenu = id; state.page = null; render(); window.scrollTo(0, 0); return; } go(t[2][0][1]); }
+function paintChrome() {
+  const name = st().name, left = Math.max(0, Math.ceil((deadline - Date.now()) / 60e3));
+  $("sys").replaceChildren(...[["user", name, () => go("student")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
+    .map(([k, l, fn]) => el("button", { onclick: fn }, icon(SYS_ICON, k, "0 0 24 24"), l)));
+  $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("div", { class: "tabcell" + (id === state.tab ? " sel" : ""), onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
+  $("menubar").replaceChildren(...TABS.find(t => t[0] === state.tab)[2].map(([l, p]) => el("a", { class: p === state.page ? "cur" : null, onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)));
+  const news = () => [el("p", {}, "あなた宛の新着情報があります。"), ...more().news.map(n => el("a", { onclick: () => go("board") }, n))];
+  const fav = () => FAV.map(([l, p, ic]) => el("li", {}, icon(SMALL, ic, "0 0 16 16"), el("a", { onclick: () => go(p) }, l)));
+  $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
+  $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
+    [`残り\n約${left}分`, () => poke(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
+    .map(([l, fn, ic]) => el("button", { onclick: fn, style: "white-space:pre-line" }, svgOf("0 0 24 24", ic), l)));
+}
+// Pages may await data; only the latest render may paint.
+let renderSeq = 0;
+async function render() {
+  if (!copy) return;
+  const seq = ++renderSeq;
+  paintChrome();
+  if (!sp()) {
+    const node = await pageNode(state.page ?? "home");
+    if (seq === renderSeq) $("main").replaceChildren(node);
+  } else {
+    const crumbs = [el("a", { onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "HOME")];
+    const tab = TABS.find(t => t[0] === state.tab);
+    if (state.page && state.page !== "spHome" || state.spMenu) crumbs.push(el("a", { onclick: () => openTab(state.tab) }, (SP_LABEL[state.tab] ?? tab[1]) + " MENU"));
+    $("spCrumbs").replaceChildren(...crumbs); $("spCrumbs2").replaceChildren(...crumbs.map(c => c.cloneNode(true)));
+    $("spCrumbs2").querySelectorAll("a").forEach((a, i) => { a.onclick = $("spCrumbs").querySelectorAll("a")[i].onclick; });
+    let node;
+    if (state.spMenu) {
+      node = el("div", { class: "sp-menu" }, el("div", { class: "mh" }, (SP_LABEL[tab[0]] ?? tab[1]) + " MENU"),
+        ...tab[2].map(([l, p]) => el("a", { onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)),
+        el("a", { class: "top", onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "TOPへ ⬆"));
+    } else if (!state.page || state.page === "spHome") {
+      node = el("div", { class: "sp-tiles" }, ...SP_TILES.map(id => { const t = TABS.find(x => x[0] === id); return el("button", { onclick: () => openTab(id) }, icon(LINE, id, "0 0 48 48"), SP_LABEL[id] ?? t[1]); }));
+    } else node = el("div", { class: "f" }, await pageNode(state.page));
+    if (seq !== renderSeq) return;
+    $("spMain").replaceChildren(node);
+    $("spPanels").hidden = !!(state.page && state.page !== "spHome") && !state.spMenu;
+  }
+}
+function enter() { $("login").hidden = true; $("portal").hidden = false; state = { tab: "home", page: sp() ? "spHome" : "home", sub: null, menu: null, spMenu: null }; poke(); render(); window.scrollTo(0, 0); }
+function leave() { $("portal").hidden = true; $("login").hidden = false; clearTimeout(idle); window.scrollTo(0, 0); }
+// Ten idle minutes end the "session"; the timer in the system menu counts down like the real 残り約30分.
+function poke() { clearTimeout(idle); if ($("portal").hidden) return; deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); paintChrome(); }
+setInterval(() => { if (!$("portal").hidden) paintChrome(); }, 30e3);
+["click", "keydown", "touchstart"].forEach(e => addEventListener(e, () => { if (!$("portal").hidden) { clearTimeout(idle); deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); } }, { passive: true }));
+// Mode: remembered per viewer; the first visit follows the screen width.
 function setMode(mode) {
   document.body.classList.toggle("sp", mode === "sp");
   try { localStorage.setItem("tofas-mode", mode); } catch {}
-  $("modeLink").textContent = mode === "sp" ? "PC版" : "スマホ版";
-  renderStudent(); if (!$("portal").hidden) show(current);
+  if (!$("portal").hidden) { if (mode === "sp" && state.page === "home") state.page = "spHome"; if (mode === "pc" && (!state.page || state.page === "spHome")) state.page = "home"; state.spMenu = null; render(); }
 }
-const act = {
-  english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"),
-  mode: () => setMode(document.body.classList.contains("sp") ? "pc" : "sp"),
-  enter: () => enter(),
-};
-document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; e.preventDefault(); act[b.dataset.act](); });
+const act = { english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
+document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b) { e.preventDefault(); act[b.dataset.act](); } const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); if ($("portal").hidden) enter(); go(g.dataset.goto); } });
 let saved = null; try { saved = localStorage.getItem("tofas-mode"); } catch {}
-setMode(saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc"));
-$("register").onclick = () => { $("regErr").textContent = $("pick").checked ? copy.register_error : "科目が選択されていません。選択欄にチェックを入れてから［登録］を押してください。"; $("regErr").hidden = false; };
-setInterval(() => { const t = jstNow(); $("clock").textContent = t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds()) + " JST"; }, 1000);
+document.body.classList.toggle("sp", (saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc")) === "sp");
 
 fetch("copy.json").then(r => r.json()).then(c => {
-  copy = c; fillCopy();
-  const tab = location.hash.slice(1); if (TABS.some(t => t[0] === tab)) enter(tab);
+  copy = c;
+  document.querySelectorAll("[data-copy]").forEach(n => { n.textContent = c[n.dataset.copy] ?? ""; });
+  document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = c.personal.student[n.dataset.ps] ?? ""; });
+  $("certBody").replaceChildren(...c.cert_body.map(p => el("p", {}, p)));
+  $("links").replaceChildren(...c.links.map((t, i) => el("li", {}, el("a", { href: "#", "data-goto": ["syllabus", "home", "syllabus", "register", "syllabus"][i] ?? "home" }, t))));
   load(); setInterval(() => { if (!document.hidden) load(); }, 30000);
 });
 </script>
