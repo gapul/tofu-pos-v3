@@ -55,7 +55,7 @@ button,input,select,textarea{font:inherit;color:#333}
 .sys button{background:none;border:0;padding:0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#333;min-width:52px}
 .sys svg{width:24px;height:24px}
 .tabbar{background:var(--body);padding:2px 0 0 10px;display:flex;flex-wrap:wrap;min-height:74px}
-.tabcell{width:79px;margin-right:0;padding:4px 2px 4px;text-align:center;cursor:pointer;font-size:11px;line-height:1.15;border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none}
+.tabcell{font:inherit;font-size:11px;color:#111;width:79px;margin-right:0;padding:4px 2px 4px;text-align:center;cursor:pointer;font-size:11px;line-height:1.15;border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none}
 .tabcell svg{width:34px;height:34px}
 .tabcell.sel{background:var(--blue);border-color:#fff;color:#111}
 .menubar{background:var(--blue);display:flex;flex-wrap:wrap;gap:0 4px;padding:6px 10px 5px;min-height:28px}
@@ -388,7 +388,7 @@ const stats = () => summarize(live);
 async function getDay(date) { const r = await fetch(API + "/v1/dashboard" + (date ? "?date=" + date : ""), { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
 async function dayData(key) { if (key === "today") return live ?? (live = await getDay(ymd(jst()))); if (!days[key] || Date.now() - days[key].at > 60e3) days[key] = { at: Date.now(), d: await getDay(key === "all" ? null : key) }; return days[key].d; }
 async function load() {
-  try { live = await getDay(ymd(jst())); paintLive(); if (!$("portal").hidden && ["home", "register", "analysis", "kyakuso"].includes(state.page)) render(); } catch { /* keep the last numbers */ }
+  try { live = await getDay(ymd(jst())); fetchedAt = Date.now(); paintLive(); if (!$("portal").hidden) paintChrome(); if (!$("portal").hidden && ["home", "register", "analysis", "kyakuso"].includes(state.page)) render(); } catch { /* keep the last numbers */ }
 }
 function paintLive() {
   const s = stats(); if (!s) return;
@@ -512,8 +512,7 @@ async function kyukoPage() {
   const counts = weekDays.map(per);
   const shift = n => () => { state.menu = off + n; render(); };
   return wrapPortlet(fbar("日別販売参照"), el("div", { class: "f" },
-    el("div", { class: "ky-cond" }, el("select", {}, el("option", {}, "コマ形式")), " で ", el("select", {}, el("option", {}, "販売情報のみ表示")), el("br"),
-      el("button", { class: "ubtn", style: "margin-top:6px", onclick: () => { week = null; render(); } }, "表 示 す る")),
+    el("div", { class: "ky-cond" }, el("button", { class: "ubtn", onclick: () => { week = null; render(); } }, "最新の情報に更新"), " ", el("button", { class: "ubtn", onclick: () => { state.menu = 0; render(); } }, "今週に戻る")),
     el("div", { class: "ky-legend" }, el("span", { style: "background:#ffcccc" }, "販売あり"), el("span", { style: "background:#dddddd" }, "販売なし")),
     el("div", { class: "ky-nav", style: "width:798px" }, el("span", {}, el("a", { onclick: shift(-4) }, "<<<月"), " ", el("a", { onclick: shift(-1) }, "<<週")),
       el("b", {}, el("a", { onclick: shift(-52) }, "<<<"), " " + weekDays[0].getUTCFullYear() + "年 ", el("a", { onclick: shift(52) }, ">>>")),
@@ -550,14 +549,20 @@ async function pageNode(page) {
 
 // ---------- chrome ----------
 const sp = () => document.body.classList.contains("sp");
-let deadline = 0, idle = null;
-function go(page, sub = null) { state.page = page; state.tab = tabOf(page)[0]; state.sub = sub; state.menu = null; state.spMenu = null; render(); poke(); window.scrollTo(0, 0); }
-function openTab(id) { const t = TABS.find(x => x[0] === id); if (sp()) { state.tab = id; state.spMenu = id; state.page = null; render(); window.scrollTo(0, 0); return; } go(t[2][0][1]); }
+let fetchedAt = null;
+function go(page, sub = null, push = true) {
+  state.page = page; state.tab = tabOf(page)[0]; state.sub = sub; state.menu = null; state.spMenu = null;
+  if (push && location.hash !== "#" + page) history.pushState(null, "", "#" + page);
+  render(); window.scrollTo(0, 0);
+}
+const PAGE_KEYS = () => TABS.flatMap(t => t[2].map(m => m[1]));
+addEventListener("popstate", () => { const h = location.hash.slice(1); if (PAGE_KEYS().includes(h)) { if ($("portal").hidden) enter(false); go(h, null, false); } else if (!$("portal").hidden && !h) leave(); });
+function openTab(id) { const t = TABS.find(x => x[0] === id); if (sp() && t[2].length > 1) { state.tab = id; state.spMenu = id; state.page = null; render(); window.scrollTo(0, 0); return; } go(t[2][0][1]); }
 function paintChrome() {
-  const name = "Are you Tofu?", left = Math.max(0, Math.ceil((deadline - Date.now()) / 60e3));
-  $("sys").replaceChildren(...[["user", name, () => go("org")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
+  const name = "Are you Tofu?", upd = fetchedAt ? hhmm(new Date(fetchedAt).toISOString()) : "—";
+  $("sys").replaceChildren(...[["user", name, () => go("org")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `更新 ${upd}`, () => refresh()], ["logout", "ログアウト", () => leave()]]
     .map(([k, l, fn]) => el("button", { onclick: fn }, icon(SYS_ICON, k, "0 0 24 24"), l)));
-  $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("div", { class: "tabcell" + (id === state.tab ? " sel" : ""), onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
+  $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("button", { type: "button", class: "tabcell" + (id === state.tab ? " sel" : ""), "aria-current": id === state.tab ? "page" : null, onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
   $("menubar").replaceChildren(...TABS.find(t => t[0] === state.tab)[2].map(([l, p]) => el("a", { class: p === state.page ? "cur" : null, onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)));
   const s = stats(), last = live?.recent?.find(o => !o.cancelled), peak = (live?.by_hour ?? []).reduce((a, h) => h.sales > (a?.sales ?? 0) ? h : a, null);
   const items = s ? [[`本日の販売数は${num(s.sold)}本です。`, "analysis", "board"], [`残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`, "analysis", "news"],
@@ -568,7 +573,7 @@ function paintChrome() {
   { const h = $("spFavHead"); if (!h.dataset.ic) { h.dataset.ic = 1; h.prepend(icon(SMALL, "info", "0 0 16 16")); } }
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
   $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
-    [`残り\n約${left}分`, () => poke(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
+    [`更新\n${upd}`, () => refresh(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
     .map(([l, fn, ic]) => el("button", { onclick: fn, style: "white-space:pre-line" }, svgOf("0 0 24 24", ic), l)));
 }
 // Pages may await data; only the latest render may paint.
@@ -578,7 +583,10 @@ async function render() {
   const seq = ++renderSeq;
   paintChrome();
   if (!sp()) {
+    // Pages that fetch show a loading notice instead of the previous page while they wait.
+    const slow = setTimeout(() => { if (seq === renderSeq) $("main").replaceChildren(wrapPortlet(phead(titleOf(state.page ?? "home")), el("div", { class: "info-text" }, "読み込み中…"))); }, 150);
     const node = await pageNode(state.page ?? "home");
+    clearTimeout(slow);
     if (seq === renderSeq) $("main").replaceChildren(node);
   } else {
     const crumbs = [el("a", { onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "HOME")];
@@ -593,18 +601,21 @@ async function render() {
         el("a", { class: "top", onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "TOPへ ⇧"));
     } else if (!state.page || state.page === "spHome") {
       node = el("div", { class: "sp-tiles" }, ...SP_TILES.map(id => { const t = TABS.find(x => x[0] === id); return el("button", { onclick: () => openTab(id) }, icon(LINE, id, "0 0 48 48"), SP_LABEL[id] ?? t[1]); }));
-    } else node = el("div", { class: "f" }, await pageNode(state.page));
+    } else {
+      const slow = setTimeout(() => { if (seq === renderSeq) $("spMain").replaceChildren(el("p", { style: "padding:10px" }, "読み込み中…")); }, 150);
+      node = el("div", { class: "f" }, await pageNode(state.page));
+      clearTimeout(slow);
+    }
     if (seq !== renderSeq) return;
     $("spMain").replaceChildren(node);
     $("spPanels").hidden = !!(state.page && state.page !== "spHome") && !state.spMenu;
   }
 }
-function enter() { $("login").hidden = true; $("portal").hidden = false; state = { tab: "home", page: sp() ? "spHome" : "home", sub: null, menu: null, spMenu: null }; poke(); render(); window.scrollTo(0, 0); }
-function leave() { $("portal").hidden = true; $("login").hidden = false; clearTimeout(idle); window.scrollTo(0, 0); }
-// Ten idle minutes end the "session"; the timer in the system menu counts down like the real 残り約30分.
-function poke() { clearTimeout(idle); if ($("portal").hidden) return; deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); paintChrome(); }
+function enter(paint = true) { $("login").hidden = true; $("portal").hidden = false; state = { tab: "home", page: sp() ? "spHome" : "home", sub: null, menu: null, spMenu: null }; if (paint) { if (location.hash !== "#home") history.pushState(null, "", "#home"); render(); } window.scrollTo(0, 0); }
+function leave() { $("portal").hidden = true; $("login").hidden = false; history.replaceState(null, "", location.pathname); window.scrollTo(0, 0); }
+// No session timeout here (the real portal logs out after 30 idle minutes); the timer slot shows the last update instead.
+async function refresh() { days = {}; week = null; await load(); render(); }
 setInterval(() => { if (!$("portal").hidden) paintChrome(); }, 30e3);
-["click", "keydown", "touchstart"].forEach(e => addEventListener(e, () => { if (!$("portal").hidden) { clearTimeout(idle); deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); } }, { passive: true }));
 // Mode: remembered per viewer; the first visit follows the screen width.
 function setMode(mode) {
   document.body.classList.toggle("sp", mode === "sp");
@@ -624,6 +635,8 @@ fetch("copy.json").then(r => r.json()).then(c => {
   $("priceLine").textContent = c.project.price + "　ご購入は店頭のみです。";
   $("links").replaceChildren(...c.links.map(([t, u]) => el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener" }, t))));
   load(); setInterval(() => { if (!document.hidden) load(); }, 30000);
+  const h = location.hash.slice(1);
+  if (PAGE_KEYS().includes(h)) { enter(false); go(h, null, false); }
 });
 </script>
 </body>
