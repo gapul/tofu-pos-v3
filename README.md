@@ -134,3 +134,26 @@ UTF-8 BOM・CRLF・1明細1行。時刻はUTC（画面はJST）。`order_total_y
 - `scripts/verify-swift-core.sh`: CLTのみで実行できるSQLite検証
 
 初版の仕様はこのREADMEとテストに限定します。先に作成した広いv3仕様案の機能を、この最小版の必須条件として扱いません。
+
+## iOS TestFlight 配信
+
+GitHub Actions ワークフロー `iOS TestFlight` により、TestFlight 向けのビルドとアップロードを自動化しています。
+
+### トリガーと処理内容
+
+- **自動実行**: `main` ブランチへの push のうち、`ios/**`、`scripts/testflight-*`、`.github/workflows/testflight.yml` のいずれかに変更がある場合（`README` のみの変更では起動しません）
+- **手動実行**: `main` ブランチでの `workflow_dispatch`
+- **処理フロー**: Swift テストを実行した後、iOS アプリのアーカイブ・署名を行い、App Store Connect API 経由でアップロードして処理完了を最大 20 分待機します
+- **ビルド番号**: `(1000 + GITHUB_RUN_NUMBER).GITHUB_RUN_ATTEMPT`
+- **配信先**: App ID `6837523860` / 内部テストグループ `TOS Internal`（全ビルドが自動配信されます）
+
+### 必要な GitHub Actions 設定
+
+- **Secrets**: `IOS_P12_BASE64`, `IOS_P12_PASSWORD`, `IOS_PROFILE_BASE64`, `IOS_SYNC_DEFAULT_JSON`, `ASC_PRIVATE_KEY`, `ASC_KEY_ID`, `ASC_ISSUER_ID`
+- **Variables**: `ASC_BETA_GROUP_ID`
+
+### 運用・セキュリティ上の注意
+
+- シークレットや本番同期トークンを含む署名済み IPA は、公開リリースやワークフローのアーティファクトへ絶対に保存・公開しないでください。
+- 初回のテスト参加および自動アップデートの有効化は、各端末の TestFlight アプリ上で行います。各ビルドの有効期限は 90 日です。
+- 署名プロファイルの有効期限は `2027-11-21` です。期限切れ前に証明書およびプロファイル関連のシークレットを差し替えてください。
