@@ -17,9 +17,6 @@ html{background:var(--page)}
 body{margin:0;background:var(--page);color:#333;font:12px/1.25 "ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","Hiragino Sans","メイリオ",Meiryo,"MS Pゴシック",Osaka,Arial,sans-serif;word-break:normal}
 a{color:var(--link);text-decoration:none;cursor:pointer}a:hover{text-decoration:underline}
 button,input,select,textarea{font:inherit;color:#333}
-.tabcell img{width:32px;height:32px}.sys img{width:24px;height:24px}.menubar img,.mi img,.mlist img,.fbar img,.pager img{width:16px;height:16px}
-.mlist img{position:absolute;left:10px;top:0}.news a img{width:15px;height:15px;flex:none;margin-top:1px}.sp-tiles img{width:44px;height:44px;object-fit:contain}.sp-sys img{width:20px;height:20px}
-.sp-menu a img{width:16px;height:16px}.ph img{width:15px;height:15px}.fbar img.help-img{margin-left:auto;cursor:pointer;height:16px;width:auto}
 [hidden]{display:none!important}
 .chunky{font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;font-weight:900;fill:var(--tofu);stroke:var(--miso);paint-order:stroke;stroke-linejoin:round}
 /* ---------- login page (PC): the public top page ---------- */
@@ -228,7 +225,7 @@ body.sp .f{overflow-x:auto;padding:4px}
     </div>
     <div class="cols">
       <div>
-        <div class="pl-h"><img src="img/info.png" alt="" style="width:16px;height:16px">Information</div>
+        <div class="pl-h"><i>i</i>Information</div>
         <div class="pl-b">
           <p data-copy="login_info"></p>
           <div class="live-inline">本日の豆腐田楽　販売数 <b data-live="sold">—</b> 本　／　残り在庫 <b data-live="stock">—</b> 本</div>
@@ -237,7 +234,7 @@ body.sp .f{overflow-x:auto;padding:4px}
           <p class="red" data-copy="cert_warning"></p>
         </div>
       </div>
-      <div><div class="pl-h"><img src="img/info.png" alt="" style="width:16px;height:16px">Link</div><ul class="links" id="links"></ul></div>
+      <div><div class="pl-h"><i>i</i>Link</div><ul class="links" id="links"></ul></div>
     </div>
     <div class="lg-foot" data-copy="footer"></div>
   </div>
@@ -255,8 +252,8 @@ body.sp .f{overflow-x:auto;padding:4px}
     <div class="menubar" id="menubar"></div>
     <div class="pbody">
       <div class="lcol">
-        <div class="portlet"><div class="ph"><img src="img/info.png" alt="">新着情報</div><div class="news" id="news"></div></div>
-        <div class="portlet"><div class="ph"><img src="img/info.png" alt="">よく使うメニュー</div><ul class="mlist" id="fav"></ul></div>
+        <div class="portlet"><div class="ph"><i>i</i>新着情報</div><div class="news" id="news"></div></div>
+        <div class="portlet"><div class="ph"><i>i</i>よく使うメニュー</div><ul class="mlist" id="fav"></ul></div>
       </div>
       <div class="main" id="main"></div>
     </div>
@@ -265,7 +262,7 @@ body.sp .f{overflow-x:auto;padding:4px}
   <!-- Smart chrome -->
   <div class="sp-only">
     <div class="sp-hd"><div class="logo"><svg viewBox="0 0 490 240" aria-label="UTOS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">UTOS</text></svg></div>
-      <div class="sp-user"><i><img src="img/portal_user_smart.png" alt="" style="width:16px;height:16px"></i><span data-ps="name"></span></div></div>
+      <div class="sp-user"><i><svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></i><span data-ps="name"></span></div></div>
     <div class="sp-sys" id="spSys"></div>
     <div class="sp-crumbs" id="spCrumbs"></div>
     <div id="spMain"></div>
@@ -353,18 +350,7 @@ const SMALL = {
   doc: '<path d="M3 1h7l3 3v11H3z" fill="#fff" stroke="#999" stroke-width=".7"/><path d="M10 1v3h3" fill="none" stroke="#999" stroke-width=".7"/><path d="M5 7h6M5 9.5h6M5 12h4" stroke="#bbb" stroke-width=".7"/>',
   news: '<path d="M2 2h9l3 3v9H2z" fill="#f4ecd4" stroke="#b9a768" stroke-width=".7"/><path d="M4 6h7M4 8.5h7M4 11h5" stroke="#c9b88a" stroke-width=".7"/>',
 };
-// Images from the real portal (img/), keyed like the SVG sets; the SVGs remain as fallbacks.
-const IMG = {
-  pc: { home: "tab_home.png", student: "tab_chart.png", rishu: "note.png", seiseki: "tab_rishu.png", kyuho: "tab_kyuho.png", syllabus: "tab_syllabus.png", enquete: "tab_enq.png",
-    keiji: "tab_keiji.png", jugyoryo: "printer.png", kaigai: "plane.png", sonota: "shinsei.png", lms: "school1.png", ugip: "plane2.png", cert: "func_download2.gif" },
-  sys: { user: "portal_user.png", smart: "smartphone_page.png", english: "portal_locale.png", timer: "portal_timeout.png", logout: "logout.png" },
-  line: { home: "tab_home_smart.png", student: "tab_chart_smart.png", rishu: "note_smart.png", seiseki: "tab_rishu_smart.png", kyuho: "tab_kyuho_smart.png", syllabus: "tab_syllabus_smart.png",
-    enquete: "tab_enq_smart.png", keiji: "tab_keiji_smart.png", jugyoryo: "printer_smart.png", sonota: "shinsei_smart.png", cert: "note_smart.png" },
-  small: { info: "info.png", person: "chart.png", find: "func_refer4.gif", book: "tab_kyuho.png", pen: "func_entry_green2.gif", board: "keiji.png", doc: "note.png", news: "tab_enq.png", faq: "func_info2.gif" },
-};
-const setName = set => set === PC_ICON ? "pc" : set === SYS_ICON ? "sys" : set === LINE ? "line" : "small";
-const img = (file, cls) => el("img", { src: "img/" + file, alt: "", class: cls });
-const icon = (set, k, vb) => { const f = IMG[setName(set)][k]; return f ? img(f, "ic") : svgOf(vb, set[k] ?? ""); };
+const icon = (set, k, vb) => svgOf(vb, set[k] ?? "");
 
 // ---------- menu structure (names follow the real portal) ----------
 const TABS = [
@@ -414,11 +400,11 @@ const photoUrl = () => { const s = stats(); return s?.p?.image_hash ? API + "/v1
 
 // ---------- pages ----------
 const st = () => copy.personal.student, more = () => copy.more;
-const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("img", { src: "img/help.png", alt: "Help", class: "help-img", onclick: () => modal("ヘルプは店頭のスタッフが口頭で提供しています。", "Help") }));
+const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal("ヘルプは店頭のスタッフが口頭で提供しています。", "Help") }, "Help"));
 const wrapPortlet = (head, ...body) => el("div", { class: "portlet" }, head, ...body);
 function infoPage(page) {
   const text = more().pages[page] ?? copy.personal[page] ?? "";
-  return wrapPortlet(el("div", { class: "ph" }, img("info.png"), titleOf(page)), el("div", { class: "info-text" }, text));
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), titleOf(page)), el("div", { class: "info-text" }, text));
 }
 function homePage() {
   const s = stats(), t = jst();
@@ -426,11 +412,11 @@ function homePage() {
   const live = s ? [el("b", { class: "big" }, `本日（${t.getUTCMonth() + 1}月${t.getUTCDate()}日）の豆腐田楽は、${num(s.sold)}本が履修（販売）済み、残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`),
     el("b", { class: "big" }, `会計${num(s.orders)}件、在庫消化率${Math.round(s.ratio * 100)}%。この表示は30秒ごとに自動で更新されます。`)] : [el("b", { class: "big" }, "販売状況を取得しています。")];
   const items = copy.notices.slice(1).flatMap(n => [hr(), el("b", {}, n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]);
-  return wrapPortlet(el("div", { class: "ph" }, img("info.png"), "お知らせ"),
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "お知らせ"),
     el("div", { class: "notice" }, el("div", { class: "nh" }, "[500]　【販売状況 / Sales】"), ...live,
       el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, copy.notices[0].title), el("p", { class: "red", style: "font-size:14px;font-weight:bold" }, copy.notices[0].body),
       ...items, hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　模擬店運営本部学務課`)),
-    el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), img("allow_s_l.gif"), el("a", { onclick: () => modal("これより前のお知らせはありません。", "前へ") }, "前へ")));
+    el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), "‹", el("a", { onclick: () => modal("これより前のお知らせはありません。", "前へ") }, "前へ")));
 }
 function studentPage() {
   const S = st(), M = more();
@@ -555,12 +541,12 @@ function syllabusPage() {
       el("button", { class: "ubtn", onclick: () => { state.sub = "list"; render(); } }, "検索"), " ", el("button", { class: "ubtn", onclick: () => { $("syKw").value = ""; } }, "ク リ ア")))));
 }
 function boardPage() {
-  return wrapPortlet(el("div", { class: "ph" }, img("info.png"), "掲示板"), el("div", { class: "f" },
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "掲示板"), el("div", { class: "f" },
     el("table", { class: "syl list", style: "width:100%" }, el("tr", {}, ...["分類", "件名", "発信元"].map(h => el("th", {}, h))),
       ...copy.notices.map(n => el("tr", {}, el("td", { style: "white-space:nowrap" }, n.category), el("td", {}, el("details", {}, el("summary", { style: "color:var(--link);cursor:pointer" }, n.title), el("div", { style: "padding:6px 0" }, n.body))), el("td", {}, n.from))))));
 }
 function certPage() {
-  return wrapPortlet(el("div", { class: "ph" }, img("info.png"), "証明書発行サービス"), el("div", { class: "info-text" }, el("b", {}, copy.cert_title), ...copy.cert_body.map(p => el("p", {}, p)), el("p", { class: "red" }, copy.cert_warning)));
+  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "証明書発行サービス"), el("div", { class: "info-text" }, el("b", {}, copy.cert_title), ...copy.cert_body.map(p => el("p", {}, p)), el("p", { class: "red" }, copy.cert_warning)));
 }
 async function pageNode(page) {
   if (page === "home") return homePage();
@@ -588,9 +574,9 @@ function paintChrome() {
   const news = () => [el("p", {}, "あなた宛の新着情報があります。"), ...more().news.map((n, i) => el("a", { onclick: () => go("board") }, icon(SMALL, ["board", "news", "book", "news"][i % 4], "0 0 16 16"), el("span", {}, n)))];
   const fav = () => FAV.map(([l, p, ic]) => el("li", {}, icon(SMALL, ic, "0 0 16 16"), el("a", { onclick: () => go(p) }, l)));
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
-  $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), "pc_page_smart.png"], ["English", () => act.english(), "portal_locale_smart.png"],
-    [`残り\n約${left}分`, () => poke(), "portal_timeout_smart.png"], ["ログアウト", () => leave(), "logout_smart.png"]]
-    .map(([l, fn, f]) => el("button", { onclick: fn, style: "white-space:pre-line" }, img(f), l)));
+  $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
+    [`残り\n約${left}分`, () => poke(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
+    .map(([l, fn, ic]) => el("button", { onclick: fn, style: "white-space:pre-line" }, svgOf("0 0 24 24", ic), l)));
 }
 // Pages may await data; only the latest render may paint.
 let renderSeq = 0;
