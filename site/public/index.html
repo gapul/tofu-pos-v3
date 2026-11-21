@@ -82,7 +82,7 @@ button,input,select,textarea{font:inherit;color:#333}
 /* お知らせ */
 .notice{font-size:13px;line-height:1.3;padding:0 4px 4px}
 .notice .nh{display:flex;align-items:center;gap:6px;font-size:14px;margin:0 0 6px;padding-left:6px;border-left:8px solid #8f8fd1;line-height:20px}
-.notice .hr{color:#333;margin:18px 0;letter-spacing:-1px;overflow:hidden;white-space:nowrap;max-width:860px}
+.notice .hr{color:#333;margin:18px 0;overflow:hidden;white-space:nowrap;max-width:860px}
 .notice b.big{font-size:15px;display:block;margin-bottom:2px}
 .notice .ind{padding-left:12px;margin:6px 0}
 .notice .sign{text-align:right;margin:20px 6px 8px}
@@ -155,42 +155,42 @@ body.sp .hero{flex-direction:column;gap:0;padding:12px 5px 0}
 body.sp .biglogo{width:min(300px,80%)}
 body.sp .side{display:none}
 .sp-title{margin:8px 5px;padding:4px 10px;border-radius:10px;background:var(--body);font:bold 15px "Courier New",Courier,monospace;text-align:center}
-.sp-panel{background:var(--body);margin:10px 5px;padding:24px 10px;text-align:center}
+.sp-band{background:var(--body);height:18px;margin:12px 0 14px}.sp-panel{background:var(--body);margin:0 0 10px;padding:24px 10px;text-align:center}
 .sp-panel .row{display:flex;justify-content:center;gap:14px;margin-bottom:30px}
 .sp-panel .gbtn.big{font-size:20px;padding:12px 40px}
-body.sp .cols{display:block;padding:0 5px;font-size:15px}
+body.sp .cols{display:block;padding:0;font-size:13px;line-height:1.4;color:#000}
 body.sp .cols>div{background:var(--body);padding:16px 4px 4px;margin-bottom:10px}
 body.sp .cols>div:last-child{background:transparent;padding:6px}
 body.sp .cols .pl-h{display:none}
-body.sp .links{background:var(--body);padding:20px 20px 20px 60px;margin:0}
+body.sp .links{background:var(--body);padding:20px 20px 20px 56px;margin:0}body.sp .links li::before{content:"";display:inline-block;border:4px solid transparent;border-left:5px solid #333;margin-right:6px;vertical-align:1px}
 body.sp .live-inline{border:0}
 body.sp .lg-foot{border-top:0;text-align:center}
 .sp-hd{display:flex;align-items:flex-start;justify-content:space-between;padding:6px 5px 0}
-.sp-hd .logo{width:auto}.sp-hd .logo svg{width:150px;height:62px}
-.sp-user{background:#ccc;min-width:130px;display:flex;align-items:center;gap:6px;font-size:14px;margin-top:4px}
+.sp-hd .logo{width:auto;gap:6px}.sp-hd .logo svg{width:128px;height:64px}.sp-hd .logo .t{font-size:16px}.sp-hd .logo::after{left:118px;width:120px}
+.sp-user{background:#ccc;min-width:130px;display:flex;align-items:center;gap:6px;font-size:13px;margin-top:10px}
 .sp-user i{width:20px;height:20px;background:#555;display:grid;place-items:center}
-.sp-sys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:310px;margin:10px 0 0 0}
-.sp-sys button,.sp-tiles button{border:0;border-radius:0;background:var(--blue);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:10px;padding:8px 2px;line-height:1.2}
+.sp-sys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:310px;margin:16px 0 0 0}
+.sp-sys button,.sp-tiles button{border:0;border-radius:0;background:var(--blue);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:11px;padding:9px 2px;line-height:1.2}
 .sp-sys svg{width:18px;height:18px}
 .sp-crumbs{display:flex;flex-wrap:wrap;padding:18px 6px 6px}
-.sp-crumbs a{background:#555;color:#fff;padding:8px 20px;margin:0 20px 6px 5px;font-size:14px;text-decoration:none}
+.sp-crumbs a{background:#555;color:#fff;padding:8px 20px;margin:0 20px 6px 5px;font-size:13px;text-decoration:none}
 .sp-crumbs a::after{content:" >"}
 .sp-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px 5px;padding:14px 5px}
-.sp-tiles button{aspect-ratio:91/76;font-size:9px;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;gap:10px;padding:10px 1px 8px;min-width:0}
-.sp-tiles svg{width:44px;height:36px}
+.sp-tiles button{aspect-ratio:91/76;font-size:10px;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;gap:8px;padding:8px 1px 6px;min-width:0}
+.sp-tiles svg{width:48px;height:42px}
 .sp-menu{margin:4px 5px 0}
-.sp-menu .mh{background:#34495e;color:#fff;font-weight:bold;text-align:center;padding:10px;font-size:14px}
-.sp-menu a{display:flex;align-items:center;gap:6px;background:#ccddee;color:#333;padding:9px 12px;border-top:1px solid #fff;font-size:14px;text-decoration:none;position:relative}
+.sp-menu .mh{background:#34495e;color:#fff;font-weight:bold;text-align:center;padding:10px;font-size:13px}.sp-menu a svg{width:16px;height:16px;flex:none}
+.sp-menu a{display:flex;align-items:center;gap:6px;background:#ccddee;color:#333;padding:10px 12px;border-top:1px solid #fff;font-size:13px;text-decoration:none;position:relative}
 .sp-menu a::after{content:"";position:absolute;right:6px;border:5px solid transparent;border-left:7px solid #888}
-.sp-menu .top{display:block;background:#34495e;color:#fff;text-align:center;font-weight:bold;padding:9px;margin-bottom:6px;font-size:14px}
+.sp-menu .top{display:block;background:#34495e;color:#fff;text-align:center;font-weight:bold;padding:9px;margin-bottom:6px;font-size:13px}
 .sp-menu .top::after{content:none}
 .sp-panel2{margin:10px 5px}
-.sp-panel2 .h{display:flex;align-items:center;gap:8px;padding:8px 10px;color:#fff;font-size:14px}
-.sp-panel2 .b{padding:4px 10px 10px;font-size:14px}
+.sp-panel2 .h{display:flex;align-items:center;gap:8px;padding:8px 10px;color:#fff;font-size:13px}.sp-panel2 .h svg,.ph svg{width:15px;height:15px;flex:none}
+.sp-panel2 .b{padding:4px 10px 10px;font-size:13px}
 .sp-news{background:#ddeebb}.sp-news .h{background:#336622}
 .sp-fav{background:#ffbbaa}.sp-fav .h{background:#663333}
-body.sp .mlist li{padding-left:40px;margin-bottom:12px;font-size:14px}
-body.sp .news a{font-size:14px}
+body.sp .mlist li{padding-left:40px;margin-bottom:10px;font-size:13px}
+body.sp .news a{font-size:13px}
 .sp-ft{text-align:right;font-size:11px;padding:20px 0 40px}
 body.sp .f{overflow-x:auto;padding:4px}
 .modal{position:fixed;inset:0;background:rgba(40,60,90,.45);display:grid;place-items:center;padding:16px;z-index:10}
@@ -219,7 +219,7 @@ body.sp .f{overflow-x:auto;padding:4px}
       </div>
     </div>
     <div class="sp-only">
-      <div class="sp-title">UTOS（Universal Tofu Operation System)</div>
+      <div class="sp-title">UTOS（Universal Tofu Operation System)</div><div class="sp-band"></div>
       <div class="sp-panel"><div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">PC版</button></div>
         <button class="gbtn big" data-act="enter">ログイン</button></div>
     </div>
@@ -252,7 +252,7 @@ body.sp .f{overflow-x:auto;padding:4px}
     <div class="menubar" id="menubar"></div>
     <div class="pbody">
       <div class="lcol">
-        <div class="portlet"><div class="ph"><i>i</i>新着情報</div><div class="news" id="news"></div></div>
+        <div class="portlet"><div class="ph" id="newsHead"><i>i</i>新着情報</div><div class="news" id="news"></div></div>
         <div class="portlet"><div class="ph"><i>i</i>よく使うメニュー</div><ul class="mlist" id="fav"></ul></div>
       </div>
       <div class="main" id="main"></div>
@@ -261,14 +261,14 @@ body.sp .f{overflow-x:auto;padding:4px}
   </div>
   <!-- Smart chrome -->
   <div class="sp-only">
-    <div class="sp-hd"><div class="logo"><svg viewBox="0 0 490 240" aria-label="UTOS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">UTOS</text></svg></div>
+    <div class="sp-hd"><div class="logo"><svg viewBox="0 0 490 240" aria-label="UTOS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">UTOS</text></svg><div class="t">Universal<br>Tofu Operation<br>System</div></div>
       <div class="sp-user"><i><svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></i><span data-ps="name"></span></div></div>
     <div class="sp-sys" id="spSys"></div>
     <div class="sp-crumbs" id="spCrumbs"></div>
     <div id="spMain"></div>
     <div id="spPanels">
-      <div class="sp-panel2 sp-news"><div class="h">新着情報</div><div class="b news" id="spNews"></div></div>
-      <div class="sp-panel2 sp-fav"><div class="h">よく使うメニュー</div><div class="b"><ul class="mlist" id="spFav"></ul></div></div>
+      <div class="sp-panel2 sp-news"><div class="h" id="spNewsHead">新着情報</div><div class="b news" id="spNews"></div></div>
+      <div class="sp-panel2 sp-fav"><div class="h" id="spFavHead">よく使うメニュー</div><div class="b"><ul class="mlist" id="spFav"></ul></div></div>
     </div>
     <div class="sp-crumbs" id="spCrumbs2"></div>
     <div class="sp-ft"><span data-copy="footer"></span></div>
@@ -411,7 +411,7 @@ function periodTabs() {
 }
 function homePage() {
   const s = stats(), t = jst();
-  const hr = () => el("div", { class: "hr" }, "-".repeat(160));
+  const hr = () => el("div", { class: "hr" }, "-".repeat(118));
   const liveLines = s ? [el("b", { class: "big" }, `本日（${t.getUTCMonth() + 1}月${t.getUTCDate()}日）の販売数は${num(s.sold)}本、残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`),
     el("b", { class: "big" }, `会計${num(s.orders)}件・在庫消化率${Math.round(s.ratio * 100)}%（30秒ごとに自動更新）`)] : [el("b", { class: "big" }, "販売状況を取得しています。")];
   const [first, ...rest] = copy.notices;
@@ -419,7 +419,8 @@ function homePage() {
     el("div", { class: "notice" }, el("div", { class: "nh" }, "[販売状況]　【Are you Tofu? / Sales】"), ...liveLines,
       el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, first.title), el("p", { style: "font-size:13px" }, first.body),
       ...rest.flatMap(n => [hr(), el("b", {}, "【" + n.category + "】" + n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]),
-      hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　Are you Tofu?（dp9）`)));
+      hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　Are you Tofu?（dp9）`)),
+    el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), "‹", el("a", { onclick: () => go("board") }, "前へ")));
 }
 function linksPage() {
   return wrapPortlet(phead("関連リンク"), el("div", { class: "f" }, el("table", { class: "syl list", style: "min-width:620px" },
@@ -499,7 +500,7 @@ function schedulePage() {
     el("p", { style: "margin-top:12px" }, F.name + "（テーマ「" + F.theme + "」）　" + F.venue + "　" + F.access), el("p", {}, "企画の時間：" + P.time)));
 }
 async function kyukoPage() {
-  const t = jst(), monday = new Date(t.getTime() - ((t.getUTCDay() + 6) % 7) * 864e5);
+  const t = jst(), off = state.menu ?? 0, monday = new Date(t.getTime() - ((t.getUTCDay() + 6) % 7) * 864e5 + off * 7 * 864e5);
   const weekDays = [...Array(7)].map((_, i) => new Date(monday.getTime() + i * 864e5)), W = "日月火水木金土";
   if (!week || week.key !== ymd(monday) || Date.now() - week.at > 60e3) {
     week = { key: ymd(monday), at: Date.now(), data: {} };
@@ -509,20 +510,32 @@ async function kyukoPage() {
   const dayRow = el("tr", {}, el("th", { class: "j" }, ""), ...weekDays.map(d => el("th", {}, label(d))), el("th", { class: "j" }, ""));
   const per = d => { const x = week.data[ymd(d)], price = unitPrice(x), out = [0, 0, 0, 0, 0, 0]; (x?.by_hour ?? []).forEach(h => { if (h.orders) out[periodOf(h.hour)] += h.sales / price; }); return out; };
   const counts = weekDays.map(per);
+  const shift = n => () => { state.menu = off + n; render(); };
   return wrapPortlet(fbar("日別販売参照"), el("div", { class: "f" },
-    el("div", { class: "ky-legend" }, el("span", { style: "background:#ffcccc" }, "販売あり"), el("span", { style: "background:#ddd" }, "販売なし")),
+    el("div", { class: "ky-cond" }, el("select", {}, el("option", {}, "コマ形式")), " で ", el("select", {}, el("option", {}, "販売情報のみ表示")), el("br"),
+      el("button", { class: "ubtn", style: "margin-top:6px", onclick: () => { week = null; render(); } }, "表 示 す る")),
+    el("div", { class: "ky-legend" }, el("span", { style: "background:#ffcccc" }, "販売あり"), el("span", { style: "background:#dddddd" }, "販売なし")),
+    el("div", { class: "ky-nav", style: "width:798px" }, el("span", {}, el("a", { onclick: shift(-4) }, "<<<月"), " ", el("a", { onclick: shift(-1) }, "<<週")),
+      el("b", {}, el("a", { onclick: shift(-52) }, "<<<"), " " + weekDays[0].getUTCFullYear() + "年 ", el("a", { onclick: shift(52) }, ">>>")),
+      el("span", {}, el("a", { onclick: shift(1) }, "週>>"), "　", el("a", { onclick: shift(4) }, "月>>>"))),
     el("table", { class: "ky" }, dayRow, ...PERIODS.map(([name], i) => el("tr", {}, el("th", { class: "j" }, name),
       ...weekDays.map((d, di) => counts[di][i] ? el("td", { class: "kaiko" }, "豆腐田楽", el("br"), num(Math.round(counts[di][i])) + "本", el("br"), copy.project.place) : el("td", {})),
-      el("th", { class: "j" }, name))), dayRow)));
+      el("th", { class: "j" }, name))), dayRow.cloneNode(true))));
 }
 function productPage() {
   const P = copy.project, F = copy.festival;
   const rows = [["商品名\n／Item", "豆腐田楽"], ["価格\n／Price", P.price], ["メニュー\n／Menu", P.menu], ["販売場所\n／Place", P.place], ["販売時間\n／Hours", P.time + "（" + F.days.map(([, l, h]) => l + " " + h).join("、") + "）"],
     ["企画名\n／Project", P.name], ["団体名\n／Organization", P.org + "（" + copy.circle.name + "）"], ["紹介\n／Description", P.intro + "。" + P.intro2], ["購入方法\n／How to buy", "店頭のみ"]];
-  return wrapPortlet(fbar("商品情報参照"), el("div", { class: "f" }, el("div", { class: "sy-h1" }, "商品情報／Item Information"),
-    el("div", { style: "display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap" },
-      el("table", { class: "syl syd" }, ...rows.map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v)))),
-      photoUrl() ? el("img", { src: photoUrl(), alt: "豆腐田楽の写真", style: "width:260px;border:1px solid #ccc" }) : null)));
+  const tab = state.menu === "photo" ? "photo" : "basic";
+  const T = [["basic", "基本情報／Basic Information"], ["photo", "写真／Photo"]];
+  const body = tab === "basic"
+    ? [el("div", { class: "sy-h2" }, "基本情報/Basic Information"), el("table", { class: "syl syd" }, ...rows.map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v))))]
+    : [el("div", { class: "sy-h2" }, "写真/Photo"), photoUrl() ? el("img", { src: photoUrl(), alt: "豆腐田楽の写真", style: "width:320px;border:1px solid #ccc" }) : el("p", {}, "写真はありません。")];
+  const d = jst();
+  return wrapPortlet(fbar("商品情報参照／商品情報"), el("div", { class: "f" }, el("div", { class: "sy-h1" }, "商品情報／Item Information"),
+    el("p", { style: "margin:0 0 6px 390px" }, `<<　${F.name}（ 最終更新日： ${d.getUTCFullYear()}年${pad(d.getUTCMonth() + 1)}月${pad(d.getUTCDate())}日 ）　>>`),
+    el("div", { class: "sy-panel", style: "width:760px" }, el("div", { class: "sy-tabs" }, ...T.map(([k, l]) => el("span", { class: k === tab ? null : "off", onclick: () => { state.menu = k; render(); } }, l))), el("div", { style: "padding:0 16px" }, ...body)),
+    el("p", {}, el("button", { class: "ubtn", onclick: () => go("home") }, "閉じる/Close"), " ", el("button", { class: "ubtn", onclick: () => go("links") }, "関連リンク/Links"))));
 }
 function boardPage() {
   return wrapPortlet(phead("掲示板"), el("div", { class: "f" },
@@ -551,6 +564,8 @@ function paintChrome() {
     [`最新の会計は${hhmm(last?.created_at)}です。`, "register", "book"], [`本日のピークは${peak ? peak.hour + "時台" : "—"}です。`, "analysis", "news"]] : [["販売状況を取得しています。", "analysis", "news"]];
   const news = () => [el("p", {}, "新着情報があります。"), ...items.map(([n, p, ic]) => el("a", { onclick: () => go(p) }, icon(SMALL, ic, "0 0 16 16"), el("span", {}, n)))];
   const fav = () => FAV.map(([l, p, ic]) => el("li", {}, icon(SMALL, ic, "0 0 16 16"), el("a", { onclick: () => go(p) }, l)));
+  for (const id of ["newsHead", "spNewsHead"]) { const h = $(id); if (h && !h.dataset.ic) { h.dataset.ic = 1; h.querySelector("i")?.remove(); h.prepend(icon(SMALL, "find", "0 0 16 16")); } }
+  { const h = $("spFavHead"); if (!h.dataset.ic) { h.dataset.ic = 1; h.prepend(icon(SMALL, "info", "0 0 16 16")); } }
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
   $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
     [`残り\n約${left}分`, () => poke(), '<circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 5v7h6" stroke="#4694d1" stroke-width="2.5" fill="none"/>'], ["ログアウト", () => leave(), '<path d="M12 2v9M6.3 6.3a8 8 0 1 0 11.4 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>']]
@@ -575,7 +590,7 @@ async function render() {
     if (state.spMenu) {
       node = el("div", { class: "sp-menu" }, el("div", { class: "mh" }, (SP_LABEL[tab[0]] ?? tab[1]) + " MENU"),
         ...tab[2].map(([l, p]) => el("a", { onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)),
-        el("a", { class: "top", onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "TOPへ ⬆"));
+        el("a", { class: "top", onclick: () => { state.spMenu = null; state.page = "spHome"; render(); } }, "TOPへ ⇧"));
     } else if (!state.page || state.page === "spHome") {
       node = el("div", { class: "sp-tiles" }, ...SP_TILES.map(id => { const t = TABS.find(x => x[0] === id); return el("button", { onclick: () => openTab(id) }, icon(LINE, id, "0 0 48 48"), SP_LABEL[id] ?? t[1]); }));
     } else node = el("div", { class: "f" }, await pageNode(state.page));
