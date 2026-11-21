@@ -12,21 +12,22 @@ struct RegisterTab: View {
     }
 }
 
-/// Optional segment, one axis per page: 年齢 → 性別 → 集団. Choosing a chip moves to the next axis;
-/// choosing 集団 calls `onComplete` so the screen can scroll to the amount/confirm area. Tapping the
+/// Optional segment, one axis per page: 年齢 → 性別 → 集団 → 関係. Choosing a chip moves to the next axis;
+/// choosing 関係 (the last) calls `onComplete` so the screen can scroll to the amount/confirm area. Tapping the
 /// selected chip only clears it. Reduce Motion switches pages without animation.
 struct CustomerPager: View {
     @Binding var age: CustomerAge?
     @Binding var gender: CustomerGender?
     @Binding var group: CustomerGroup?
+    @Binding var relation: CustomerRelation?
     @Binding var page: Int
     var onComplete: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    private let titles = ["年齢", "性別", "集団"]
+    private let titles = ["年齢", "性別", "集団", "関係"]
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 6) {
-                ForEach(0..<3, id: \.self) { index in
+                ForEach(0..<titles.count, id: \.self) { index in
                     Button { move(to: index) } label: {
                         VStack(spacing: 1) {
                             Text(titles[index]).font(.subheadline.weight(page == index ? .bold : .regular))
@@ -44,13 +45,14 @@ struct CustomerPager: View {
                 row(CustomerAge.allCases.map { a in (a.label, age == a, { tap(age == a) { age = age == a ? nil : a } }) }).tag(0)
                 row(CustomerGender.allCases.map { g in (g.label, gender == g, { tap(gender == g) { gender = gender == g ? nil : g } }) }).tag(1)
                 row(CustomerGroup.allCases.map { g in (g.label, group == g, { tap(group == g) { group = group == g ? nil : g } }) }).tag(2)
+                row(CustomerRelation.allCases.map { r in (r.label, relation == r, { tap(relation == r) { relation = relation == r ? nil : r } }) }).tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: 52)
         }
     }
     private func selection(_ index: Int) -> String? {
-        switch index { case 0: return age?.label; case 1: return gender?.label; default: return group?.label }
+        switch index { case 0: return age?.label; case 1: return gender?.label; case 2: return group?.label; default: return relation?.label }
     }
     private func row(_ chips: [(String, Bool, () -> Void)]) -> some View {
         HStack(spacing: 6) {
@@ -73,7 +75,7 @@ struct CustomerPager: View {
     private func tap(_ wasSelected: Bool, _ change: () -> Void) {
         change()
         guard !wasSelected else { return }
-        if page < 2 { move(to: page + 1) } else { onComplete() }
+        if page < titles.count - 1 { move(to: page + 1) } else { onComplete() }
     }
     private func move(to index: Int) {
         if reduceMotion { page = index } else { withAnimation(.easeInOut(duration: 0.25)) { page = index } }
@@ -89,6 +91,7 @@ struct SingleProductView: View {
     @State private var age: CustomerAge?
     @State private var gender: CustomerGender?
     @State private var group: CustomerGroup?
+    @State private var relation: CustomerRelation?
     @State private var customerPage = 0
     @State private var scrollToTop = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -117,7 +120,7 @@ struct SingleProductView: View {
                     productCard.id("top")
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 6) { Text("客層").font(.headline); Text("任意").font(.caption).foregroundColor(.tofuMuted) }
-                        CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
+                        CustomerPager(age: $age, gender: $gender, group: $group, relation: $relation, page: $customerPage) {
                             if reduceMotion { proxy.scrollTo("money", anchor: .top) } else { withAnimation { proxy.scrollTo("money", anchor: .top) } }
                         }
                         Text("受け取った額").font(.headline).padding(.top, 6).id("money")
@@ -271,10 +274,10 @@ struct SingleProductView: View {
         // Saving stays on for a moment after the write so a double tap cannot start a second sale.
         saving = true
         do {
-            let customer = Customer(age: age, gender: gender, group: group)
+            let customer = Customer(age: age, gender: gender, group: group, relation: relation)
             let sale = try model.checkout(id: commandID, lines: [line], received: received, customer: customer)
             commandID = UUID().uuidString
-            quantity = 1; choice = .none; manualText = ""; age = nil; gender = nil; group = nil; customerPage = 0
+            quantity = 1; choice = .none; manualText = ""; age = nil; gender = nil; group = nil; relation = nil; customerPage = 0
             model.refresh()
             show(sale)
             scrollToTop += 1

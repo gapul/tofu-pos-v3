@@ -155,6 +155,10 @@ func v4Checks() throws {
     let freshTest = try SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.test.databaseFile).path)
     try check(freshTest.sales().isEmpty && freshTest.syncGate().failures == 0 && freshTest.feedAfter() == 0
               && SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.production.databaseFile).path).sales().count == 1, "erase test data keeps production")
+    let rel = try tickets.checkout(id: "rel", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, relation: .member))
+    let relJSON = String(decoding: try JSONEncoder().encode(tickets.pendingSales().first { $0.id == "rel" }!), as: UTF8.self)
+    try check(rel.customerRelation == "member" && relJSON.contains("\"customer_relation\":\"member\"") && !ticketJSON.contains("customer_relation")
+              && Customer.text(age: nil, gender: nil, group: nil, relation: "tofu_fan") == "豆腐狂", "customer relation")
     let quick = try SQLiteStore(path: ":memory:")
     let quickSale = try quick.checkout(id: "q", lines: [Line(productID: "p", name: "田楽豆腐", price: 500, quantity: 2)], received: 5000)
     try check(QuickSale.savedText(quickSale) == "¥1,000（2本）を保存しました・お釣り ¥4,000" && quickSale.customerAge == nil, "quick sale notice, optional segment")
@@ -225,7 +229,7 @@ func v4Checks() throws {
     try check(SQLiteStore(path: file).deviceID == migrated.deviceID, "device id stable")
     var v3: OpaquePointer?
     try check(sqlite3_open(file, &v3) == SQLITE_OK, "open for v3 fixture")
-    try check(sqlite3_exec(v3, "ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil) == SQLITE_OK, "downgrade to v3")
+    try check(sqlite3_exec(v3, "ALTER TABLE orders DROP COLUMN customer_relation; ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil) == SQLITE_OK, "downgrade to v3")
     sqlite3_close(v3)
     let fromV3 = try SQLiteStore(path: file)
     try check(fromV3.sales().count == 1 && fromV3.checkout(id: "after-v4", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .solo)).customerGroup == "solo", "v3 to v4 keeps data")

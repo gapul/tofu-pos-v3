@@ -262,7 +262,7 @@ final class V4Tests: XCTestCase {
         }
         var db: OpaquePointer?
         XCTAssertEqual(sqlite3_open(file, &db), SQLITE_OK)
-        XCTAssertEqual(sqlite3_exec(db, "ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil), SQLITE_OK)
+        XCTAssertEqual(sqlite3_exec(db, "ALTER TABLE orders DROP COLUMN customer_relation; ALTER TABLE orders DROP COLUMN customer_group; ALTER TABLE orders DROP COLUMN ticket_no; PRAGMA user_version=3", nil, nil, nil), SQLITE_OK)
         sqlite3_close(db)
         let store = try SQLiteStore(path: file)
         XCTAssertEqual(try store.sales().first?.customerAge, "adult"); XCTAssertNil(try store.sales().first?.ticketNo)
@@ -279,6 +279,29 @@ final class V4Tests: XCTestCase {
         _ = try store.checkout(id: "g", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .friends))
         XCTAssertEqual(try store.sessionSummary(open).groups["friends"], 1)
         XCTAssertThrowsError(try JSONDecoder().decode(CloudOrder.self, from: Data(#"{"id":"x","revision":1,"created_at":"2026-11-21T00:00:00Z","total":0,"received":0,"change_yen":0,"lines":[{"product_id":"p","name":"p","price":0,"quantity":1}],"customer_group":"crowd"}"#.utf8)).validatedSale())
+    }
+    func testCustomerRelationAndVersionFiveMigration() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("tofu-v4-\(UUID()).sqlite").path
+        defer { try? FileManager.default.removeItem(atPath: file) }
+        do { _ = try SQLiteStore(path: file).checkout(id: "v4", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, group: .family)) }
+        var db: OpaquePointer?
+        XCTAssertEqual(sqlite3_open(file, &db), SQLITE_OK)
+        XCTAssertEqual(sqlite3_exec(db, "ALTER TABLE orders DROP COLUMN customer_relation; PRAGMA user_version=4", nil, nil, nil), SQLITE_OK)
+        sqlite3_close(db)
+        let store = try SQLiteStore(path: file)
+        XCTAssertEqual(try store.sales().first?.customerGroup, "family", "v4 data kept"); XCTAssertNil(try store.sales().first?.customerRelation)
+        let sale = try store.checkout(id: "v5", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, relation: .tofu_fan))
+        XCTAssertEqual(sale.customerRelation, "tofu_fan")
+        XCTAssertThrowsError(try store.checkout(id: "v5", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, relation: .member)))
+        let json = String(decoding: try JSONEncoder().encode(try XCTUnwrap(store.pendingSales().first { $0.id == "v5" })), as: UTF8.self)
+        XCTAssertTrue(json.contains("\"customer_relation\":\"tofu_fan\""))
+        XCTAssertFalse(String(decoding: try JSONEncoder().encode(try XCTUnwrap(store.pendingSales().first { $0.id == "v4" })), as: UTF8.self).contains("customer_relation"))
+        XCTAssertEqual(CustomerRelation.allCases.map(\.label), ["知り合い", "親族", "メンバー", "豆腐狂", "一般人"])
+        XCTAssertEqual(Customer.text(age: nil, gender: "female", group: nil, relation: "general"), "女性・一般人")
+        let open = try store.openSession(float: [:])
+        _ = try store.checkout(id: "r", lines: [tofu], received: 1000, customer: Customer(age: nil, gender: nil, relation: .relative))
+        XCTAssertEqual(try store.sessionSummary(open).relations["relative"], 1)
+        XCTAssertThrowsError(try JSONDecoder().decode(CloudOrder.self, from: Data(#"{"id":"x","revision":1,"created_at":"2026-11-21T00:00:00Z","total":0,"received":0,"change_yen":0,"lines":[{"product_id":"p","name":"p","price":0,"quantity":1}],"customer_relation":"boss"}"#.utf8)).validatedSale())
     }
     func testQuickSale() throws {
         var p = Product(id: "p", name: "田楽豆腐", price: 500)

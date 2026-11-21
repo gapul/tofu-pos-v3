@@ -227,6 +227,7 @@ struct RegisterView: View {
     @State private var age: CustomerAge?
     @State private var gender: CustomerGender?
     @State private var group: CustomerGroup?
+    @State private var relation: CustomerRelation?
     @State private var customerPage = 0
     @State private var scrollToTop = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -305,8 +306,8 @@ struct RegisterView: View {
                     Text("会計を保存しました").font(.title)
                     Text("合計 ¥\(Yen.format(sale.total))").font(.title2)
                     Text("預り金 ¥\(Yen.format(sale.received))")
-                    if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil {
-                        Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup))").foregroundColor(.tofuMuted)
+                    if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil || sale.customerRelation != nil {
+                        Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup, relation: sale.customerRelation))").foregroundColor(.tofuMuted)
                     }
                     Text("お釣り ¥\(Yen.format(sale.change))").font(.largeTitle.bold())
                     Button { receipt = nil } label: { Text("次のお客様").foregroundColor(.tofuOnAccent) }.buttonStyle(.borderedProminent)
@@ -349,7 +350,7 @@ struct RegisterView: View {
             Text("合計　¥\(Yen.format(total ?? 0))").font(.title2.bold())
         }.id("cartTop")
         Section("客層（任意）") {
-            CustomerPager(age: $age, gender: $gender, group: $group, page: $customerPage) {
+            CustomerPager(age: $age, gender: $gender, group: $group, relation: $relation, page: $customerPage) {
                 if reduceMotion { proxy.scrollTo("cash", anchor: .center) } else { withAnimation { proxy.scrollTo("cash", anchor: .center) } }
             }
         }
@@ -403,7 +404,7 @@ struct RegisterView: View {
     }
     private var confirmMessage: String {
         guard let total, let cash, cash >= total else { return "" }
-        return "預り金 ¥\(Yen.format(cash))　お釣り ¥\(Yen.format(cash - total))\n客層: \(Customer.text(age: age?.rawValue, gender: gender?.rawValue, group: group?.rawValue))"
+        return "預り金 ¥\(Yen.format(cash))　お釣り ¥\(Yen.format(cash - total))\n客層: \(Customer.text(age: age?.rawValue, gender: gender?.rawValue, group: group?.rawValue, relation: relation?.rawValue))"
     }
     private func setReceived(_ value: Int64) { receivedFocused = false; received = String(min(max(0, value), Money.maximum)) }
     private func addReceived(_ value: Int64) { setReceived((cash ?? 0) + value) }
@@ -424,9 +425,9 @@ struct RegisterView: View {
         receivedFocused = false
         do {
             guard let cash = Money.parse(received) else { throw POSFailure.invalid("預り金を確認してください") }
-            let sale = try model.checkout(id: commandID, lines: cart, received: cash, customer: Customer(age: age, gender: gender, group: group))
+            let sale = try model.checkout(id: commandID, lines: cart, received: cash, customer: Customer(age: age, gender: gender, group: group, relation: relation))
             cart = []; received = ""; commandID = UUID().uuidString; receipt = sale
-            self.age = nil; self.gender = nil; group = nil; customerPage = 0; scrollToTop += 1
+            self.age = nil; self.gender = nil; group = nil; relation = nil; customerPage = 0; scrollToTop += 1
             model.refresh()
         } catch { model.error = error.localizedDescription }
     }
@@ -610,6 +611,12 @@ struct DrawerView: View {
                                 Text(CustomerGroup.allCases.map { "\($0.label)\(summary?.groups[$0.rawValue] ?? 0)" }.joined(separator: "　")).font(.footnote)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
+                            HStack {
+                                Text("関係")
+                                Spacer()
+                                Text(CustomerRelation.allCases.map { "\($0.label)\(summary?.relations[$0.rawValue] ?? 0)" }.joined(separator: "　")).font(.footnote)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
                         }
                     } else {
                         Section("レジ開け（釣銭準備金の枚数）") {
@@ -696,8 +703,8 @@ struct HistoryView: View {
                                 Spacer()
                                 if let ticket = sale.ticketNo { Text("整理番号 \(ticket)").font(.headline) }
                             }
-                            if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil {
-                                Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup))").font(.caption)
+                            if sale.customerAge != nil || sale.customerGender != nil || sale.customerGroup != nil || sale.customerRelation != nil {
+                                Text("客層: \(Customer.text(age: sale.customerAge, gender: sale.customerGender, group: sale.customerGroup, relation: sale.customerRelation))").font(.caption)
                             }
                             Text("¥\(sale.total)　\(sale.cancelledAt == nil ? "会計済み" : "取消済み")").font(.headline)
                             ForEach(sale.lines) { line in Text("\(line.name) × \(line.quantity)　¥\(line.price * Int64(line.quantity))") }

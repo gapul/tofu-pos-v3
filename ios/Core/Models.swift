@@ -42,15 +42,24 @@ public enum CustomerGroup: String, CaseIterable, Identifiable {
     public var id: String { rawValue }
     public var label: String { ["solo": "一人", "friends": "友人", "family": "家族", "couple": "カップル", "group": "グループ"][rawValue]! }
 }
+public enum CustomerRelation: String, CaseIterable, Identifiable {
+    case acquaintance, relative, member, tofu_fan, general
+    public var id: String { rawValue }
+    public var label: String { ["acquaintance": "知り合い", "relative": "親族", "member": "メンバー", "tofu_fan": "豆腐狂", "general": "一般人"][rawValue]! }
+}
 public struct Customer: Equatable {
     public let age: CustomerAge?
     public let gender: CustomerGender?
     public let group: CustomerGroup?
-    public init(age: CustomerAge?, gender: CustomerGender?, group: CustomerGroup? = nil) { self.age = age; self.gender = gender; self.group = group }
-    public var isEmpty: Bool { age == nil && gender == nil && group == nil }
-    /// "大人・女性・家族"; unselected axes are left out.
-    public static func text(age: String?, gender: String?, group: String?) -> String {
-        let parts = [age.flatMap(CustomerAge.init(rawValue:))?.label, gender.flatMap(CustomerGender.init(rawValue:))?.label, group.flatMap(CustomerGroup.init(rawValue:))?.label].compactMap { $0 }
+    public let relation: CustomerRelation?
+    public init(age: CustomerAge?, gender: CustomerGender?, group: CustomerGroup? = nil, relation: CustomerRelation? = nil) {
+        self.age = age; self.gender = gender; self.group = group; self.relation = relation
+    }
+    public var isEmpty: Bool { age == nil && gender == nil && group == nil && relation == nil }
+    /// "大人・女性・家族・知り合い"; unselected axes are left out.
+    public static func text(age: String?, gender: String?, group: String?, relation: String? = nil) -> String {
+        let parts = [age.flatMap(CustomerAge.init(rawValue:))?.label, gender.flatMap(CustomerGender.init(rawValue:))?.label,
+                     group.flatMap(CustomerGroup.init(rawValue:))?.label, relation.flatMap(CustomerRelation.init(rawValue:))?.label].compactMap { $0 }
         return parts.isEmpty ? "未選択" : parts.joined(separator: "・")
     }
 }
@@ -79,6 +88,7 @@ public struct Sale: Identifiable {
     public var customerAge: String? = nil
     public var customerGender: String? = nil
     public var customerGroup: String? = nil
+    public var customerRelation: String? = nil
     /// Per-device daily ticket ("12" or "A-12"), issued in the checkout transaction.
     public var ticketNo: String? = nil
     /// Local only: the cancellation was recorded on this device (drawer cash went out here).

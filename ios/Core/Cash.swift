@@ -62,6 +62,8 @@ public struct DrawerSummary: Equatable {
     public let segments: [String: Int]
     /// customer_group → paid orders in the session.
     public var groups: [String: Int] = [:]
+    /// customer_relation → paid orders in the session.
+    public var relations: [String: Int] = [:]
 }
 
 public enum DrawerMath {
@@ -75,16 +77,17 @@ public enum DrawerMath {
             return date >= start && (end.map { date < $0 } ?? true)
         }
         var salesTotal: Int64 = 0, cancelTotal: Int64 = 0, count = 0
-        var segments: [String: Int] = [:], groups: [String: Int] = [:]
+        var segments: [String: Int] = [:], groups: [String: Int] = [:], relations: [String: Int] = [:]
         for sale in sales {
             if sale.deviceID == deviceID && inside(sale.createdAt) {
                 salesTotal += sale.total; count += 1
                 if sale.cancelledAt == nil, let age = sale.customerAge, let gender = sale.customerGender { segments["\(age)/\(gender)", default: 0] += 1 }
                 if sale.cancelledAt == nil, let group = sale.customerGroup { groups[group, default: 0] += 1 }
+                if sale.cancelledAt == nil, let relation = sale.customerRelation { relations[relation, default: 0] += 1 }
             }
             if sale.cancelledHere && inside(sale.cancelledAt) { cancelTotal += sale.total }
         }
-        return DrawerSummary(salesTotal: salesTotal, cancelTotal: cancelTotal, orderCount: count, expected: floatTotal + salesTotal - cancelTotal, segments: segments, groups: groups)
+        return DrawerSummary(salesTotal: salesTotal, cancelTotal: cancelTotal, orderCount: count, expected: floatTotal + salesTotal - cancelTotal, segments: segments, groups: groups, relations: relations)
     }
 }
 

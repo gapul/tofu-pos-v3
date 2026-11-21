@@ -21,7 +21,7 @@ public final class SQLiteStore {
             try exec("PRAGMA foreign_keys=ON")
             try exec("PRAGMA synchronous=FULL")
             let version = try query("PRAGMA user_version").first?.first ?? "0"
-            guard ["0", "1", "2", "3", "4"].contains(version) else { throw POSFailure.invalid("未対応のDBバージョンです") }
+            guard ["0", "1", "2", "3", "4", "5"].contains(version) else { throw POSFailure.invalid("未対応のDBバージョンです") }
             if version == "0" {
                 try transaction {
                     try exec("CREATE TABLE products(id TEXT PRIMARY KEY,name TEXT NOT NULL,price INTEGER NOT NULL CHECK(price>=0 AND price<=1000000000))")
@@ -41,7 +41,7 @@ public final class SQLiteStore {
                     try exec("PRAGMA user_version=2")
                 }
             }
-            if !["3", "4"].contains(version) {
+            if !["3", "4", "5"].contains(version) {
                 try transaction {
                     for column in ["device_id", "customer_age", "customer_gender"] { try exec("ALTER TABLE orders ADD COLUMN \(column) TEXT") }
                     // 1 only when the cancellation was recorded on this device (never sent; restore/feed keep 0).
@@ -66,11 +66,18 @@ public final class SQLiteStore {
                 }
             }
             // v4 (v3 is in use on devices): customer group and ticket number. Columns only; no data rewritten.
-            if version != "4" {
+            if !["4", "5"].contains(version) {
                 try transaction {
                     try exec("ALTER TABLE orders ADD COLUMN customer_group TEXT")
                     try exec("ALTER TABLE orders ADD COLUMN ticket_no TEXT")
                     try exec("PRAGMA user_version=4")
+                }
+            }
+            // v5 (v4 is in use on devices): customer relation. Column only; no data rewritten.
+            if version != "5" {
+                try transaction {
+                    try exec("ALTER TABLE orders ADD COLUMN customer_relation TEXT")
+                    try exec("PRAGMA user_version=5")
                 }
             }
             if let id = try query("SELECT value FROM sync_metadata WHERE key='device_id'").first?.first, !id.isEmpty { deviceID = id }
@@ -189,14 +196,15 @@ public final class SQLiteStore {
         try transaction {
             if let existing = try sale(id: id) {
                 guard existing.lines == lines, existing.received == received, existing.customerAge == customer?.age?.rawValue,
-                      existing.customerGender == customer?.gender?.rawValue, existing.customerGroup == customer?.group?.rawValue else { throw POSFailure.invalid("同じ会計IDで内容が異なります") }
+                      existing.customerGender == customer?.gender?.rawValue, existing.customerGroup == customer?.group?.rawValue,
+                      existing.customerRelation == customer?.relation?.rawValue else { throw POSFailure.invalid("同じ会計IDで内容が異なります") }
                 return existing  // an idempotent replay keeps its ticket and takes no new number
             }
             let total = try Money.total(lines)
             guard !id.isEmpty, received >= total, received <= Money.maximum else { throw POSFailure.invalid("預り金が不足しているか上限を超えています") }
             let ticket = try nextTicket()
-            try exec("INSERT INTO orders(id,created_at,total,received,change_yen,device_id,customer_age,customer_gender,customer_group,ticket_no) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                     [id, now(), String(total), String(received), String(received - total), deviceID, customer?.age?.rawValue, customer?.gender?.rawValue, customer?.group?.rawValue, ticket])
+            try exec("INSERT INTO orders(id,created_at,total,received,change_yen,device_id,customer_age,customer_gender,customer_group,ticket_no,customer_relation) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                     [id, now(), String(total), String(received), String(received - total), deviceID, customer?.age?.rawValue, customer?.gender?.rawValue, customer?.group?.rawValue, ticket, customer?.relation?.rawValue])
             for (index, line) in lines.enumerated() {
                 try exec("INSERT INTO order_lines VALUES(?,?,?,?,?,?)",
                          [id, String(index + 1), line.productID, line.name, String(line.price), String(line.quantity)])
@@ -230,7 +238,7 @@ public final class SQLiteStore {
         let marks = Array(repeating: "?", count: ids.count).joined(separator: ",")
         let details = try query("SELECT order_id,product_id,name,price,quantity FROM order_lines WHERE order_id IN (\(marks)) ORDER BY order_id,line_no", ids)
         let grouped = Dictionary(grouping: details, by: { $0[0] })
-        return rows.map { CloudOrder(sale: makeSale($0, details: grouped[$0[0]] ?? []), revision: Int($0[13])!) }
+        return rows.map { CloudOrder(sale: makeSale($0, details: grouped[$0[0]] ?? []), revision: Int($0[14])!) }
     }
     public func acknowledge(_ receipts: [SyncReceipt]) throws {
         guard !receipts.isEmpty else { return }
@@ -323,7 +331,7 @@ public final class SQLiteStore {
         if let old = try sale(id: row.id) {
             if old.createdAt != incoming.createdAt || old.total != incoming.total || old.received != incoming.received || old.change != incoming.change || old.lines != incoming.lines
                 || old.deviceID != incoming.deviceID || old.customerAge != incoming.customerAge || old.customerGender != incoming.customerGender
-                || old.customerGroup != incoming.customerGroup || old.ticketNo != incoming.ticketNo {
+                || old.customerGroup != incoming.customerGroup || old.ticketNo != incoming.ticketNo || old.customerRelation != incoming.customerRelation {
                 return .conflict
             } else if old.cancelledAt != nil && incoming.cancelledAt != nil && (old.cancelledAt != incoming.cancelledAt || old.cancellationReason != incoming.cancellationReason) {
                 return .conflict
@@ -335,8 +343,8 @@ public final class SQLiteStore {
             try exec("UPDATE orders SET synced_revision=CAST(? AS INTEGER) WHERE id=? AND synced_revision<?", [String(row.revision),row.id,String(row.revision)])
             return outcome
         }
-        try exec("INSERT INTO orders(id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,revision,synced_revision,device_id,customer_age,customer_gender,customer_group,ticket_no) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                 [row.id,row.created_at,String(row.total),String(row.received),String(row.change_yen),row.cancelled_at,row.cancellation_reason,String(row.revision),String(row.revision),row.device_id,row.customer_age,row.customer_gender,row.customer_group,row.ticket_no])
+        try exec("INSERT INTO orders(id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,revision,synced_revision,device_id,customer_age,customer_gender,customer_group,ticket_no,customer_relation) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                 [row.id,row.created_at,String(row.total),String(row.received),String(row.change_yen),row.cancelled_at,row.cancellation_reason,String(row.revision),String(row.revision),row.device_id,row.customer_age,row.customer_gender,row.customer_group,row.ticket_no,row.customer_relation])
         for (index,l) in incoming.lines.enumerated() {
             try exec("INSERT INTO order_lines VALUES(?,?,?,?,?,?)", [row.id,String(index+1),l.productID,l.name,String(l.price),String(l.quantity)])
         }
@@ -441,7 +449,7 @@ public final class SQLiteStore {
         try setMetadata("ticket_date", today); try setMetadata("ticket_seq", String(seq))
         return Ticket.format(prefix: try ticketPrefix(), seq: seq)
     }
-    private static let orderColumns = "id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,cancelled_here,customer_group,ticket_no"
+    private static let orderColumns = "id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,cancelled_here,customer_group,ticket_no,customer_relation"
     private func sale(id: String) throws -> Sale? {
         guard let row = try query("SELECT \(Self.orderColumns) FROM orders WHERE id=?", [id]).first else { return nil }
         return makeSale(row, details: try query("SELECT order_id,product_id,name,price,quantity FROM order_lines WHERE order_id=? ORDER BY line_no", [id]))
@@ -451,7 +459,7 @@ public final class SQLiteStore {
              cancelledAt: row[5].isEmpty ? nil : row[5], cancellationReason: row[6].isEmpty ? nil : row[6],
              lines: details.map { Line(productID: $0[1], name: $0[2], price: Int64($0[3])!, quantity: Int($0[4])!) },
              deviceID: row[7].isEmpty ? nil : row[7], customerAge: row[8].isEmpty ? nil : row[8], customerGender: row[9].isEmpty ? nil : row[9],
-             customerGroup: row[11].isEmpty ? nil : row[11], ticketNo: row[12].isEmpty ? nil : row[12], cancelledHere: row[10] == "1")
+             customerGroup: row[11].isEmpty ? nil : row[11], customerRelation: row[13].isEmpty ? nil : row[13], ticketNo: row[12].isEmpty ? nil : row[12], cancelledHere: row[10] == "1")
     }
     private func transaction<T>(_ body: () throws -> T) throws -> T {
         try exec("BEGIN IMMEDIATE")

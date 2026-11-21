@@ -64,10 +64,11 @@ extension CloudOrder {
               customer_age.map({ CustomerAge(rawValue: $0) != nil }) ?? true,
               customer_gender.map({ CustomerGender(rawValue: $0) != nil }) ?? true,
               customer_group.map({ CustomerGroup(rawValue: $0) != nil }) ?? true,
+              customer_relation.map({ CustomerRelation(rawValue: $0) != nil }) ?? true,
               ticket_no.map(Ticket.valid) ?? true else { throw POSFailure.invalid("不正な会計の端末・客層です") }
         return Sale(id: id, createdAt: created_at, total: total, received: received, change: change_yen,
                     cancelledAt: cancelled_at, cancellationReason: cancellation_reason, lines: details,
                     deviceID: device_id, customerAge: customer_age, customerGender: customer_gender,
-                    customerGroup: customer_group, ticketNo: ticket_no)
+                    customerGroup: customer_group, customerRelation: customer_relation, ticketNo: ticket_no)
     }
 }
