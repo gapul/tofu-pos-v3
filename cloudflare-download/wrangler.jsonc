@@ -1,9 +1,9 @@
 {
-  // Passphrase-protected download page for the Android APK (staff sideload). CI uploads the APK.
+  // Capability-URL download page for the Android APK (staff sideload). CI uploads the APK.
   "name": "tos-download",
   "account_id": "38e092dee9c904784d58cc1b7f0096b8",
   "main": "src/index.js",
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true }
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" }
 }
