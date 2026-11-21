@@ -12,7 +12,7 @@ pnpm test
 pnpm exec wrangler deploy --dry-run
 ```
 
-テストは全migrationを順に適用したDBで、100回の同一再送・取消の巻戻し防止・内容競合・店舗分離・50件バッチのDBアクセス数・不正トークン・過大サイズ・DB障害時の無再試行・同時更新の競合を確認する。0.4.0分は、0.3.0の行をmigration 0003で移行した後の再送が競合しないこと、任意フィールドの検証、在庫の派生値（販売・取消・add/set、並行再送で二重計上しない）、商品の作成/更新/競合/冪等、在庫イベントの冪等とset、レジセッションの冪等と締め後不変、フィードのseq順・512KiB切り・has_more、ダッシュボードの認証分離と集計値、migration 0004で既存商品が全て在庫管理になり再配信されること、`stop_at_zero`のversion管理と`track_stock`の無視、修復SQLの冪等性、商品写真（JPEG検証・冪等アップロード・両トークンでの取得・ETag/304・未登録hashの拒否・image_hashのversion管理）、客層グループと整理番号（検証・base_hash・既存会計のハッシュ不変・migration 0006の埋め戻し・ダッシュボード表示）を確認する。Wranglerは開発用依存のみ。esbuildとworkerdの固定バージョンのビルドスクリプトだけを許可する。
+テストは全migrationを順に適用したDBで、100回の同一再送・取消の巻戻し防止・内容競合・店舗分離・50件バッチのDBアクセス数・不正トークン・過大サイズ・DB障害時の無再試行・同時更新の競合を確認する。0.4.0分は、0.3.0の行をmigration 0003で移行した後の再送が競合しないこと、任意フィールドの検証、在庫の派生値（販売・取消・add/set、並行再送で二重計上しない）、商品の作成/更新/競合/冪等、在庫イベントの冪等とset、レジセッションの冪等と締め後不変、フィードのseq順・512KiB切り・has_more、ダッシュボードの認証分離と集計値、migration 0004で既存商品が全て在庫管理になり再配信されること、`stop_at_zero`のversion管理と`track_stock`の無視、修復SQLの冪等性、商品写真（JPEG検証・冪等アップロード・両トークンでの取得・ETag/304・未登録hashの拒否・image_hashのversion管理）、客層グループ・整理番号・関係（検証・base_hash・既存会計のハッシュ不変・migration 0006の埋め戻し・ダッシュボード表示）を確認する。Wranglerは開発用依存のみ。esbuildとworkerdの固定バージョンのビルドスクリプトだけを許可する。
 
 ## 配備
 
@@ -32,6 +32,17 @@ pnpm exec wrangler d1 migrations apply tofu-pos-v3 --remote                     
 pnpm exec wrangler deploy                                                         # 2. 直後に0.4.0のWorker
 pnpm exec wrangler d1 execute tofu-pos-v3 --remote --file repair/0003_after_deploy.sql  # 3. 修復
 ```
+
+### 客層「関係」（migration 0007）への更新
+
+本番・テスト環境とも0006まで適用済み。0007は`customer_relation`列の追加とpayloadからの埋め戻しだけで、手順は0006と同じ（各環境でmigration → 直後にdeploy）。
+
+```sh
+pnpm exec wrangler d1 migrations apply tofu-pos-v3 --remote && pnpm exec wrangler deploy
+pnpm exec wrangler d1 migrations apply tofu-pos-v3-staging --remote --env staging && pnpm exec wrangler deploy --env staging
+```
+
+配備までの間に旧Workerが受けた注文の列は空のまま（payloadには残る）なので、必要なら0007の`UPDATE`を再実行して埋める。`repair/0003_after_deploy.sql`は0007適用後に使う。
 
 ### 客層グループ・整理番号（migration 0006）への更新
 
@@ -136,7 +147,7 @@ FROM cloud_orders WHERE shop_id='tofu';
 
 ### POST /v1/sync（拡張）
 
-注文に任意の`device_id`（1〜64文字）・`customer_age`（child/student/adult/senior）・`customer_gender`（male/female/other）・`customer_group`（solo/friends/family/couple/group）・`ticket_no`（整理番号。8文字以内で`^(?:[A-Z]{1,2}-?)?[0-9]{1,4}$`、例`12`・`A-12`）。それぞれ`cloud_orders`の同名列にも保存する。null・未指定ならpayloadに含めないので、0.3.0の注文はpayloadとhashが変わらず、再送は従来どおり読み取りのみ。値はbase_hashにも入るので、同じrevisionで値が違えば競合。
+注文に任意の`device_id`（1〜64文字）・`customer_age`（child/student/adult/senior）・`customer_gender`（male/female/other）・`customer_group`（solo/friends/family/couple/group）・`customer_relation`（acquaintance/relative/member/tofu_fan/general）・`ticket_no`（整理番号。8文字以内で`^(?:[A-Z]{1,2}-?)?[0-9]{1,4}$`、例`12`・`A-12`）。それぞれ`cloud_orders`の同名列にも保存する。null・未指定ならpayloadに含めないので、0.3.0の注文はpayloadとhashが変わらず、再送は従来どおり読み取りのみ。値はbase_hashにも入るので、同じrevisionで値が違えば競合。
 
 ### POST /v1/products
 
@@ -159,7 +170,7 @@ FROM cloud_orders WHERE shop_id='tofu';
 ### ダッシュボード
 
 - `GET /dashboard`: データを含まない静的HTML（外部読み込みなし、CSPで接続先を自オリジンに限定）。トークンは`sessionStorage`に置き、30秒ごと（タブが前面のとき）に再取得する。表示はJST。
-- `GET /v1/dashboard?date=YYYY-MM-DD`: JSTの日付（省略で全期間）。合計・時間帯別・商品別・客層（年代×性別）・グループ別`groups:[{group,orders,sales}]`（未設定は`group:null`、solo→groupの順で未設定は最後）・在庫・端末別・最近の会計`recent:[{id,ticket_no,created_at,total,cancelled,device_id}]`（作成時刻の新しい順に20件）・レジ締めを返す。日付は注文の`created_at`、レジ締めは`opened_at`で絞る。在庫は全商品を少ない順に返し（`stop_at_zero`付き）、`stock`は常に全期間、`sold`は指定日の販売数。画面では負数の行を赤く強調し、`stop_at_zero`の商品が0以下なら「売り切れ」と付ける。
+- `GET /v1/dashboard?date=YYYY-MM-DD`: JSTの日付（省略で全期間）。合計・時間帯別・商品別・客層（年代×性別）・グループ別`groups:[{group,orders,sales}]`（未設定は`group:null`、solo→groupの順で未設定は最後）・関係別`relations:[{relation,orders,sales}]`（同様、acquaintance→generalの順）・在庫・端末別・最近の会計`recent:[{id,ticket_no,created_at,total,cancelled,device_id}]`（作成時刻の新しい順に20件）・レジ締めを返す。日付は注文の`created_at`、レジ締めは`opened_at`で絞る。在庫は全商品を少ない順に返し（`stop_at_zero`付き）、`stock`は常に全期間、`sold`は指定日の販売数。画面では負数の行を赤く強調し、`stop_at_zero`の商品が0以下なら「売り切れ」と付ける。
 
 ### 商品写真
 

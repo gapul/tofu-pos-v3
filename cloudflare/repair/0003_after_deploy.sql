@@ -3,7 +3,7 @@
 -- Orders accepted by the 0.3.0 Worker between migration 0003 and the 0.4.0 deploy have seq=0
 -- (invisible to /v1/feed), no created_at/device columns and no cloud_order_lines rows.
 -- Only seq=0 orders are touched; rows the 0.4.0 Worker wrote (seq>0) are left as they are.
--- Requires migrations up to 0006 (customer_group and ticket_no columns).
+-- Requires migrations up to 0007 (customer_group, ticket_no and customer_relation columns).
 -- The work list is a real table (not TEMP) so an interrupted run can be resumed; it is dropped at the end.
 CREATE TABLE IF NOT EXISTS repair_0003_orders (shop_id TEXT NOT NULL, id TEXT NOT NULL, PRIMARY KEY(shop_id,id));
 INSERT OR IGNORE INTO repair_0003_orders(shop_id,id) SELECT shop_id,id FROM cloud_orders WHERE seq=0;
@@ -18,6 +18,7 @@ UPDATE cloud_orders SET seq=m.base+r.n,
   customer_gender=json_extract(cloud_orders.payload,'$.customer_gender'),
   customer_group=json_extract(cloud_orders.payload,'$.customer_group'),
   ticket_no=json_extract(cloud_orders.payload,'$.ticket_no'),
+  customer_relation=json_extract(cloud_orders.payload,'$.customer_relation'),
   created_at=json_extract(cloud_orders.payload,'$.created_at')
 FROM (SELECT shop_id,id,ROW_NUMBER() OVER (PARTITION BY shop_id ORDER BY id) AS n FROM cloud_orders WHERE seq=0) AS r,
   (SELECT s.shop_id,MAX(COALESCE((SELECT MAX(seq) FROM cloud_orders WHERE shop_id=s.shop_id),0),

@@ -421,7 +421,7 @@ test("repair SQL fixes orders the 0.3.0 Worker wrote after migration 0003, idemp
   await productsCall(env, [product("tofu")]); await stockCall(env, [stockEvent(1, "tofu", "add", 10)]);
   await send(env, [order("new-1")]);
   // What the 0.3.0 Worker inserts: the original nine columns only, so seq stays 0.
-  for (const o of [order("old-b"), { ...v4order("old-a"), customer_group: "family", ticket_no: "7", revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" }]) {
+  for (const o of [order("old-b"), { ...v4order("old-a"), customer_group: "family", ticket_no: "7", customer_relation: "tofu_fan", revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" }]) {
     const payload = JSON.stringify(o);
     DB.db.prepare("INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at) VALUES(?,?,?,?,?,?,?,?,?)")
       .run("test-shop", o.id, o.revision, "x", await digest(payload), payload, 1000, o.revision === 2 ? 1 : 0, "2026-11-20T02:00:00Z");
@@ -434,7 +434,8 @@ test("repair SQL fixes orders the 0.3.0 Worker wrote after migration 0003, idemp
   const rows = DB.db.prepare("SELECT id,seq,created_at,device_id,customer_age,customer_gender FROM cloud_orders WHERE id LIKE 'old-%' ORDER BY id").all().map(r => ({ ...r }));
   assert.deepEqual(rows, [{ id: "old-a", seq: 5, created_at: "2026-11-20T01:00:00Z", device_id: "device-a", customer_age: "student", customer_gender: "female" },
     { id: "old-b", seq: 6, created_at: "2026-11-20T01:00:00Z", device_id: null, customer_age: null, customer_gender: null }]);
-  assert.deepEqual(DB.db.prepare("SELECT customer_group,ticket_no FROM cloud_orders WHERE id LIKE 'old-%' ORDER BY id").all().map(r => [r.customer_group, r.ticket_no]), [["family", "7"], [null, null]]);
+  assert.deepEqual(DB.db.prepare("SELECT customer_group,ticket_no,customer_relation FROM cloud_orders WHERE id LIKE 'old-%' ORDER BY id").all()
+    .map(r => [r.customer_group, r.ticket_no, r.customer_relation]), [["family", "7", "tofu_fan"], [null, null, null]]);
   assert.deepEqual({ ...DB.db.prepare("SELECT * FROM cloud_orders WHERE id='new-1'").get() }, correct);
   assert.deepEqual(DB.db.prepare("SELECT * FROM cloud_order_lines WHERE order_id='new-1'").all().map(r => ({ ...r })), correctLines);
   assert.equal(await stockOf(env, "tofu"), 6); // old-b sold 2, old-a is cancelled
@@ -574,7 +575,7 @@ test("migration 0006 fills customer_group and ticket_no from existing payloads w
   insert.run("s", "with", 1, "b", "h1", JSON.stringify({ ...v4order("with"), customer_group: "friends", ticket_no: "A-1" }), 1000, 0, "t", 1);
   insert.run("s", "without", 1, "b", "h2", JSON.stringify(order("without")), 1000, 0, "t", 2);
   const before = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
-  DB.migrate();
+  DB.migrate(6);
   const after = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
   assert.deepEqual(after.map(r => [r.customer_group, r.ticket_no]), [["friends", "A-1"], [null, null]]);
   assert.deepEqual(after.map(({ customer_group, ticket_no, ...rest }) => rest), before);
@@ -615,4 +616,37 @@ test("ticket_no: optional, validated, stored, part of the content hash; existing
   assert.equal(d.recent.length, 6);
   assert.deepEqual(d.recent.find(o => o.id === "t3"), { id: "t3", ticket_no: "A-12", created_at: "2026-11-20T01:00:00Z", total: 1000, cancelled: true, device_id: "device-a" });
   assert.match(await (await worker.fetch(new Request("https://test.example/dashboard"), {})).text(), /整理番号/);
+});
+
+test("customer_relation: optional, validated, hashed; existing hashes unchanged; migration 0007 and dashboard relations", async () => {
+  const env = await v4env();
+  for (const customer_relation of ["fan", "Tofu_fan", 1, ""]) assert.equal((await send(env, [v4order("bad", { customer_relation })])).status, 400);
+  assert.equal(env.DB.writes, 0);
+  // The pre-relation payload (with group and ticket) must keep its exact bytes and hash.
+  const before = v4order("o", { customer_group: "solo", ticket_no: "A-1" });
+  const legacy = JSON.stringify({ id: "o", revision: 1, created_at: before.created_at, total: 1000, received: 2000, change_yen: 1000, cancelled_at: null,
+    cancellation_reason: null, lines: before.lines, device_id: "device-a", customer_age: "student", customer_gender: "female", customer_group: "solo", ticket_no: "A-1" });
+  await send(env, [{ ...before, customer_relation: null }, v4order("r", { customer_relation: "member" }), v4order("r2", { customer_relation: "member" }), v4order("r3", { customer_relation: "acquaintance" })]);
+  const row = env.DB.db.prepare("SELECT payload,payload_hash,base_hash,customer_relation FROM cloud_orders WHERE id='o'").get();
+  assert.equal(row.payload, legacy); assert.equal(row.payload_hash, await digest(legacy)); assert.equal(row.base_hash, await digest(legacy)); assert.equal(row.customer_relation, null);
+  const writes = env.DB.writes;
+  assert.equal((await (await send(env, [before])).json()).accepted.length, 1); assert.equal(env.DB.writes, writes);
+  assert.equal(env.DB.db.prepare("SELECT customer_relation FROM cloud_orders WHERE id='r'").get().customer_relation, "member");
+  assert.equal((await (await send(env, [{ ...before, customer_relation: "general" }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [v4order("r", { customer_relation: "relative" })])).json()).conflicts.length, 1);
+  const cancel = { ...v4order("r", { customer_relation: "member" }), revision: 2, cancelled_at: "2026-11-20T01:01:00Z", cancellation_reason: "返金済み" };
+  assert.equal((await (await send(env, [{ ...cancel, customer_relation: null }])).json()).conflicts.length, 1);
+  assert.equal((await (await send(env, [cancel])).json()).accepted.length, 1);
+  const d = await (await worker.fetch(new Request("https://test.example/v1/dashboard", { headers: { Authorization: "Bearer " + dashboardToken } }), env)).json();
+  assert.deepEqual(d.relations, [{ relation: "acquaintance", orders: 1, sales: 1000 }, { relation: "member", orders: 1, sales: 1000 }, { relation: null, orders: 1, sales: 1000 }]);
+  assert.match(await (await worker.fetch(new Request("https://test.example/dashboard"), {})).text(), /関係別/);
+  // Migration 0007 fills the column from payloads and leaves everything else as it was.
+  const DB = new LocalD1(6), insert = DB.db.prepare("INSERT INTO cloud_orders(shop_id,id,revision,base_hash,payload_hash,payload,total_yen,cancelled,received_at,seq) VALUES(?,?,?,?,?,?,?,?,?,?)");
+  insert.run("s", "with", 1, "b", "h1", JSON.stringify(v4order("with", { customer_relation: "relative" })), 1000, 0, "t", 1);
+  insert.run("s", "without", 1, "b", "h2", JSON.stringify(order("without")), 1000, 0, "t", 2);
+  const old = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
+  DB.migrate();
+  const now = DB.db.prepare("SELECT * FROM cloud_orders ORDER BY id").all().map(r => ({ ...r }));
+  assert.deepEqual(now.map(r => r.customer_relation), ["relative", null]);
+  assert.deepEqual(now.map(({ customer_relation, ...rest }) => rest), old);
 });
