@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TOFAS - Are you Tofu?</title>
 <meta name="description" content="豆腐田楽の模擬店 Are you Tofu? の販売状況をリアルタイムで公示する、学務システム風のパロディサイト。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap" rel="stylesheet">
@@ -67,7 +68,7 @@ button,input,select,textarea{font:inherit;color:#333}
 .ph{display:flex;align-items:center;gap:8px;height:22px;padding:0 8px;border-radius:11px;background:linear-gradient(#5aa2db,var(--blue) 60%,#3d89c8);color:#111;font-size:12px;margin-bottom:4px}
 .ph i{width:14px;height:14px}
 .news{padding:0 4px;font-size:12px}.news p{margin:0 0 1px;text-align:center}
-.news a{display:block;padding-left:20px;position:relative}.news a::before{content:"";position:absolute;left:4px;top:2px;width:12px;height:11px;background:linear-gradient(#f6f2d8,#e8dfa8);border:1px solid #b9a768}
+.news a{display:flex;gap:4px;align-items:flex-start}.news a svg{width:15px;height:15px;flex:none;margin-top:1px}
 .mlist{list-style:none;margin:6px 0 0;padding:0 4px}.mlist li{margin:0 0 8px;padding-left:34px;position:relative;line-height:1.25}
 .mlist svg{position:absolute;left:10px;top:0;width:16px;height:16px}
 .main{flex:1;min-width:0}
@@ -175,7 +176,7 @@ body.sp .lg-foot{border-top:0;text-align:center}
 .sp-crumbs a{background:#555;color:#fff;padding:8px 20px;margin:0 20px 6px 5px;font-size:14px;text-decoration:none}
 .sp-crumbs a::after{content:" >"}
 .sp-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px 5px;padding:14px 5px}
-.sp-tiles button{aspect-ratio:91/76;font-size:10px;gap:10px;padding:10px 2px 8px;min-width:0;overflow-wrap:anywhere}
+.sp-tiles button{aspect-ratio:91/76;font-size:9px;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;gap:10px;padding:10px 1px 8px;min-width:0}
 .sp-tiles svg{width:44px;height:36px}
 .sp-menu{margin:4px 5px 0}
 .sp-menu .mh{background:#34495e;color:#fff;font-weight:bold;text-align:center;padding:10px;font-size:14px}
@@ -294,46 +295,60 @@ function modal(text, title = "TOFAS") { $("mdh").textContent = title; $("mdb").t
 $("mok").onclick = () => { $("modal").hidden = true; };
 
 // ---------- icons: colourful 48px for the PC tabs, white line icons for the smart tiles ----------
-const svgOf = (vb, body) => { const d = document.createElement("div"); d.innerHTML = `<svg viewBox="${vb}" aria-hidden="true">${body}</svg>`; return d.firstChild; };
+// Hand-drawn look-alikes of the portal's glossy icon set. "ID" is replaced per instance so gradient ids stay unique.
+let iconSeq = 0;
+const svgOf = (vb, body) => { const d = document.createElement("div"); const id = "i" + (++iconSeq); d.innerHTML = `<svg viewBox="${vb}" aria-hidden="true">${body.replaceAll("ID", id)}</svg>`; return d.firstChild; };
+const lg = (n, c1, c2, x2 = 0, y2 = 1) => `<linearGradient id="ID${n}" x1="0" y1="0" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`;
+const rg = (n, c1, c2, cx = .35, cy = .3) => `<radialGradient id="ID${n}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient>`;
+const shine = (x, y, w, h, r = 6) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="#fff" opacity=".35"/>`;
+// Yellow running figure on a blue screen (学生情報).
+const RUNNER = `<circle cx="28" cy="13" r="5" fill="url(#IDy)" stroke="#8a6a00" stroke-width="1.2"/><path d="M25 19c-4 1-7 4-9 8l3 2c2-3 4-5 6-5l-3 8-7 6 2 3 8-6 3-5 4 5v8h4V33l-5-7 2-5c2 3 5 4 9 4v-3c-3 0-6-2-7-5l-1-2c-1-1-3-1-5 0z" fill="url(#IDy)" stroke="#8a6a00" stroke-width="1.2" stroke-linejoin="round"/>`;
 const PC_ICON = {
-  home: '<circle cx="24" cy="24" r="21" fill="#3d8be0"/><circle cx="24" cy="18" r="16" fill="#8cc4ff" opacity=".6"/><path d="M12 25 24 14l12 11h-4v10h-6v-7h-4v7h-6V25z" fill="#fff"/>',
-  student: '<rect x="6" y="10" width="34" height="28" rx="3" fill="#5aa0e6"/><circle cx="24" cy="18" r="5" fill="#ffd21e" stroke="#7a5b00"/><path d="M14 40l6-14h8l6 14" fill="#ffd21e" stroke="#7a5b00"/><path d="M20 30l-6 4M28 30l6-6" stroke="#7a5b00" stroke-width="2"/>',
-  rishu: '<path d="M10 8h24l6 6v28H10z" fill="#fff" stroke="#9a9a9a"/><path d="M14 18h20M14 24h20M14 30h14" stroke="#b9c8e0"/><path d="M18 40 40 12l4 3-22 28-6 2z" fill="#f2c94c" stroke="#8a6d1a"/>',
-  seiseki: '<rect x="8" y="8" width="26" height="32" fill="#fff" stroke="#aaa"/><path d="M12 34v-8M18 34V18M24 34v-12" stroke="#e05a2a" stroke-width="4"/><circle cx="34" cy="32" r="10" fill="#f7b500"/><path d="M34 32V22a10 10 0 0 1 9 6z" fill="#3cb043"/>',
-  kyuho: '<path d="M6 12l18-4 18 4v28l-18-4-18 4z" fill="#c98a3c" stroke="#7a4d17"/><path d="M24 8v28" stroke="#7a4d17"/><path d="M10 18l10-2M10 24l10-2M28 16l10 2M28 22l10 2" stroke="#f4e3c4"/>',
-  syllabus: '<rect x="6" y="8" width="30" height="32" fill="#e86f2b"/><path d="M10 8v32M16 8v32M22 8v32M28 8v32" stroke="#ffd29b" stroke-width="2"/><circle cx="32" cy="30" r="8" fill="#fff" stroke="#555" stroke-width="3"/><path d="M38 36l6 6" stroke="#555" stroke-width="4"/>',
-  enquete: '<rect x="10" y="8" width="26" height="34" rx="2" fill="#efd9b0" stroke="#a78a55"/><rect x="18" y="5" width="10" height="6" rx="2" fill="#cfa86a"/><path d="M15 20h16M15 26h16M15 32h10" stroke="#a78a55"/>',
-  keiji: '<rect x="5" y="10" width="38" height="26" rx="2" fill="#4f9a53" stroke="#6b4a1e" stroke-width="3"/><path d="M12 18h18M12 24h12" stroke="#d9f0d0" stroke-width="2"/><path d="M14 36l-4 8M34 36l4 8" stroke="#6b4a1e" stroke-width="3"/>',
-  jugyoryo: '<rect x="8" y="18" width="32" height="16" rx="3" fill="#333"/><rect x="13" y="8" width="22" height="12" fill="#fff" stroke="#888"/><rect x="13" y="30" width="22" height="12" fill="#fff" stroke="#888"/><circle cx="34" cy="24" r="2" fill="#5f5"/>',
-  kaigai: '<path d="M4 28l40-14-4 6-14 6 6 16-4 2-8-14-10 4-2 6-3 1z" fill="#8ab0e6" stroke="#3a5f9a"/>',
-  sonota: '<path d="M8 34c6-2 10-8 16-8h10l6 6-14 8H12z" fill="#f7c9a0" stroke="#a66a3a"/><rect x="22" y="6" width="18" height="22" fill="#fff" stroke="#999" transform="rotate(10 31 17)"/><path d="M26 12l10 2M25 18l10 2" stroke="#e33"/>',
-  lms: '<rect x="8" y="18" width="32" height="22" fill="#9fd08f" stroke="#3c7a33"/><path d="M6 18 24 8l18 10z" fill="#5aa94c"/><rect x="21" y="28" width="6" height="12" fill="#3c7a33"/><path d="M12 24h5M31 24h5" stroke="#fff" stroke-width="3"/>',
-  ugip: '<path d="M4 28l40-14-4 6-14 6 6 16-4 2-8-14-10 4-2 6-3 1z" fill="#6fbf5f" stroke="#2f6f2a"/>',
-  cert: '<rect x="8" y="20" width="30" height="16" rx="3" fill="#777"/><rect x="12" y="8" width="22" height="14" fill="#fff" stroke="#888"/><rect x="12" y="32" width="22" height="10" fill="#eee" stroke="#888"/><circle cx="38" cy="10" r="7" fill="#1f3fae"/><path d="M38 6v6l-2-2M38 12l2-2" stroke="#fff" stroke-width="1.6"/>',
+  home: `<defs>${rg("b", "#cfe9ff", "#1a6fd6", .4, .25)}</defs><circle cx="24" cy="24" r="21" fill="url(#IDb)" stroke="#1557a8"/><ellipse cx="24" cy="14" rx="14" ry="8" fill="#fff" opacity=".45"/><path d="M11 25 24 13l13 12h-4v11h-6v-7h-6v7h-6V25z" fill="#fff"/>`,
+  student: `<defs>${lg("s", "#bfe0ff", "#3b86d9")}${lg("y", "#fff27a", "#f2b600")}</defs><rect x="4" y="5" width="32" height="26" rx="3" fill="url(#IDs)" stroke="#2a64a8"/>${shine(6, 7, 28, 9, 2)}<g transform="translate(6 4)">${RUNNER}</g>`,
+  rishu: `<defs>${lg("p", "#ffffff", "#e7edf6")}${lg("n", "#ffe27a", "#e0a400", 1, 0)}</defs><rect x="9" y="6" width="28" height="36" fill="url(#IDp)" stroke="#9aa6b6"/><path d="M9 12h28" stroke="#d64a4a"/><path d="M13 18h20M13 23h20M13 28h20M13 33h14" stroke="#9cc0ea"/><path d="M16 44 41 10l4 3-25 34-6 2z" fill="url(#IDn)" stroke="#8a6100"/><path d="M14 46l2-6 4 3z" fill="#f4d7b0"/><path d="M41 10l4 3 2-3-4-3z" fill="#e88"/>`,
+  seiseki: `<defs>${lg("d", "#ffffff", "#f1e6e6")}${lg("r", "#ff8a6a", "#d23b1e")}</defs><path d="M8 6h22l6 6v30H8z" fill="url(#IDd)" stroke="#b9a0a0"/><rect x="8" y="6" width="28" height="7" fill="url(#IDr)"/><path d="M12 19h14M12 23h14M12 27h10" stroke="#c9b5b5"/><circle cx="32" cy="32" r="11" fill="#f5c400" stroke="#9a7b00"/><path d="M32 32V21a11 11 0 0 1 10.5 7.6z" fill="#3cb043" stroke="#1f7a2a"/><path d="M32 32l10.5-3.4A11 11 0 0 1 36 42.4z" fill="#e8402a" stroke="#9a2414"/>`,
+  kyuho: `<defs>${lg("l", "#e0a35a", "#9a5a1c")}${lg("k", "#f7e6c8", "#e2c99c")}</defs><path d="M5 10l18-3v34L5 44z" fill="url(#IDl)" stroke="#5e3410"/><path d="M43 10l-18-3v34l18 3z" fill="url(#IDl)" stroke="#5e3410"/><path d="M8 13l13-2v26L8 39zM40 13l-13-2v26l13 2z" fill="url(#IDk)"/><path d="M11 18l8-1M11 23l8-1M11 28l8-1M29 17l8 1M29 22l8 1M29 27l8 1" stroke="#b08a50"/><rect x="21" y="20" width="10" height="10" rx="2" fill="#c98a3c" stroke="#5e3410"/>`,
+  syllabus: `<defs>${lg("o", "#ffb066", "#d9561a", 1, 0)}</defs><rect x="4" y="7" width="7" height="34" fill="url(#IDo)" stroke="#8a3a10"/><rect x="11" y="7" width="7" height="34" fill="url(#IDo)" stroke="#8a3a10"/><rect x="18" y="7" width="7" height="34" fill="url(#IDo)" stroke="#8a3a10"/><rect x="25" y="7" width="7" height="34" fill="url(#IDo)" stroke="#8a3a10"/><path d="M5 12h26M5 36h26" stroke="#ffe0b8" stroke-width="2"/><circle cx="32" cy="29" r="9" fill="#eaf4ff" fill-opacity=".85" stroke="#444" stroke-width="3"/><path d="M38.5 35.5 45 42" stroke="#333" stroke-width="5" stroke-linecap="round"/>`,
+  enquete: `<defs>${lg("c", "#f3dfb8", "#cfa86a")}</defs><rect x="9" y="7" width="28" height="36" rx="3" fill="url(#IDc)" stroke="#8a6a3a"/><rect x="18" y="4" width="10" height="7" rx="2" fill="#b9b9b9" stroke="#777"/><path d="M14 13h18v26H14z" fill="#fff" stroke="#ccc"/><path d="M26 32l6-6v6z" fill="#e8e8e8" stroke="#ccc"/>`,
+  keiji: `<defs>${lg("g", "#7cc489", "#3a8a4a")}</defs><g transform="rotate(-8 24 24)"><rect x="5" y="11" width="38" height="26" rx="2" fill="#b7814a" stroke="#6b4a1e"/><rect x="8" y="14" width="32" height="20" fill="url(#IDg)"/>${shine(9, 15, 30, 6, 1)}<path d="M12 22h14M12 27h9" stroke="#e6f6e6" stroke-width="1.6"/></g>`,
+  jugyoryo: `<defs>${lg("k", "#555", "#111")}</defs><rect x="11" y="6" width="26" height="12" fill="#fff" stroke="#999"/><rect x="5" y="16" width="38" height="18" rx="3" fill="url(#IDk)"/><rect x="5" y="16" width="38" height="5" rx="2" fill="#777"/><rect x="11" y="28" width="26" height="14" fill="#fff" stroke="#999"/><path d="M15 33h18M15 37h12" stroke="#bbb"/><circle cx="37" cy="24" r="1.6" fill="#4f4"/>`,
+  kaigai: `<defs>${lg("w", "#f4f8ff", "#8aa8d6")}</defs><path d="M3 30l8-2 10-7 6-12 4 1-2 12 14-3c3-1 5 1 4 3l-17 5-5 12-4 1 1-11-10 3-3 4-3 0 1-5z" fill="url(#IDw)" stroke="#3a5a8a" stroke-linejoin="round"/><path d="M14 28h4M20 26h3" stroke="#3a5a8a"/>`,
+  sonota: `<defs>${lg("h", "#ffe0c4", "#e0a070")}</defs><rect x="20" y="4" width="20" height="26" fill="#fff" stroke="#999" transform="rotate(8 30 17)"/><path d="M24 11l12 2M23 16l12 2M22 21l8 1" stroke="#c33"/><path d="M33 4l6 14-2 2-6-14z" fill="#f2c94c" stroke="#8a6100"/><path d="M4 34c6-3 10-9 17-9h11c3 0 3 4 0 4h-8l12-2c3 0 4 3 1 4l-15 6H4z" fill="url(#IDh)" stroke="#a66a3a" stroke-linejoin="round"/>`,
+  lms: `<defs>${lg("w", "#fffbe8", "#e8dfc0")}</defs><rect x="6" y="19" width="36" height="21" fill="url(#IDw)" stroke="#8a7a50"/><path d="M4 20 24 9l20 11z" fill="#c25a3a" stroke="#7a3020"/><circle cx="24" cy="16" r="3.2" fill="#fff" stroke="#555"/><rect x="20" y="29" width="8" height="11" fill="#7a5a3a"/><path d="M10 24h6v4h-6zM32 24h6v4h-6zM10 32h6v4h-6zM32 32h6v4h-6z" fill="#8cc4f0" stroke="#557"/><circle cx="6" cy="38" r="5" fill="#4caf50"/><circle cx="42" cy="38" r="5" fill="#4caf50"/>`,
+  ugip: `<defs>${lg("w", "#e8ffe8", "#5aa94c")}</defs><path d="M3 30l8-2 10-7 6-12 4 1-2 12 14-3c3-1 5 1 4 3l-17 5-5 12-4 1 1-11-10 3-3 4-3 0 1-5z" fill="url(#IDw)" stroke="#2f6f2a" stroke-linejoin="round"/>`,
+  cert: `<defs>${lg("k", "#bbb", "#777")}${rg("b", "#7fa4ff", "#1f3fae")}</defs><rect x="9" y="6" width="24" height="12" fill="#fff" stroke="#999"/><rect x="4" y="16" width="34" height="16" rx="3" fill="url(#IDk)" stroke="#555"/><rect x="9" y="28" width="24" height="14" fill="#f2f2f2" stroke="#999"/><path d="M13 33h16M13 37h10" stroke="#bbb"/><circle cx="38" cy="10" r="8" fill="url(#IDb)" stroke="#132a7a"/><path d="M38 5v8M34.5 9.5 38 13l3.5-3.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`,
 };
 const SYS_ICON = {
-  user: '<circle cx="12" cy="8" r="5" fill="#7fb2e8" stroke="#3d6fae"/><path d="M3 23c0-6 4-9 9-9s9 3 9 9z" fill="#7fb2e8" stroke="#3d6fae"/>',
-  smart: '<rect x="6" y="2" width="12" height="20" rx="2" fill="#666"/><rect x="8" y="5" width="8" height="12" fill="#cde"/>',
-  english: '<path d="M3 4h18v12H11l-5 5v-5H3z" fill="#8cc4f5" stroke="#3a7fc4"/><circle cx="12" cy="10" r="3" fill="#fff"/>',
-  timer: '<circle cx="12" cy="12" r="10" fill="#cfe3fa" stroke="#3a7fc4" stroke-width="1.6"/><path d="M12 6v6l4 3" stroke="#3a7fc4" stroke-width="2" fill="none"/>',
-  logout: '<rect x="2" y="2" width="20" height="20" rx="4" fill="#e23b2e"/><path d="M12 5v7M7.5 8.5a6 6 0 1 0 9 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>',
+  user: `<defs>${rg("u", "#d6ecff", "#3d7fd0", .4, .25)}</defs><circle cx="12" cy="7.5" r="5" fill="url(#IDu)" stroke="#2a5fa8" stroke-width=".8"/><path d="M3 23c0-6 4-9.5 9-9.5s9 3.5 9 9.5z" fill="url(#IDu)" stroke="#2a5fa8" stroke-width=".8"/>`,
+  smart: `<defs>${lg("p", "#9aa0a8", "#3a3f45")}${lg("s", "#d8ecff", "#6ea4d8")}</defs><rect x="6" y="1.5" width="12" height="21" rx="2.2" fill="url(#IDp)"/><rect x="7.5" y="4.5" width="9" height="13" fill="url(#IDs)"/><circle cx="12" cy="20" r="1" fill="#ccc"/>`,
+  english: `<defs>${rg("e", "#e6f4ff", "#4a9ae6", .4, .25)}</defs><path d="M2 11c0-5 4.5-8.5 10-8.5S22 6 22 11s-4.5 8.5-10 8.5c-1 0-2-.1-3-.4L4 22l1.4-4.2C3.3 16.3 2 13.8 2 11z" fill="url(#IDe)" stroke="#2a72c0" stroke-width=".8"/><path d="M9 6.5h5l2 2v6H9z" fill="#fff" stroke="#6a9ad0" stroke-width=".6"/>`,
+  timer: `<defs>${rg("t", "#ffffff", "#9cc8f2", .45, .35)}</defs><circle cx="12" cy="12" r="10.5" fill="#3a7fc4"/><circle cx="12" cy="12" r="8.6" fill="url(#IDt)"/><path d="M12 5v7l4.5 3" stroke="#1d4f8a" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M12 12 7 15" stroke="#d33" stroke-width=".8"/>`,
+  logout: `<defs>${lg("r", "#ff6a5a", "#c41a10")}</defs><rect x="1.5" y="1.5" width="21" height="21" rx="4.5" fill="url(#IDr)" stroke="#8a0f08"/>${shine(3, 3, 18, 7, 3)}<path d="M12 5.5v6.5M7.6 8.6a6.2 6.2 0 1 0 8.8 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
 };
+// White glyphs for the smart tiles (the *_smart.png set).
 const LINE = {
-  home: '<path d="M6 22 24 6l18 16h-5v18H11V22z" fill="#fff"/>', student: '<rect x="4" y="8" width="40" height="30" rx="2" fill="none" stroke="#fff" stroke-width="3"/><circle cx="16" cy="20" r="5" fill="#fff"/><path d="M8 34c0-5 4-7 8-7s8 2 8 7zM28 16h12M28 23h12M28 30h8" fill="#fff" stroke="#fff" stroke-width="2.5"/>',
-  rishu: '<path d="M10 4h20l8 8v32H10z" fill="#fff"/><path d="M16 20h16M16 27h16M16 34h10" stroke="#4694d1" stroke-width="2.5"/>', seiseki: '<path d="M8 40V24M16 40V14M24 40V20" stroke="#fff" stroke-width="4"/><circle cx="34" cy="30" r="9" fill="#fff"/><path d="M34 30V21a9 9 0 0 1 9 9z" fill="#4694d1"/>',
-  kyuho: '<rect x="6" y="6" width="36" height="34" rx="2" fill="none" stroke="#fff" stroke-width="3"/><path d="M6 14h36M24 6v34M10 22h10M28 22h10M10 30h10" stroke="#fff" stroke-width="2.5"/>', syllabus: '<rect x="6" y="8" width="8" height="32" fill="#fff"/><rect x="16" y="8" width="8" height="32" fill="#fff"/><circle cx="34" cy="20" r="7" fill="none" stroke="#fff" stroke-width="3"/><path d="M34 27v13" stroke="#fff" stroke-width="3"/>',
-  enquete: '<circle cx="16" cy="18" r="7" fill="#fff"/><path d="M4 40c0-8 5-12 12-12s12 4 12 12z" fill="#fff"/><path d="M26 6h18v12h-8l-4 4v-4h-6z" fill="#fff"/>', keiji: '<rect x="6" y="6" width="36" height="28" fill="#fff"/><rect x="18" y="12" width="12" height="16" fill="#4694d1"/><path d="M14 34l-4 8M34 34l4 8" stroke="#fff" stroke-width="3"/>',
-  jugyoryo: '<rect x="6" y="18" width="36" height="16" rx="2" fill="#fff"/><rect x="12" y="6" width="24" height="12" fill="#fff"/><rect x="12" y="30" width="24" height="12" fill="#fff" stroke="#4694d1" stroke-width="2"/>', sonota: '<text x="24" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#fff" font-family="Arial">etc.</text>',
-  cert: '<path d="M12 4h18l8 8v32H12z" fill="#fff"/><path d="M18 20h14M18 26h14M18 32h10" stroke="#4694d1" stroke-width="2.5"/>',
+  home: '<path d="M4 23 24 6l20 17h-6v19H10V23z" fill="#fff"/><rect x="33" y="8" width="5" height="10" fill="#fff"/>',
+  student: '<rect x="3" y="8" width="42" height="32" rx="2" fill="none" stroke="#fff" stroke-width="3"/><circle cx="16" cy="20" r="5.5" fill="#fff"/><path d="M7 36c0-6 4-9 9-9s9 3 9 9z" fill="#fff"/><path d="M29 17h12M29 24h12M29 31h8" stroke="#fff" stroke-width="3"/>',
+  rishu: '<path d="M11 4h18l9 9v31H11z" fill="#fff"/><path d="M29 4v9h9" fill="none" stroke="#4694d1" stroke-width="2"/><path d="M17 22h15M17 28h15M17 34h11" stroke="#4694d1" stroke-width="2.5"/>',
+  seiseki: '<path d="M6 42V22M13 42V12M20 42V18" stroke="#fff" stroke-width="4"/><path d="M4 42h20M8 8l8 6 8-8" stroke="#fff" stroke-width="2" fill="none"/><circle cx="35" cy="31" r="10" fill="#fff"/><path d="M35 31V21a10 10 0 0 1 10 10z" fill="#4694d1"/><path d="M36 30V20a10 10 0 0 1 10 10z" fill="#fff"/>',
+  kyuho: '<path d="M4 9h18v32H4zM26 9h18v32H26z" fill="none" stroke="#fff" stroke-width="3"/><path d="M22 12h4M22 20h4M22 28h4M22 36h4" stroke="#fff" stroke-width="3"/><path d="M8 17h10M8 23h10M30 17h10M30 23h10M8 29h6" stroke="#fff" stroke-width="2.5"/>',
+  syllabus: '<rect x="3" y="7" width="8" height="34" fill="#fff"/><rect x="13" y="7" width="8" height="34" fill="#fff"/><rect x="23" y="7" width="6" height="34" fill="#fff"/><circle cx="36" cy="17" r="7" fill="none" stroke="#fff" stroke-width="3"/><path d="M36 24v17" stroke="#fff" stroke-width="3.5"/>',
+  enquete: '<circle cx="15" cy="19" r="7" fill="#fff"/><path d="M2 40c0-8 6-12 13-12s13 4 13 12z" fill="#fff"/><path d="M26 6h19v13h-9l-5 4v-4h-5z" fill="#fff"/><path d="M30 11h11M30 15h7" stroke="#4694d1" stroke-width="1.6"/>',
+  keiji: '<rect x="4" y="6" width="40" height="28" fill="#fff"/><rect x="7" y="9" width="34" height="22" fill="#4694d1"/><path d="M19 12h10l3 3v14H19z" fill="#fff"/><path d="M22 18h7M22 22h7M22 26h5" stroke="#4694d1" stroke-width="1.5"/><path d="M14 34l-4 9M34 34l4 9" stroke="#fff" stroke-width="3"/>',
+  jugyoryo: '<rect x="12" y="4" width="24" height="11" fill="#fff"/><rect x="3" y="14" width="42" height="18" rx="2" fill="#fff"/><rect x="11" y="27" width="26" height="16" fill="#fff" stroke="#4694d1" stroke-width="2"/><path d="M15 33h18M15 38h12" stroke="#4694d1" stroke-width="1.6"/>',
+  sonota: '<text x="24" y="31" text-anchor="middle" font-size="19" font-weight="bold" fill="#fff" font-family="Arial,Helvetica,sans-serif">etc.</text>',
+  cert: '<path d="M11 4h18l9 9v31H11z" fill="#fff"/><path d="M29 4v9h9" fill="none" stroke="#4694d1" stroke-width="2"/><path d="M17 22h15M17 28h15M17 34h11" stroke="#4694d1" stroke-width="2.5"/>',
 };
 const SMALL = {
-  info: '<circle cx="8" cy="8" r="7" fill="#5aa0e6" stroke="#fff"/><text x="8" y="12" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff" font-family="Georgia">i</text>',
-  person: '<rect x="1" y="2" width="14" height="12" fill="#6aa8e6"/><circle cx="8" cy="6" r="2.5" fill="#ffd21e"/><path d="M4 14l2-5h4l2 5" fill="#ffd21e"/>',
-  find: '<circle cx="6.5" cy="6.5" r="4.5" fill="#fff" stroke="#999" stroke-width="1.6"/><path d="M10 10l5 5" stroke="#999" stroke-width="2"/>',
-  book: '<path d="M1 3l7-1 7 1v11l-7-1-7 1z" fill="#c98a3c"/><path d="M8 2v11" stroke="#7a4d17"/>',
-  pen: '<path d="M2 14l1-4 9-9 3 3-9 9z" fill="#5fbf3f" stroke="#2f6f2a"/>',
-  board: '<rect x="1" y="3" width="14" height="9" fill="#d8e8a8" stroke="#8a7a3a"/>',
-  doc: '<path d="M3 1h7l3 3v11H3z" fill="#f4ecd4" stroke="#b9a768"/>',
+  info: `<defs>${rg("b", "#e6f4ff", "#2f7fd6", .4, .25)}</defs><circle cx="8" cy="8" r="7" fill="url(#IDb)" stroke="#1d5aa8" stroke-width=".7"/><circle cx="8" cy="4.6" r="1.2" fill="#fff"/><path d="M8 7v5" stroke="#fff" stroke-width="2"/>`,
+  person: `<defs>${lg("s", "#d6ecff", "#4a90da")}${lg("y", "#fff27a", "#f2b600")}</defs><rect x=".5" y="1.5" width="13" height="11" rx="1.5" fill="url(#IDs)" stroke="#2a64a8" stroke-width=".7"/><circle cx="9" cy="4.8" r="1.8" fill="url(#IDy)" stroke="#8a6a00" stroke-width=".5"/><path d="M8 7 5 10l1 1 2-2 1 3 1 3h1.5l-1-4 2 1 .5-1-3-2z" fill="url(#IDy)" stroke="#8a6a00" stroke-width=".5"/>`,
+  find: `<defs>${rg("g", "#ffffff", "#c8d0d8", .4, .35)}</defs><circle cx="6.3" cy="6.3" r="4.6" fill="url(#IDg)" stroke="#8a929a" stroke-width="1.4"/><path d="M9.6 9.6 14.5 14.5" stroke="#9aa2aa" stroke-width="2.6" stroke-linecap="round"/>`,
+  book: `<defs>${lg("l", "#e0a35a", "#9a5a1c")}</defs><path d="M1 3l6.5-1v11L1 14zM15 3l-6.5-1v11l6.5 1z" fill="url(#IDl)" stroke="#5e3410" stroke-width=".6"/><path d="M2.5 4.5l4-.6v8.2l-4 .6zM13.5 4.5l-4-.6v8.2l4 .6z" fill="#f2dfbd"/>`,
+  pen: `<defs>${lg("g", "#9be27a", "#2f9a2a", 1, 0)}</defs><path d="M2 14.5l.8-3.6L11 2.7l2.8 2.8-8.2 8.2z" fill="url(#IDg)" stroke="#1f6a1a" stroke-width=".6"/><path d="M2 14.5l.8-3.6 2.8 2.8z" fill="#f4d7b0"/>`,
+  board: `<defs>${lg("g", "#cfe8a0", "#8ab84a")}</defs><rect x=".5" y="2.5" width="15" height="10" rx="1" fill="#b7814a"/><rect x="1.8" y="3.8" width="12.4" height="7.4" fill="url(#IDg)"/>`,
+  doc: '<path d="M3 1h7l3 3v11H3z" fill="#fff" stroke="#999" stroke-width=".7"/><path d="M10 1v3h3" fill="none" stroke="#999" stroke-width=".7"/><path d="M5 7h6M5 9.5h6M5 12h4" stroke="#bbb" stroke-width=".7"/>',
+  news: '<path d="M2 2h9l3 3v9H2z" fill="#f4ecd4" stroke="#b9a768" stroke-width=".7"/><path d="M4 6h7M4 8.5h7M4 11h5" stroke="#c9b88a" stroke-width=".7"/>',
 };
 const icon = (set, k, vb) => svgOf(vb, set[k] ?? "");
 
@@ -556,7 +571,7 @@ function paintChrome() {
     .map(([k, l, fn]) => el("button", { onclick: fn }, icon(SYS_ICON, k, "0 0 24 24"), l)));
   $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("div", { class: "tabcell" + (id === state.tab ? " sel" : ""), onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
   $("menubar").replaceChildren(...TABS.find(t => t[0] === state.tab)[2].map(([l, p]) => el("a", { class: p === state.page ? "cur" : null, onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)));
-  const news = () => [el("p", {}, "あなた宛の新着情報があります。"), ...more().news.map(n => el("a", { onclick: () => go("board") }, n))];
+  const news = () => [el("p", {}, "あなた宛の新着情報があります。"), ...more().news.map((n, i) => el("a", { onclick: () => go("board") }, icon(SMALL, ["board", "doc", "book", "doc"][i % 4], "0 0 16 16"), el("span", {}, n)))];
   const fav = () => FAV.map(([l, p, ic]) => el("li", {}, icon(SMALL, ic, "0 0 16 16"), el("a", { onclick: () => go(p) }, l)));
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
   $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
