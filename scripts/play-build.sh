@@ -16,6 +16,7 @@ python3 -c 'import json,sys; [json.load(open(f)) for f in sys.argv[1:]]' android
 # Same offset scheme as iOS; a retry gets a distinct code.
 export TOS_VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
 export TOS_SIGNING_PROPERTIES="$RUNNER_TEMP/signing.properties"
-(cd android && ./gradlew --no-daemon testDebugUnitTest bundleRelease)
+(cd android && ./gradlew --no-daemon testDebugUnitTest bundleRelease assembleRelease)
 jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab >/dev/null
+echo "$TOS_VERSION_CODE" > "$RUNNER_TEMP/version-code"
 echo "versionCode $TOS_VERSION_CODE"

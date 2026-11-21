@@ -5,7 +5,7 @@ on:
     paths: ['android/**', 'scripts/play-*', '.github/workflows/play.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: android-play
   cancel-in-progress: false
@@ -38,6 +38,14 @@ jobs:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           PLAY_TRACK: ${{ vars.PLAY_TRACK || 'alpha' }}
         run: python3 scripts/play-upload.py android/app/build/outputs/bundle/release/app-release.aab
+      - name: Attach to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          code=$(cat "$RUNNER_TEMP/version-code")
+          cp android/app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/TOS-android-$code.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/TOS-android-$code.apk"
+          bash scripts/release-attach.sh android "$RUNNER_TEMP/TOS-android-$code.aab" "$RUNNER_TEMP/TOS-android-$code.apk"
       - name: Remove signing materials
         if: always()
-        run: rm -f "$RUNNER_TEMP/upload.jks" "$RUNNER_TEMP/signing.properties" "$RUNNER_TEMP/play-key.pem" android/app/src/release/assets/sync-default*.json
+        run: rm -f "$RUNNER_TEMP/upload.jks" "$RUNNER_TEMP/signing.properties" "$RUNNER_TEMP/play-key.pem" android/app/src/release/assets/sync-default*.json "$RUNNER_TEMP"/TOS-android-*

@@ -5,7 +5,7 @@ on:
     paths: ['ios/**', 'scripts/testflight-*', '.github/workflows/testflight.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: ios-testflight
   cancel-in-progress: false
@@ -37,6 +37,13 @@ jobs:
           ASC_APP_ID: '6837523860'
           ASC_BETA_GROUP_ID: ${{ vars.ASC_BETA_GROUP_ID }}
         run: python3 scripts/testflight-upload.py "$RUNNER_TEMP/export/TofuPOS.ipa"
+      - name: Attach to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$RUNNER_TEMP/TofuPOS.xcarchive/Products/Applications/TofuPOS.app/Info.plist")
+          cp "$RUNNER_TEMP/export/TofuPOS.ipa" "$RUNNER_TEMP/TOS-ios-$build.ipa"
+          bash scripts/release-attach.sh ios "$RUNNER_TEMP/TOS-ios-$build.ipa"
       - name: Remove signing materials
         if: always()
         run: |

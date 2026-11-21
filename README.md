@@ -164,5 +164,6 @@ GitHub Actions ワークフロー `Android Play testing` が、`main` への pus
 
 - **versionCode**: `1000 + GITHUB_RUN_NUMBER × 10 + GITHUB_RUN_ATTEMPT`
 - **Secrets**: `ANDROID_KEYSTORE_BASE64`（アップロード鍵）, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_SYNC_DEFAULT_JSON`, `ANDROID_SYNC_DEFAULT_TEST_JSON`, `PLAY_SERVICE_ACCOUNT_JSON`
+- 成果物（AAB・APK）と iOS の IPA は、コミットごとの GitHub Release（タグ `build-<短縮SHA>`、プレリリース）に添付されます。
 - `PLAY_SERVICE_ACCOUNT_JSON` が未設定のあいだは、ビルドと署名だけ行いアップロードしません。
 - 事前にPlay Consoleでアプリを作成し、最初の1回はAABを手動でアップロードし（Play App Signingの登録）、サービスアカウントにリリース権限を付けておく必要があります。
