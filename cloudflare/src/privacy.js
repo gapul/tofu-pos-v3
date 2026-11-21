@@ -40,6 +40,6 @@ main{max-width:720px;margin:0 auto;padding:32px 16px 64px}h1{font-size:1.6rem}h2
 
 <h2>6. お問い合わせ</h2>
 <p>本アプリに関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
-<p>__CONTACT__</p>
+<p><a href="mailto:wiry-tweet-nylon@duck.com">wiry-tweet-nylon@duck.com</a></p>
 </main></body>
 </html>`;

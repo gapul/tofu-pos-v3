@@ -30,7 +30,7 @@
 ・データは店の売上管理のためだけに使用します。
 
 ■ お問い合わせ
-（問い合わせ先: 未定）
+wiry-tweet-nylon@duck.com
 
 ## プライバシーポリシー（HTMLの<body>内に入れる本文として、<h1>〜<p>のHTMLで）
 
@@ -62,5 +62,5 @@
 
 <h2>6. お問い合わせ</h2>
 <p>本アプリに関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
-<p><a href="mailto:（問い合わせ先: 未定）">（問い合わせ先: 未定）</a></p>
+<p><a href="mailto:wiry-tweet-nylon@duck.com">wiry-tweet-nylon@duck.com</a></p>
 ```
