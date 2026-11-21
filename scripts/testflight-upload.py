@@ -59,6 +59,7 @@ def main():
     group = os.environ['ASC_BETA_GROUP_ID']
     if not group:
         raise ValueError('ASC_BETA_GROUP_ID is required')
+    group_info = api('GET', 'betaGroups/' + group)['data']['attributes']
     ipa = Path(sys.argv[1])
     with zipfile.ZipFile(ipa) as archive:
         names = [n for n in archive.namelist() if n.startswith('Payload/') and n.count('/') == 2 and n.endswith('.app/Info.plist')]
@@ -96,7 +97,9 @@ def main():
             if state in ('FAILED', 'INVALID'):
                 raise RuntimeError('Apple rejected the build')
             if state == 'VALID':
-                api('POST', f'betaGroups/{group}/relationships/builds', {'data': [{'type': 'builds', 'id': entry['id']}]})
+                # Automatic internal groups already receive every processed build.
+                if not group_info.get('hasAccessToAllBuilds'):
+                    api('POST', f'betaGroups/{group}/relationships/builds', {'data': [{'type': 'builds', 'id': entry['id']}]})
                 print(f'TestFlight distribution complete: {version} ({build})', flush=True)
                 return
         time.sleep(20)
