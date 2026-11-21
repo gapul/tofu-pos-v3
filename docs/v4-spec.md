@@ -363,3 +363,9 @@ AndroidはMaterial 3のColorSchemeへ、iOSはアクセントカラーと背景�
 - 横送りのページは「年齢 → 性別 → 集団 → 関係」。関係を選んだら受け取った額（単品）／合計（複数）へスクロール（今までの「集団の後」の動きを「関係の後」へ移す）。インジケーターにも4つ目。
 - 注文ペイロードの任意フィールド（null/未指定は出力しない、不正値は400、base_hashに含める）。D1 migration `0007_customer_relation.sql`（追加のみ、`cloud_orders.customer_relation`、payloadから埋める）。ダッシュボードAPIに `relations:[{relation, orders, sales}]` と画面に「関係別」表。修復SQLにも反映。
 - 端末DB: **v4はリリース済み**なので **v5**（v4→v5で `orders.customer_relation` を追加、データを消さない）。確認・レシート・履歴・締めの客層表示にも含める。
+
+## 改訂: ダッシュボードの公開（2026-11-21）
+
+- Workerの変数 `DASHBOARD_PUBLIC="true"` のとき、`GET /v1/dashboard` と `GET /v1/images/<hash>` はトークンなしで読める（URLを知っていれば誰でも見られる）。本番・テストとも `true`。書き込み・feed・restoreなど端末用の経路は従来どおり端末トークン必須。
+- 画面はトークンなしでまず読み込み、401のときだけトークン入力欄を出す。ログアウトボタンはトークンを使っているときだけ表示。
+- 閉じる場合は `wrangler.jsonc` の `DASHBOARD_PUBLIC` を外して配備すれば、`DASHBOARD_TOKEN_SHA256` による従来の閲覧に戻る。

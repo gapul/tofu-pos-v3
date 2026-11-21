@@ -1,4 +1,5 @@
-// Static page only: it contains no data. The token stays in sessionStorage and is sent to /v1/dashboard.
+// Static page only: it contains no data. The token stays in sessionStorage and is sent to /v1/dashboard;
+// when the Worker has DASHBOARD_PUBLIC="true" the page loads without one.
 export const DASHBOARD_HTML = `<!doctype html>
 <html lang="ja">
 <head>
@@ -30,7 +31,7 @@ th{font-size:13px;color:var(--muted);font-weight:600}.warn{color:var(--warn);fon
 <header><h1>TOS ダッシュボード</h1>
 <label class="muted"><input type="date" id="date"> </label>
 <label class="muted"><input type="checkbox" id="all"> 全期間</label>
-<button id="refresh">更新</button><button id="logout">ログアウト</button>
+<button id="refresh">更新</button><button id="logout" hidden>ログアウト</button>
 <span class="muted" id="updated"></span></header>
 <main>
 <div id="error" role="alert"></div>
@@ -85,11 +86,11 @@ function hoursChart(hours) {
   }
   return svg;
 }
-// Photos need the bearer token, so they are fetched once per hash and shown via blob URLs.
+// Photos may need the bearer token, so they are fetched once per hash and shown via blob URLs.
 const images = new Map();
 function thumb(hash) {
   const img = el("img", { class: "thumb", alt: "", loading: "lazy" });
-  if (!images.has(hash)) images.set(hash, fetch("/v1/images/" + hash, { headers: { Authorization: "Bearer " + token() } })
+  if (!images.has(hash)) images.set(hash, fetch("/v1/images/" + hash, { headers: token() ? { Authorization: "Bearer " + token() } : {} })
     .then(r => r.ok ? r.blob() : Promise.reject(new Error("HTTP " + r.status))).then(b => URL.createObjectURL(b))
     .catch(e => { images.delete(hash); throw e; }));
   images.get(hash).then(url => { img.src = url; }, () => img.remove());
@@ -124,14 +125,14 @@ function render(d) {
 }
 async function load() {
   const t = token();
-  $("login").hidden = !!t; if (!t || loading) return;
+  if (loading) return;
   loading = true;
   try {
     const q = $("all").checked ? "" : "?date=" + encodeURIComponent($("date").value || today());
-    const r = await fetch("/v1/dashboard" + q, { headers: { Authorization: "Bearer " + t }, cache: "no-store" });
-    if (r.status === 401) { store("remove"); memoryToken = null; $("view").hidden = true; $("login").hidden = false; $("error").textContent = "トークンが違います。"; return; }
+    const r = await fetch("/v1/dashboard" + q, { headers: t ? { Authorization: "Bearer " + t } : {}, cache: "no-store" });
+    if (r.status === 401) { store("remove"); memoryToken = null; $("view").hidden = true; $("login").hidden = false; $("logout").hidden = true; $("error").textContent = t ? "トークンが違います。" : ""; return; }
     if (!r.ok) throw new Error("HTTP " + r.status);
-    render(await r.json()); $("view").hidden = false; $("error").textContent = "";
+    render(await r.json()); $("view").hidden = false; $("login").hidden = true; $("logout").hidden = !t; $("error").textContent = "";
     $("updated").textContent = "更新 " + new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", timeStyle: "medium" }).format(new Date());
   } catch (e) { $("error").textContent = "読み込みに失敗しました（" + e.message + "）。30秒後に再試行します。"; }
   finally { loading = false; }

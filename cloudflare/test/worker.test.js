@@ -650,3 +650,17 @@ test("customer_relation: optional, validated, hashed; existing hashes unchanged;
   assert.deepEqual(now.map(r => r.customer_relation), ["relative", null]);
   assert.deepEqual(now.map(({ customer_relation, ...rest }) => rest), old);
 });
+
+test("DASHBOARD_PUBLIC opens the dashboard and photos without a token but never the device routes", async () => {
+  const env = { ...(await v4env()), DASHBOARD_PUBLIC: "true" }, body = jpeg();
+  const hash = (await (await upload(env, body)).json()).hash;
+  assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard"), env)).status, 200);
+  assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard"), { ...env, DASHBOARD_TOKEN_SHA256: undefined })).status, 200);
+  assert.equal((await getImage(env, hash, "wrong")).status, 200);
+  const writes = env.DB.writes;
+  assert.equal((await backupCall(env, "/v1/sync", { schema_version: 1, orders: [order()] }, "wrong")).status, 401);
+  assert.equal((await backupCall(env, "/v1/feed", undefined, dashboardToken)).status, 401);
+  assert.equal((await upload(env, jpeg(2), "image/jpeg", "wrong")).status, 401);
+  assert.equal(env.DB.writes, writes);
+  assert.equal((await worker.fetch(new Request("https://test.example/v1/dashboard"), { ...env, DASHBOARD_PUBLIC: "1" })).status, 401);
+});

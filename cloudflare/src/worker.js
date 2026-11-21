@@ -388,16 +388,19 @@ export default {
     const image = request.method === "GET" && /^\/v1\/images\/([a-f0-9]{64})$/.exec(path)?.[1];
     const route = DEVICE_ROUTES.get(key);
     if (!route && !image && key !== "GET /v1/dashboard") return json({ error: "not found" }, 404);
+    const publicDashboard = env.DASHBOARD_PUBLIC === "true";
     try {
       if (image) {
-        // Read-only: either the device token or the dashboard token may fetch a photo.
-        if (!env.SHOP_ID || !(env.DEVICE_TOKEN_SHA256 || env.DASHBOARD_TOKEN_SHA256)) return json({ error: "not configured" }, 503);
-        const ok = (env.DEVICE_TOKEN_SHA256 && await authorized(request, env.DEVICE_TOKEN_SHA256)) ||
+        // Read-only: either the device token or the dashboard token may fetch a photo, or anyone when the dashboard is public.
+        if (!env.SHOP_ID || !(env.DEVICE_TOKEN_SHA256 || env.DASHBOARD_TOKEN_SHA256 || publicDashboard)) return json({ error: "not configured" }, 503);
+        const ok = publicDashboard || (env.DEVICE_TOKEN_SHA256 && await authorized(request, env.DEVICE_TOKEN_SHA256)) ||
           (env.DASHBOARD_TOKEN_SHA256 && await authorized(request, env.DASHBOARD_TOKEN_SHA256));
         if (!ok) return json({ error: "unauthorized" }, 401);
         return await getImage(request, env, image);
       }
       if (!route) {
+        // DASHBOARD_PUBLIC="true" opens the read-only aggregate to anyone with the URL.
+        if (publicDashboard && env.SHOP_ID) return await dashboard(request, env);
         // Separate secret: device tokens cannot read the dashboard, the dashboard token cannot write.
         if (!env.DASHBOARD_TOKEN_SHA256 || !env.SHOP_ID || env.DASHBOARD_TOKEN_SHA256 === env.DEVICE_TOKEN_SHA256) return json({ error: "not configured" }, 503);
         if (!await authorized(request, env.DASHBOARD_TOKEN_SHA256)) return json({ error: "unauthorized" }, 401);

@@ -5,7 +5,7 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
-  "vars": { "SHOP_ID": "tofu" },
+  "vars": { "SHOP_ID": "tofu", "DASHBOARD_PUBLIC": "true" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -18,7 +18,7 @@
   "env": {
     "staging": {
       "name": "tofu-pos-v3-sync-staging",
-      "vars": { "SHOP_ID": "tofu-test" },
+      "vars": { "SHOP_ID": "tofu-test", "DASHBOARD_PUBLIC": "true" },
       "d1_databases": [
         {
           "binding": "DB",
