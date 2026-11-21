@@ -17,7 +17,8 @@ data class Sale(
   /** Local only: the cancellation (refund) was recorded on this device. */
   val cancelledHere: Boolean = false,
   val customerGroup: String? = null,
-  val ticketNo: String? = null
+  val ticketNo: String? = null,
+  val customerRelation: String? = null
 )
 data class DrawerSession(
   val id: String, val openedAt: String, val closedAt: String?, val float: Map<String, Int>, val floatTotal: Long,

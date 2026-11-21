@@ -174,6 +174,7 @@ class MainActivity : ComponentActivity() {
   private var age by mutableStateOf<String?>(null)
   private var gender by mutableStateOf<String?>(null)
   private var group by mutableStateOf<String?>(null)
+  private var relation by mutableStateOf<String?>(null)
   // Bumped after each sale (and environment switch) so the customer pager returns to its first page.
   private var customerEpoch by mutableIntStateOf(0)
   private var ticketPrefix by mutableStateOf("")
@@ -215,7 +216,7 @@ class MainActivity : ComponentActivity() {
       tab = it.getInt("selectedTab", 0).coerceIn(0, 3)
       advanced = it.getBoolean("advanced")
       single = SingleState(it.getInt("singleQuantity", 1).coerceIn(1, 999), it.getString("singleTender"), it.getString("singleManual").orEmpty())
-      age = it.getString("age"); gender = it.getString("gender"); group = it.getString("group")
+      age = it.getString("age"); gender = it.getString("gender"); group = it.getString("group"); relation = it.getString("relation")
       val rows = JSONArray(it.getString("cart") ?: "[]")
       for (i in 0 until rows.length()) {
         val row = rows.getJSONObject(i)
@@ -233,14 +234,14 @@ class MainActivity : ComponentActivity() {
         POSScreen(
           products, sales, cart, cash, tab, ready, busy, pendingSync, syncRunning, syncMessage,
           ScreenExtras(stocks, age, gender, drawer, summary, app.lastFeedAt, deviceLabel, held, deviceID, app.lastSentAt, app.syncFailed, app.imageGeneration, app.environment,
-            group = group, customerEpoch = customerEpoch, ticketPrefix = ticketPrefix),
+            group = group, relation = relation, customerEpoch = customerEpoch, ticketPrefix = ticketPrefix),
           onTab = { tab = it }, onCash = { cash = it }, onQuantity = ::quantity,
           onExact = { runCatching { Money.total(cart) }.getOrNull()?.let { cash = it.toString() } },
           onCashSet = { cash = it.toString() },
           onCashAdd = { add -> cash = ((Money.parse(cash) ?: 0) + add).coerceAtMost(Money.MAXIMUM).toString() },
           // Customer segment is optional; tapping the selected chip clears it.
           onAge = { age = if (age == it) null else it }, onGender = { gender = if (gender == it) null else it },
-          onGroup = { group = if (group == it) null else it },
+          onGroup = { group = if (group == it) null else it }, onRelation = { relation = if (relation == it) null else it },
           onTicketPrefix = { value -> work({ app.store.setTicketPrefix(value); app.store.ticketPrefix() }) { ticketPrefix = it; Toast.makeText(this, "接頭辞を保存しました", Toast.LENGTH_SHORT).show() } },
           onCheckout = ::confirmCheckout, onEdit = { productEditor = ProductEdit(it) },
           onStock = { product, kind -> stockEdit = StockEdit(product, kind) },
@@ -273,7 +274,7 @@ class MainActivity : ComponentActivity() {
         }
         confirmation?.let { checkout ->
           CheckoutDialog(checkout, busy, onDismiss = { confirmation = null }) {
-            if (!busy) work({ app.store.checkout(checkout.id, checkout.lines, checkout.received, checkout.age, checkout.gender, checkout.group) }) { sale ->
+            if (!busy) work({ app.store.checkout(checkout.id, checkout.lines, checkout.received, checkout.age, checkout.gender, checkout.group, checkout.relation) }) { sale ->
               confirmation = null; clearCart(); savedSale = sale; load(); app.requestSync()
             }
           }
@@ -302,7 +303,7 @@ class MainActivity : ComponentActivity() {
 
   override fun onSaveInstanceState(out: Bundle) {
     out.putString("commandID", commandID); out.putString("cash", cash); out.putInt("selectedTab", tab)
-    out.putString("age", age); out.putString("gender", gender); out.putString("group", group); out.putBoolean("advanced", advanced)
+    out.putString("age", age); out.putString("gender", gender); out.putString("group", group); out.putString("relation", relation); out.putBoolean("advanced", advanced)
     out.putInt("singleQuantity", single.quantity); out.putString("singleTender", single.tender); out.putString("singleManual", single.manual)
     out.putString("cart", JSONArray().apply {
       cart.forEach { put(JSONObject().put("id", it.productID).put("name", it.name).put("price", it.price).put("quantity", it.quantity)) }
@@ -366,7 +367,7 @@ class MainActivity : ComponentActivity() {
     if (total == null || received == null || received < total) {
       failure(IllegalArgumentException("商品・数量・預り金を確認してください")); return
     }
-    confirmation = Checkout(commandID, cart.toList(), total, received, age, gender, group)
+    confirmation = Checkout(commandID, cart.toList(), total, received, age, gender, group, relation)
   }
   /** One tap, no dialogs. The command ID plus the busy guard keep a double tap from saving twice. */
   private fun confirmSingle() {
@@ -375,9 +376,9 @@ class MainActivity : ComponentActivity() {
     val state = single
     if (!state.canConfirm(product.price, product.stopAtZero, stockOf(product))) return
     val total = state.total(product.price) ?: return; val received = state.received(total) ?: return
-    val id = commandID; val customerAge = age; val customerGender = gender; val customerGroup = group
-    work({ app.store.checkout(id, listOf(Line(product.id, product.name, product.price, state.quantity)), received, customerAge, customerGender, customerGroup) }) { sale ->
-      single = SingleState(); age = null; gender = null; group = null; customerEpoch++; commandID = UUID.randomUUID().toString()
+    val id = commandID; val customerAge = age; val customerGender = gender; val customerGroup = group; val customerRelation = relation
+    work({ app.store.checkout(id, listOf(Line(product.id, product.name, product.price, state.quantity)), received, customerAge, customerGender, customerGroup, customerRelation) }) { sale ->
+      single = SingleState(); age = null; gender = null; group = null; relation = null; customerEpoch++; commandID = UUID.randomUUID().toString()
       load(); app.requestSync(); offerUndo(sale, state.quantity)
     }
   }
@@ -427,7 +428,7 @@ class MainActivity : ComponentActivity() {
   /** Drops every piece of screen state (cart, dialogs, loaded rows) and reloads from the current environment's database. */
   private fun resetScreen() {
       snackbar.currentSnackbarData?.dismiss()
-      cart.clear(); cash = ""; age = null; gender = null; group = null; customerEpoch++; ticketPrefix = ""; single = SingleState(); commandID = UUID.randomUUID().toString()
+      cart.clear(); cash = ""; age = null; gender = null; group = null; relation = null; customerEpoch++; ticketPrefix = ""; single = SingleState(); commandID = UUID.randomUUID().toString()
       productEditor = null; stockEdit = null; cancelSale = null; confirmation = null; savedSale = null; settings = null
       catalogs = null; catalogNext = null; restoreChoice = null; canContinueRestore = false
       products = emptyList(); sales = emptyList(); pendingQuantities = emptyMap(); drawer = null; held = Held(); deviceID = ""
@@ -444,7 +445,7 @@ class MainActivity : ComponentActivity() {
       Toast.makeText(this, "レジを締めました（差額 ${if (difference > 0) "+" else ""}${difference}円）", Toast.LENGTH_LONG).show()
     }
   }
-  private fun clearCart() { cart.clear(); cash = ""; age = null; gender = null; group = null; customerEpoch++; commandID = UUID.randomUUID().toString() }
+  private fun clearCart() { cart.clear(); cash = ""; age = null; gender = null; group = null; relation = null; customerEpoch++; commandID = UUID.randomUUID().toString() }
   private fun failure(cause: Throwable) { error = cause.message ?: "処理に失敗しました" }
 
   private fun sync() {
@@ -523,7 +524,7 @@ class MainActivity : ComponentActivity() {
   }
 }
 
-data class Checkout(val id: String, val lines: List<Line>, val total: Long, val received: Long, val age: String? = null, val gender: String? = null, val group: String? = null)
+data class Checkout(val id: String, val lines: List<Line>, val total: Long, val received: Long, val age: String? = null, val gender: String? = null, val group: String? = null, val relation: String? = null)
 private data class StockEdit(val product: Product, val kind: String)
 private data class ProductEdit(val product: Product?, val picked: String? = null, val token: Int = 0)
 private data class ConnectionEdit(val url: String)

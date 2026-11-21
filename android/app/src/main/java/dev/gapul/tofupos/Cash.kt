@@ -8,11 +8,14 @@ object Customer {
   fun age(key: String?) = AGES.firstOrNull { it.first == key }?.second ?: "未設定"
   val GROUPS = listOf("solo" to "一人", "friends" to "友人", "family" to "家族", "couple" to "カップル", "group" to "グループ")
   fun gender(key: String?) = GENDERS.firstOrNull { it.first == key }?.second ?: "未設定"
+  val RELATIONS = listOf("acquaintance" to "知り合い", "relative" to "親族", "member" to "メンバー", "tofu_fan" to "豆腐狂", "general" to "一般人")
   fun group(key: String?) = GROUPS.firstOrNull { it.first == key }?.second ?: "未設定"
+  fun relation(key: String?) = RELATIONS.firstOrNull { it.first == key }?.second ?: "未設定"
+  fun validRelation(key: String?) = key == null || RELATIONS.any { it.first == key }
   fun validGroup(key: String?) = key == null || GROUPS.any { it.first == key }
   /** "大人・女性・家族"; only the axes that were chosen, null when none. */
-  fun describe(age: String?, gender: String?, group: String?): String? =
-    listOfNotNull(age?.let(::age), gender?.let(::gender), group?.let(::group)).takeIf { it.isNotEmpty() }?.joinToString("・")
+  fun describe(age: String?, gender: String?, group: String?, relation: String? = null): String? =
+    listOfNotNull(age?.let(::age), gender?.let(::gender), group?.let(::group), relation?.let(::relation)).takeIf { it.isNotEmpty() }?.joinToString("・")
   fun validAge(key: String?) = key == null || AGES.any { it.first == key }
   fun validGender(key: String?) = key == null || GENDERS.any { it.first == key }
 }
@@ -60,12 +63,13 @@ object Cash {
     val created = sales.filter { it.deviceID == deviceID && inside(it.createdAt) }
     val segments = created.filter { it.cancelledAt == null }.groupingBy { it.customerAge to it.customerGender }.eachCount()
     val groups = created.filter { it.cancelledAt == null }.groupingBy { it.customerGroup }.eachCount()
-    return SessionSummary(created.sumOf { it.total }, sales.filter { it.cancelledHere && inside(it.cancelledAt) }.sumOf { it.total }, created.size, segments, groups)
+    val relations = created.filter { it.cancelledAt == null }.groupingBy { it.customerRelation }.eachCount()
+    return SessionSummary(created.sumOf { it.total }, sales.filter { it.cancelledHere && inside(it.cancelledAt) }.sumOf { it.total }, created.size, segments, groups, relations)
   }
   fun expected(floatTotal: Long, summary: SessionSummary) = floatTotal + summary.sales - summary.cancels
 }
 
-data class SessionSummary(val sales: Long, val cancels: Long, val orders: Int, val segments: Map<Pair<String?, String?>, Int>, val groups: Map<String?, Int> = emptyMap())
+data class SessionSummary(val sales: Long, val cancels: Long, val orders: Int, val segments: Map<Pair<String?, String?>, Int>, val groups: Map<String?, Int> = emptyMap(), val relations: Map<String?, Int> = emptyMap())
 
 /** Single-product register: quantity and the tender choice. Nothing is tendered until chosen; a quantity change clears it. */
 data class SingleState(val quantity: Int = 1, val tender: String? = null, val manual: String = "") {

@@ -55,4 +55,18 @@ class ReleaseTest {
     val csv = SalesCSV.make(listOf(sale(ticket = "12")))
     assertTrue(csv.lines().first().endsWith(",ticket_no")); assertTrue(csv.lines()[1].endsWith(",\"12\""))
   }
+  @Test fun relationIsAnOptionalFourthAxis() {
+    assertEquals(listOf("知り合い", "親族", "メンバー", "豆腐狂", "一般人"), Customer.RELATIONS.map { it.second })
+    assertEquals(listOf("acquaintance", "relative", "member", "tofu_fan", "general"), Customer.RELATIONS.map { it.first })
+    assertEquals("大人・女性・家族・豆腐狂", Customer.describe("adult", "female", "family", "tofu_fan"))
+    assertEquals("一般人", Customer.describe(null, null, null, "general"))
+    val plain = sale()
+    assertFalse(PendingSale(plain, 1).json().has("customer_relation"))
+    val json = PendingSale(plain.copy(customerRelation = "member"), 1).json()
+    assertEquals("member", json.getString("customer_relation"))
+    assertEquals("member", CloudJSON.order(json).sale.customerRelation)
+    assertThrows(IllegalArgumentException::class.java) { CloudJSON.validate(PendingSale(plain.copy(customerRelation = "boss"), 1)) }
+    val sales = listOf(plain.copy(customerRelation = "relative"), plain.copy(id = "b", customerRelation = "relative"), plain.copy(id = "c"))
+    assertEquals(mapOf("relative" to 2, null to 1), Cash.summary(sales, "d", "2026-11-21T00:00:00Z", null).relations)
+  }
 }

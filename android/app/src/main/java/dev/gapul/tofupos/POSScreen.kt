@@ -211,7 +211,7 @@ data class ScreenExtras(
   val drawer: DrawerSession? = null, val summary: SessionSummary? = null, val lastFeedAt: String? = null, val deviceLabel: String = "",
   val held: Held = Held(), val deviceID: String = "", val lastSentAt: String? = null, val syncFailed: Boolean = false, val imageGeneration: Int = 0,
   val environment: AppEnvironment = AppEnvironment.PRODUCTION,
-  val group: String? = null, val customerEpoch: Int = 0, val ticketPrefix: String = ""
+  val group: String? = null, val relation: String? = null, val customerEpoch: Int = 0, val ticketPrefix: String = ""
 ) { val test get() = environment == AppEnvironment.TEST }
 /** Items left out of automatic sync: refused by the cloud (HTTP 400) and conflicting orders. */
 data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0, val conflicts: Int = 0, val images: Int = 0) {
@@ -229,7 +229,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit,
   advanced: Boolean, onAdvanced: (Boolean) -> Unit,
   single: SingleState, onSingle: (SingleState) -> Unit, onSingleConfirm: () -> Unit, snackbar: SnackbarHostState,
-  onEnvironment: (AppEnvironment) -> Unit, onGroup: (String) -> Unit, onTicketPrefix: (String) -> Unit,
+  onEnvironment: (AppEnvironment) -> Unit, onGroup: (String) -> Unit, onTicketPrefix: (String) -> Unit, onRelation: (String) -> Unit,
   refreshing: Boolean = false, onRefresh: () -> Unit = {}, onResetTest: () -> Unit = {}
 ) {
   val focus = LocalFocusManager.current
@@ -291,8 +291,8 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         } else PullRefresh(refreshing, onRefresh) { when (tab) {
           // Exactly one product on sale switches the register to the single-product screen.
           0 -> products.filter { it.active }.let { onSale ->
-            if (onSale.size == 1) SingleRegister(onSale.single(), extras.stocks[onSale.single().id], single, extras, enabled, onSingle, onAge, onGender, onGroup, onSingleConfirm)
-            else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onGroup, onCheckout)
+            if (onSale.size == 1) SingleRegister(onSale.single(), extras.stocks[onSale.single().id], single, extras, enabled, onSingle, onAge, onGender, onGroup, onRelation, onSingleConfirm)
+            else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onGroup, onRelation, onCheckout)
           }
           1 -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { IconAction("商品を追加", rememberVectorPainter(Icons.Default.Add), { onEdit(null) }, enabled = enabled, filled = true, size = 56.dp, text = "商品を追加") } }
@@ -446,16 +446,16 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   return remember { android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
 }
 /**
- * Customer segment as three swipeable pages (年齢 → 性別 → 集団). Choosing a chip moves to the next page; after 集団
+ * Customer segment as four swipeable pages (年齢 → 性別 → 集団 → 関係). Choosing a chip moves to the next page; after 関係
  * [onDone] scrolls the register. Tapping the chosen chip only clears it. Every axis is optional.
  */
-@Composable private fun CustomerPager(extras: ScreenExtras, enabled: Boolean, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onDone: () -> Unit) {
-  val pager = rememberPagerState { 3 }
+@Composable private fun CustomerPager(extras: ScreenExtras, enabled: Boolean, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onRelation: (String) -> Unit, onDone: () -> Unit) {
+  val pager = rememberPagerState { 4 }
   val scope = rememberCoroutineScope(); val still = reducedMotion()
   fun go(page: Int) { scope.launch { if (still) pager.scrollToPage(page) else pager.animateScrollToPage(page) } }
   LaunchedEffect(extras.customerEpoch) { if (pager.currentPage != 0) pager.scrollToPage(0) }
-  val axes = listOf(Triple("年齢", Customer.AGES, extras.age), Triple("性別", Customer.GENDERS, extras.gender), Triple("集団", Customer.GROUPS, extras.group))
-  val selects = listOf(onAge, onGender, onGroup)
+  val axes = listOf(Triple("年齢", Customer.AGES, extras.age), Triple("性別", Customer.GENDERS, extras.gender), Triple("集団", Customer.GROUPS, extras.group), Triple("関係", Customer.RELATIONS, extras.relation))
+  val selects = listOf(onAge, onGender, onGroup, onRelation)
   Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
     Row(Modifier.padding(horizontal = 20.dp)) {
       Text("客層", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
@@ -480,7 +480,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       Choices(options, value, enabled) { key ->
         val choosing = value != key
         selects[page](key)
-        if (choosing) { if (page < 2) go(page + 1) else onDone() }
+        if (choosing) { if (page < axes.lastIndex) go(page + 1) else onDone() }
       }
     }
   }
@@ -506,7 +506,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
 }
 @Composable private fun SingleRegister(
   product: Product, stock: Long?, state: SingleState, extras: ScreenExtras, enabled: Boolean,
-  onState: (SingleState) -> Unit, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onConfirm: () -> Unit
+  onState: (SingleState) -> Unit, onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onRelation: (String) -> Unit, onConfirm: () -> Unit
 ) {
   val focus = LocalFocusManager.current
   val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
@@ -543,7 +543,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
         }
       } }
       item { Card(shape = RoundedCornerShape(24.dp)) {
-        CustomerPager(extras, enabled, onAge, onGender, onGroup) {
+        CustomerPager(extras, enabled, onAge, onGender, onGroup, onRelation) {
           focus.clearFocus(); scope.launch { if (still) list.scrollToItem(2) else list.animateScrollToItem(2) } // show 受け取った額
         }
       } }
@@ -593,7 +593,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
 @Composable private fun Register(
   products: List<Product>, cart: List<Line>, cash: String, extras: ScreenExtras, enabled: Boolean, compact: Boolean,
   onCash: (String) -> Unit, onQuantity: (String, Int) -> Unit, onExact: () -> Unit, onCashSet: (Long) -> Unit, onCashAdd: (Long) -> Unit,
-  onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onCheckout: () -> Unit
+  onAge: (String) -> Unit, onGender: (String) -> Unit, onGroup: (String) -> Unit, onRelation: (String) -> Unit, onCheckout: () -> Unit
 ) {
   val focus = LocalFocusManager.current
   val list = rememberLazyListState(); val scope = rememberCoroutineScope(); val still = reducedMotion()
@@ -649,8 +649,8 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       }
       if (cart.isNotEmpty()) item {
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-          CustomerPager(extras, enabled, onAge, onGender, onGroup) {
-            // After 集団: bring the cash card / total and 購入 into view.
+          CustomerPager(extras, enabled, onAge, onGender, onGroup, onRelation) {
+            // After 関係: bring the cash card / total and 購入 into view.
             focus.clearFocus(); scope.launch { val last = list.layoutInfo.totalItemsCount - 1; if (last >= 0) { if (still) list.scrollToItem(last) else list.animateScrollToItem(last) } }
           }
         }
@@ -753,6 +753,10 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
             Text("集団別", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall)
             (Customer.GROUPS.map { it.first } + listOf<String?>(null)).forEach { key -> summary.groups[key]?.let { Text("${Customer.group(key)}　${it}件") } }
           }
+          if (summary.relations.isNotEmpty()) {
+            Text("関係別", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall)
+            (Customer.RELATIONS.map { it.first } + listOf<String?>(null)).forEach { key -> summary.relations[key]?.let { Text("${Customer.relation(key)}　${it}件") } }
+          }
         }
       } }
       item { Text("レジ締め：実際の枚数を数えて入力", Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium) }
@@ -795,7 +799,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
           Text(yen(sale.total), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
           sale.ticketNo?.let { Text("整理番号 $it", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         }
-        Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodySmall) }
+        Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup, sale.customerRelation)?.let { Text("客層 $it", style = MaterialTheme.typography.bodySmall) }
         sale.lines.forEach { Text("${it.name} × ${it.quantity}　${yen(it.price * it.quantity)}") }
         Text("預り ${yen(sale.received)} · 釣銭 ${yen(sale.change)}", style = MaterialTheme.typography.bodySmall)
         sale.cancellationReason?.let { Text("取消理由: $it") }
@@ -865,7 +869,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
 @Composable fun CheckoutDialog(checkout: Checkout, busy: Boolean, onDismiss: () -> Unit, confirm: () -> Unit) {
   val change = checkout.received - checkout.total
   AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("${yen(checkout.total)} の会計を確定しますか？") },
-    text = { Text("預り金 ${yen(checkout.received)}\nお釣り ${yen(change)}\n客層 ${Customer.describe(checkout.age, checkout.gender, checkout.group) ?: "未設定"}") },
+    text = { Text("預り金 ${yen(checkout.received)}\nお釣り ${yen(change)}\n客層 ${Customer.describe(checkout.age, checkout.gender, checkout.group, checkout.relation) ?: "未設定"}") },
     confirmButton = { ConfirmIcon("確定する", !busy, onClick = confirm) }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ReceiptDialog(sale: Sale, next: () -> Unit) {
@@ -874,7 +878,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       sale.ticketNo?.let { Text("整理番号 $it", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold) }
       Text("合計 ${yen(sale.total)}\n預り金 ${yen(sale.received)}")
       Text("お釣り ${yen(sale.change)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-      Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodyMedium) }
+      Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup, sale.customerRelation)?.let { Text("客層 $it", style = MaterialTheme.typography.bodyMedium) }
     }
   }, confirmButton = { ConfirmIcon("次のお客様", text = "次へ", onClick = next) })
 }

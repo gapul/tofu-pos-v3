@@ -30,7 +30,7 @@ data class PendingSale(val sale: Sale, val revision: Int) {
     .put("cancelled_at", sale.cancelledAt ?: JSONObject.NULL).put("cancellation_reason", sale.cancellationReason ?: JSONObject.NULL)
     .put("lines", JSONArray(sale.lines.map { JSONObject().put("product_id", it.productID).put("name", it.name).put("price", it.price).put("quantity", it.quantity) }))
     // Omitted when null so 0.3.0 orders keep their cloud payload and hash.
-    .apply { sale.deviceID?.let { put("device_id", it) }; sale.customerAge?.let { put("customer_age", it) }; sale.customerGender?.let { put("customer_gender", it) }; sale.customerGroup?.let { put("customer_group", it) }; sale.ticketNo?.let { put("ticket_no", it) } }
+    .apply { sale.deviceID?.let { put("device_id", it) }; sale.customerAge?.let { put("customer_age", it) }; sale.customerGender?.let { put("customer_gender", it) }; sale.customerGroup?.let { put("customer_group", it) }; sale.ticketNo?.let { put("ticket_no", it) }; sale.customerRelation?.let { put("customer_relation", it) } }
 }
 data class SyncReceipt(val id: String, val revision: Int)
 data class SyncOutcome(val message: String, val pending: Int, val changed: Boolean = false, val images: Int = 0)

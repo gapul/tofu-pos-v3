@@ -12,7 +12,7 @@ data class StockEvent(val id: String, val productID: String, val kind: String, v
 data class FeedResult(val products: Int, val orders: Int, val cancellations: Int)
 private enum class Merge { ADDED, CANCELLED, SAME, CONFLICT }
 
-class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenHelper(context, name, null, 4) {
+class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenHelper(context, name, null, 5) {
   override fun onConfigure(db: SQLiteDatabase) {
     db.setForeignKeyConstraintsEnabled(true)
     db.execSQL("PRAGMA synchronous=FULL")
@@ -24,14 +24,17 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
     addSyncSchema(db)
     addVersion3(db)
     addVersion4(db)
+    addVersion5(db)
   }
-  // v3 is in use on shipped devices: every step only adds columns or tables.
+  // v3 and v4 are in use on shipped devices: every step only adds columns or tables.
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-    check(oldVersion in 1..3 && newVersion == 4) { "未対応のDBバージョンです。データを削除せず確認してください" }
+    check(oldVersion in 1..4 && newVersion == 5) { "未対応のDBバージョンです。データを削除せず確認してください" }
     if (oldVersion < 2) addSyncSchema(db)
     if (oldVersion < 3) addVersion3(db)
-    addVersion4(db)
+    if (oldVersion < 4) addVersion4(db)
+    addVersion5(db)
   }
+  private fun addVersion5(db: SQLiteDatabase) = db.execSQL("ALTER TABLE orders ADD COLUMN customer_relation TEXT")
   private fun addVersion4(db: SQLiteDatabase) = listOf("customer_group", "ticket_no").forEach { db.execSQL("ALTER TABLE orders ADD COLUMN $it TEXT") }
   fun ticketPrefix(): String = query("SELECT value FROM sync_metadata WHERE key='ticket_prefix'").firstOrNull()?.get(0).orEmpty()
   fun setTicketPrefix(prefix: String) {
@@ -116,22 +119,22 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
   /** Unsynced, not cancelled sales per product; the cloud stock does not include them yet. */
   fun pendingQuantities(): Map<String, Long> = query("SELECT l.product_id,SUM(l.quantity) FROM order_lines l JOIN orders o ON o.id=l.order_id WHERE o.synced_revision<o.revision AND o.cancelled_at IS NULL GROUP BY l.product_id")
     .associate { it[0] to it[1].toLong() }
-  fun checkout(id: String, lines: List<Line>, received: Long, age: String? = null, gender: String? = null, group: String? = null): Sale = transaction {
+  fun checkout(id: String, lines: List<Line>, received: Long, age: String? = null, gender: String? = null, group: String? = null, relation: String? = null): Sale = transaction {
     sale(id)?.let {
       require(it.lines == lines && it.received == received) { "同じ会計IDで内容が異なります" }
       return@transaction it
     }
     val total = Money.total(lines)
     require(id.isNotEmpty() && received >= total && received <= Money.MAXIMUM) { "預り金が不足しているか上限を超えています" }
-    require(Customer.validAge(age) && Customer.validGender(gender) && Customer.validGroup(group)) { "客層を確認してください" }
+    require(Customer.validAge(age) && Customer.validGender(gender) && Customer.validGroup(group) && Customer.validRelation(relation)) { "客層を確認してください" }
     // The ticket number is taken in the same transaction, so a replayed command ID never consumes another one.
     val now = Instant.now(); val today = Tickets.date(now)
     val meta = query("SELECT key,value FROM sync_metadata WHERE key IN ('ticket_date','ticket_seq','ticket_prefix')").associate { it[0] to it[1] }
     val seq = Tickets.next(meta["ticket_date"], meta["ticket_seq"]?.toIntOrNull() ?: 0, today)
     writableDatabase.execSQL("INSERT OR REPLACE INTO sync_metadata VALUES('ticket_date',?)", arrayOf(today))
     writableDatabase.execSQL("INSERT OR REPLACE INTO sync_metadata VALUES('ticket_seq',?)", arrayOf(seq.toString()))
-    writableDatabase.execSQL("INSERT INTO orders(id,created_at,total,received,change_yen,device_id,customer_age,customer_gender,customer_group,ticket_no) VALUES(?,?,?,?,?,?,?,?,?,?)",
-      arrayOf<Any?>(id, now.toString(), total, received, received - total, deviceID(), age, gender, group, Tickets.format(meta["ticket_prefix"].orEmpty(), seq)))
+    writableDatabase.execSQL("INSERT INTO orders(id,created_at,total,received,change_yen,device_id,customer_age,customer_gender,customer_group,ticket_no,customer_relation) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+      arrayOf<Any?>(id, now.toString(), total, received, received - total, deviceID(), age, gender, group, Tickets.format(meta["ticket_prefix"].orEmpty(), seq), relation))
     lines.forEachIndexed { index, line ->
       writableDatabase.execSQL("INSERT INTO order_lines VALUES(?,?,?,?,?,?)", arrayOf<Any>(id, index + 1, line.productID, line.name, line.price, line.quantity))
     }
@@ -157,7 +160,7 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
     if (rows.isEmpty()) return emptyList()
     val marks = rows.joinToString(",") { "?" }
     val details = query("SELECT order_id,product_id,name,price,quantity FROM order_lines WHERE order_id IN ($marks) ORDER BY order_id,line_no", rows.map { it[0] }.toTypedArray()).groupBy { it[0] }
-    return rows.map { PendingSale(makeSale(it, details[it[0]].orEmpty()), it[13].toInt()) }
+    return rows.map { PendingSale(makeSale(it, details[it[0]].orEmpty()), it[14].toInt()) }
   }
   fun acknowledge(receipts: List<SyncReceipt>) {
     if (receipts.isEmpty()) return
@@ -263,13 +266,13 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
   private fun merge(row: PendingSale): Merge {
     val incoming = row.sale; val old = sale(incoming.id)
     if (old == null) {
-      writableDatabase.execSQL("INSERT INTO orders(id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,customer_group,ticket_no,revision,synced_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        arrayOf(incoming.id,incoming.createdAt,incoming.total,incoming.received,incoming.change,incoming.cancelledAt,incoming.cancellationReason,incoming.deviceID,incoming.customerAge,incoming.customerGender,incoming.customerGroup,incoming.ticketNo,row.revision,row.revision))
+      writableDatabase.execSQL("INSERT INTO orders(id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,customer_group,ticket_no,customer_relation,revision,synced_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        arrayOf(incoming.id,incoming.createdAt,incoming.total,incoming.received,incoming.change,incoming.cancelledAt,incoming.cancellationReason,incoming.deviceID,incoming.customerAge,incoming.customerGender,incoming.customerGroup,incoming.ticketNo,incoming.customerRelation,row.revision,row.revision))
       incoming.lines.forEachIndexed { index, l -> writableDatabase.execSQL("INSERT INTO order_lines VALUES(?,?,?,?,?,?)", arrayOf<Any>(incoming.id,index+1,l.productID,l.name,l.price,l.quantity)) }
       return Merge.ADDED
     }
     if (old.createdAt != incoming.createdAt || old.total != incoming.total || old.received != incoming.received || old.change != incoming.change || old.lines != incoming.lines ||
-      old.deviceID != incoming.deviceID || old.customerAge != incoming.customerAge || old.customerGender != incoming.customerGender || old.customerGroup != incoming.customerGroup || old.ticketNo != incoming.ticketNo) return Merge.CONFLICT
+      old.deviceID != incoming.deviceID || old.customerAge != incoming.customerAge || old.customerGender != incoming.customerGender || old.customerGroup != incoming.customerGroup || old.ticketNo != incoming.ticketNo || old.customerRelation != incoming.customerRelation) return Merge.CONFLICT
     if (old.cancelledAt != null && incoming.cancelledAt != null && (old.cancelledAt != incoming.cancelledAt || old.cancellationReason != incoming.cancellationReason)) return Merge.CONFLICT
     var result = Merge.SAME
     if (old.cancelledAt == null && row.revision == 2) {
@@ -311,7 +314,7 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
   }
   private fun makeSale(row: List<String>, lines: List<List<String>>) = Sale(
     row[0], row[1], row[2].toLong(), row[3].toLong(), row[4].toLong(), row[5].ifEmpty { null }, row[6].ifEmpty { null },
-    lines.map { Line(it[1], it[2], it[3].toLong(), it[4].toInt()) }, row[7].ifEmpty { null }, row[8].ifEmpty { null }, row[9].ifEmpty { null }, row[10] == "1", row[11].ifEmpty { null }, row[12].ifEmpty { null }
+    lines.map { Line(it[1], it[2], it[3].toLong(), it[4].toInt()) }, row[7].ifEmpty { null }, row[8].ifEmpty { null }, row[9].ifEmpty { null }, row[10] == "1", row[11].ifEmpty { null }, row[12].ifEmpty { null }, row[13].ifEmpty { null }
   )
   private fun query(sql: String, args: Array<String> = emptyArray()): List<List<String>> =
     readableDatabase.rawQuery(sql, args).use { cursor ->
@@ -323,7 +326,7 @@ class POSStore(context: Context, name: String = "tofu-pos.sqlite") : SQLiteOpenH
     finally { writableDatabase.endTransaction() }
   }
   private companion object {
-    const val ORDER = "id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,cancelled_here,customer_group,ticket_no"
+    const val ORDER = "id,created_at,total,received,change_yen,cancelled_at,cancellation_reason,device_id,customer_age,customer_gender,cancelled_here,customer_group,ticket_no,customer_relation"
     const val PRODUCT = "id,name,price,active,stop_at_zero,version,cloud_stock,dirty,image_hash"
     const val SESSION = "id,opened_at,closed_at,float_json,float_total,counted_json,counted_total,expected_total,sales_total,cancel_total,order_count"
   }
