@@ -24,7 +24,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.gapul.tofupos.v3
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: '0.4.0'
-        CURRENT_PROJECT_VERSION: '17'
+        CURRENT_PROJECT_VERSION: '18'
         INFOPLIST_KEY_CFBundleShortVersionString: '$(MARKETING_VERSION)'
         INFOPLIST_KEY_CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
         INFOPLIST_KEY_CFBundleDisplayName: TOS
@@ -43,6 +43,8 @@ targets:
         # Sandbox, outgoing network and user-selected files (CSV export, settings import) on the Mac only.
         "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Support/TofuPOS-macCatalyst.entitlements
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: S3H296G6Q5
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
     dependencies:
       - sdk: libsqlite3.tbd
 schemes:
