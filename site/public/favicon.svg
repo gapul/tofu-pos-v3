@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M32 4 6 18v28l26 14 26-14V18z" fill="#fbf1d9" stroke="#8a4b1f" stroke-width="3" stroke-linejoin="round"/><path d="M32 32v28l26-14V18z" fill="#ffe8a9"/><path d="M6 18 32 32 58 18 32 4z" fill="#8a4b1f"/><g fill="#2e2018"><ellipse cx="24" cy="17" rx="1.6" ry="2.8"/><ellipse cx="34" cy="12" rx="1.6" ry="2.8"/><ellipse cx="40" cy="20" rx="1.6" ry="2.8"/><ellipse cx="30" cy="23" rx="1.6" ry="2.8"/></g><path d="M32 32v28" stroke="#8a4b1f" stroke-width="3"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Same pose as the portal's tilted cube icon, as a block of tofu with a miso top. -->
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c47a3c"/><stop offset="1" stop-color="#8a4b1f"/></linearGradient>
+    <linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f2e3c4"/></linearGradient>
+    <linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cfa4"/><stop offset="1" stop-color="#d1b07a"/></linearGradient>
+  </defs>
+  <g transform="translate(32 33) rotate(14) scale(1.12) translate(-32 -33)">
+  <path d="M10 21 33 7 55 19 32 33z" fill="url(#t)"/>
+  <path d="M10 21 32 33 30 58 9 45z" fill="url(#l)"/>
+  <path d="M32 33 55 19 53 44 30 58z" fill="url(#r)"/>
+  <g fill="#2e2018"><ellipse cx="25" cy="18" rx="1.3" ry="2.2" transform="rotate(30 25 18)"/><ellipse cx="34" cy="13" rx="1.3" ry="2.2" transform="rotate(-20 34 13)"/><ellipse cx="41" cy="21" rx="1.3" ry="2.2" transform="rotate(50 41 21)"/><ellipse cx="31" cy="25" rx="1.3" ry="2.2" transform="rotate(10 31 25)"/></g>
+  <g fill="#f6f4f3"><ellipse cx="38" cy="16" rx="1.1" ry="1.9" transform="rotate(-40 38 16)"/><ellipse cx="22" cy="23" rx="1.1" ry="1.9" transform="rotate(60 22 23)"/></g>
+  </g>
+</svg>
