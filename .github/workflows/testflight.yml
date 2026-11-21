@@ -1,0 +1,46 @@
+name: iOS TestFlight
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', 'scripts/testflight-*', '.github/workflows/testflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'gapul/tofu-pos-v3' && github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Verify Swift core
+        run: swift test
+      - name: Build and sign
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          IOS_SYNC_DEFAULT_JSON: ${{ secrets.IOS_SYNC_DEFAULT_JSON }}
+        run: bash scripts/testflight-build.sh
+      - name: Upload and distribute
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_APP_ID: '6837523860'
+          ASC_BETA_GROUP_ID: ${{ vars.ASC_BETA_GROUP_ID }}
+        run: python3 scripts/testflight-upload.py "$RUNNER_TEMP/export/TofuPOS.ipa"
+      - name: Remove signing materials
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/tos-ci.keychain-db" || true
+          rm -f "$RUNNER_TEMP/signing.p12" "$RUNNER_TEMP/profile.mobileprovision" "$RUNNER_TEMP/asc-key.p8"
+          rm -f ios/Config/sync-default.json
+          rm -rf "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
