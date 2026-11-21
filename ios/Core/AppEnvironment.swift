@@ -14,4 +14,14 @@ public enum AppEnvironment: String, CaseIterable, Identifiable {
     public var bundledConnection: String { self == .production ? "sync-default" : "sync-default-test" }
     public var switchPrompt: String { self == .test ? "テスト環境に切り替えます（売上は本番に入りません）。" : "本番環境に戻します。" }
     public static func stored(_ value: String?) -> AppEnvironment { value.flatMap(AppEnvironment.init(rawValue:)) ?? .production }
+    /// Test only: deletes the test DB (with its journal files) and photo folder under `directory`, so the
+    /// next open starts empty and pulls everything from the test cloud again. Production is refused.
+    public func eraseLocalData(in directory: URL) throws {
+        guard self == .test else { throw POSFailure.invalid("本番のデータは消去できません") }
+        let fm = FileManager.default
+        for name in [databaseFile, databaseFile + "-journal", databaseFile + "-wal", databaseFile + "-shm", imageFolder] {
+            let url = directory.appendingPathComponent(name)
+            if fm.fileExists(atPath: url.path) { try fm.removeItem(at: url) }
+        }
+    }
 }

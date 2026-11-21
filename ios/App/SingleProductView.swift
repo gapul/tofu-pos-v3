@@ -149,9 +149,10 @@ struct SingleProductView: View {
             }
             .background(Color.tofuBackground)
             .modifier(TofuBar())
+            .refreshable { await model.pullToRefresh() }
             .navigationTitle("レジ")
             .syncToolbar(model)
-            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { manualFocused = false } } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down"), text: "完了") { manualFocused = false } } }
             .overlay(alignment: .bottom) { if let toast { toastView(toast) } }
             .onChange(of: quantity) { _ in choice = .none; manualText = "" }
             .onChange(of: limit) { newLimit in if quantity > max(1, newLimit) { quantity = max(1, newLimit) } }
@@ -256,7 +257,7 @@ struct SingleProductView: View {
                 Text((isTest ? "テスト・" : "") + QuickSale.savedText(sale)).font(.subheadline).foregroundColor(.white).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 4)
-            IconButton("この会計を取消", .asset("IconCancelSale")) { undo(sale) }.foregroundColor(.tofuTop)
+            IconButton("この会計を取消", .asset("IconCancelSale"), text: "取消") { undo(sale) }.foregroundColor(.tofuTop)
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 12).fill(toastDark.opacity(0.95)))

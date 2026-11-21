@@ -36,14 +36,20 @@ struct TofuBar: ViewModifier {
     }
 }
 
+/// Shown only in the test environment; tapping it asks to go back to production.
 struct TestBadge: View {
     @Environment(\.isTestEnvironment) private var test
+    var backToProduction: () -> Void = {}
     var body: some View {
         if test {
-            Text("テスト").font(.caption.bold()).foregroundColor(.white)
-                .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(Capsule().fill(Color.red))
-                .accessibilityLabel("テスト環境")
+            Button(action: backToProduction) {
+                Text("テスト").font(.caption.bold()).foregroundColor(.white)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.red))
+                    .frame(minHeight: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("テスト環境。タップで本番に戻す").help("本番に戻す")
         }
     }
 }
@@ -93,9 +99,9 @@ extension View {
     /// Sync status icon at the top right of every main screen, plus the test badge at the top left.
     func syncToolbar(_ model: RegisterModel) -> some View {
         toolbar {
-            ToolbarItem(placement: .navigationBarLeading) { TestBadge() }
+            ToolbarItem(placement: .navigationBarLeading) { TestBadge { model.requestSwitch(to: .production) } }
             ToolbarItem(placement: .primaryAction) {
-                if let sync = model.sync { SyncStatusButton(controller: sync) }
+                if let sync = model.sync { SyncStatusButton(controller: sync) { model.showingSyncSheet = true } }
             }
         }
     }
@@ -166,13 +172,14 @@ struct TofuLoading: View {
 
 struct SyncStatusButton: View {
     @ObservedObject var controller: CloudSyncController
-    @State private var showing = false
+    /// The sheet itself is presented by RootView, so environment switching can close it first.
+    let open: () -> Void
     private var warning: Bool {
         controller.failed || controller.held > 0 || controller.conflicts > 0 || controller.rejectedImages > 0
             || controller.rejected.products + controller.rejected.stock + controller.rejected.sessions > 0
     }
     var body: some View {
-        Button { showing = true } label: {
+        Button(action: open) {
             if controller.isSyncing {
                 TofuLoading(size: 22)
             } else if !controller.configured {
@@ -191,7 +198,6 @@ struct SyncStatusButton: View {
             }
         }
         .accessibilityLabel(controller.pending > 0 ? "未同期 \(controller.pending)件" : "同期済み")
-        .sheet(isPresented: $showing) { SyncSheet(controller: controller) }
     }
 }
 
@@ -228,10 +234,12 @@ struct SyncSheet: View {
                     Section {
                         HStack {
                             if controller.isSyncing { TofuLoading().frame(minWidth: 44, minHeight: 44) }
-                            else { IconButton("今すぐ送信", .asset("IconSyncPending")) { Task { await controller.run() } }.disabled(!controller.configured) }
+                            else { IconButton("今すぐ送信", .asset("IconSyncPending"), text: "今すぐ送信") { Task { await controller.run() } }.disabled(!controller.configured) }
                             Spacer()
-                            NavigationLink { CloudSyncView(controller: controller) } label: { IconImage(icon: .asset("IconSettings")).foregroundColor(.tofuMuted) }
-                                .frame(minWidth: 44, minHeight: 44).fixedSize()
+                            NavigationLink { CloudSyncView(controller: controller) } label: {
+                                Label { Text("詳細設定") } icon: { IconImage(icon: .asset("IconSettings"), size: 20) }.labelStyle(.titleAndIcon).foregroundColor(.tofuMuted)
+                            }
+                                .frame(minHeight: 44).fixedSize()
                                 .accessibilityLabel("詳細設定").help("詳細設定")
                         }
                     }
@@ -306,30 +314,40 @@ enum MacWindow {
     }
 }
 
-/// Icon-only button: shop icon from Assets.xcassets (template SVG) or an SF Symbol, ≥44pt target,
-/// VoiceOver label, pointer hover name (.help) and the name in the long-press menu.
+/// Icon button: shop icon from Assets.xcassets (template SVG) or an SF Symbol, ≥44pt target, VoiceOver
+/// label, pointer hover name (.help) and the name in the long-press menu. Icon-only is reserved for
+/// ＋/−, ×, ✓ and back; everything else passes a short `text` (2–6 characters) shown next to the icon.
 struct IconButton: View {
     enum Icon { case asset(String), symbol(String) }
     let label: String
     let icon: Icon
+    var text: String?
     var role: ButtonRole?
     let action: () -> Void
-    init(_ label: String, _ icon: Icon, role: ButtonRole? = nil, action: @escaping () -> Void) {
-        self.label = label; self.icon = icon; self.role = role; self.action = action
+    init(_ label: String, _ icon: Icon, text: String? = nil, role: ButtonRole? = nil, action: @escaping () -> Void) {
+        self.label = label; self.icon = icon; self.text = text; self.role = role; self.action = action
     }
     var body: some View {
         Button(role: role, action: action) {
             // Only destructive buttons force a color, so callers can tint the others (e.g. the toast's undo).
-            if role == .destructive {
-                IconImage(icon: icon).foregroundColor(.red).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
-            } else {
-                IconImage(icon: icon).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
-            }
+            if role == .destructive { content.foregroundColor(.red) } else { content }
         }
             .buttonStyle(.borderless)  // several icon buttons can share one list row
             .accessibilityLabel(label)
             .help(label)
             .contextMenu { Button(role: role, action: action) { Text(label) } }
+    }
+}
+
+extension IconButton {
+    @ViewBuilder fileprivate var content: some View {
+        if let text {
+            Label { Text(text).lineLimit(1) } icon: { IconImage(icon: icon, size: 20) }
+                .labelStyle(.titleAndIcon)
+                .frame(minHeight: 44).contentShape(Rectangle())
+        } else {
+            IconImage(icon: icon).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+        }
     }
 }
 

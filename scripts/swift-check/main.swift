@@ -141,6 +141,20 @@ func v4Checks() throws {
     let ticketJSON = String(decoding: try JSONEncoder().encode(tickets.pendingSales().first { $0.id == "c" }!), as: UTF8.self)
     try check(ticketJSON.contains("\"ticket_no\":\"A-1\"") && ticketJSON.contains("\"customer_group\":\"couple\"") && !ticketJSON.contains("customer_age"), "group and ticket in payload")
     try check(SalesCSV.make(tickets.sales(), ticket: true).contains(",ticket_no\r\n") && Customer.text(age: "adult", gender: nil, group: "couple") == "大人・カップル", "ticket csv, segment text")
+    let envDir = FileManager.default.temporaryDirectory.appendingPathComponent("tofu-env-\(UUID())")
+    try FileManager.default.createDirectory(at: envDir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: envDir) }
+    do {
+        let prod = try SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.production.databaseFile).path)
+        let test = try SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.test.databaseFile).path)
+        _ = try prod.checkout(id: "p", lines: [tofu], received: 1000); _ = try test.checkout(id: "t", lines: [tofu], received: 1000)
+        try test.setSyncGate(next: 9, failures: 2)
+    }
+    try rejects("erase production") { try AppEnvironment.production.eraseLocalData(in: envDir) }
+    try AppEnvironment.test.eraseLocalData(in: envDir)
+    let freshTest = try SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.test.databaseFile).path)
+    try check(freshTest.sales().isEmpty && freshTest.syncGate().failures == 0 && freshTest.feedAfter() == 0
+              && SQLiteStore(path: envDir.appendingPathComponent(AppEnvironment.production.databaseFile).path).sales().count == 1, "erase test data keeps production")
     let quick = try SQLiteStore(path: ":memory:")
     let quickSale = try quick.checkout(id: "q", lines: [Line(productID: "p", name: "田楽豆腐", price: 500, quantity: 2)], received: 5000)
     try check(QuickSale.savedText(quickSale) == "¥1,000（2本）を保存しました・お釣り ¥4,000" && quickSale.customerAge == nil, "quick sale notice, optional segment")

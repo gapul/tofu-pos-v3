@@ -55,6 +55,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -169,22 +171,32 @@ private fun jst(value: String): String = runCatching {
   Text(text, Modifier.fillMaxWidth().padding(24.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
 }
 /**
- * Icon-only button: the label is the content description and the long-press tooltip. 48dp minimum touch target.
- * Confirm actions use a check, dismiss uses ×.
+ * Icon button: [label] is the content description and the long-press tooltip; 48dp minimum touch target.
+ * Icon-only is reserved for obvious actions (+/−, ×, ✓, back); everything else passes a short visible [text].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun IconAction(label: String, icon: androidx.compose.ui.graphics.painter.Painter, onClick: () -> Unit, modifier: Modifier = Modifier,
-  enabled: Boolean = true, filled: Boolean = false, tint: Color = Color.Unspecified, size: androidx.compose.ui.unit.Dp = 48.dp) {
+  enabled: Boolean = true, filled: Boolean = false, tint: Color = Color.Unspecified, size: androidx.compose.ui.unit.Dp = 48.dp, text: String? = null) {
   TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), { PlainTooltip { Text(label) } }, rememberTooltipState()) {
+    if (text != null) {
+      val inner: @Composable RowScope.() -> Unit = {
+        val color = if (tint == Color.Unspecified || !enabled) LocalContentColor.current else tint
+        Icon(icon, null, Modifier.size(20.dp), tint = color); Spacer(Modifier.width(8.dp)); Text(text, color = color, maxLines = 1)
+      }
+      val m = modifier.heightIn(min = maxOf(size, 48.dp)).semantics { contentDescription = label }
+      if (filled) FilledTonalButton(onClick, m, enabled = enabled, content = inner) else TextButton(onClick, m, enabled = enabled, content = inner)
+      return@TooltipBox
+    }
     val content: @Composable () -> Unit = { Icon(icon, label, Modifier.size(if (size > 56.dp) 36.dp else 24.dp), tint = if (tint == Color.Unspecified) LocalContentColor.current else tint) }
     if (filled) FilledTonalIconButton(onClick, modifier.size(size), enabled = enabled, content = content)
     else IconButton(onClick, modifier.size(size), enabled = enabled, content = content)
   }
 }
-@Composable private fun ConfirmIcon(label: String, enabled: Boolean = true, destructive: Boolean = false, onClick: () -> Unit) =
-  IconAction(label, rememberVectorPainter(Icons.Default.Check), onClick, enabled = enabled, tint = if (!enabled) Color.Unspecified else if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-@Composable private fun DismissIcon(label: String = "キャンセル", enabled: Boolean = true, onClick: () -> Unit) =
-  IconAction(label, rememberVectorPainter(Icons.Default.Close), onClick, enabled = enabled)
+@Composable private fun ConfirmIcon(label: String, enabled: Boolean = true, destructive: Boolean = false, text: String = "確定", onClick: () -> Unit) =
+  IconAction(label, rememberVectorPainter(Icons.Default.Check), onClick, enabled = enabled, text = text,
+    tint = if (!enabled) Color.Unspecified else if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+@Composable private fun DismissIcon(label: String = "キャンセル", enabled: Boolean = true, text: String = "戻る", onClick: () -> Unit) =
+  IconAction(label, rememberVectorPainter(Icons.Default.Close), onClick, enabled = enabled, text = text)
 @Composable private fun Info(title: String, body: String) {
   Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
     Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -217,14 +229,20 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit,
   advanced: Boolean, onAdvanced: (Boolean) -> Unit,
   single: SingleState, onSingle: (SingleState) -> Unit, onSingleConfirm: () -> Unit, snackbar: SnackbarHostState,
-  onEnvironment: (AppEnvironment) -> Unit, onGroup: (String) -> Unit, onTicketPrefix: (String) -> Unit
+  onEnvironment: (AppEnvironment) -> Unit, onGroup: (String) -> Unit, onTicketPrefix: (String) -> Unit,
+  refreshing: Boolean = false, onRefresh: () -> Unit = {}, onResetTest: () -> Unit = {}
 ) {
   val focus = LocalFocusManager.current
   val enabled = ready && !busy
   var sheet by rememberSaveable { mutableStateOf(false) }
+  var backToProduction by rememberSaveable { mutableStateOf(false) }
+  if (backToProduction) AlertDialog(onDismissRequest = { backToProduction = false }, title = { Text("本番環境に戻します") },
+    text = { Text("入力中のカートは破棄されます。") },
+    confirmButton = { ConfirmIcon("本番に戻す", text = "本番に戻す") { backToProduction = false; onEnvironment(AppEnvironment.PRODUCTION) } },
+    dismissButton = { DismissIcon { backToProduction = false } })
   if (advanced) {
     BackHandler { onAdvanced(false) }
-    Advanced(extras, enabled && !syncing, canContinue, { onAdvanced(false) }, onSettings, onImport, onBackup, onRestore, onContinue, onEnvironment, onTicketPrefix)
+    Advanced(extras, enabled && !syncing, canContinue, { onAdvanced(false) }, onSettings, onImport, onBackup, onRestore, onContinue, onEnvironment, onTicketPrefix, onResetTest)
     return
   }
   val labels = listOf("レジ", "商品", "履歴", "締め")
@@ -234,7 +252,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
   val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
   // Lifted above the single-product "購入" button so the next sale is never blocked by the notice.
   Scaffold(snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = 88.dp)) { data ->
-    Snackbar(action = { data.visuals.actionLabel?.let { label -> IconAction(label, painterResource(R.drawable.ic_cancel_sale), data::performAction, tint = MaterialTheme.colorScheme.inversePrimary) } }) {
+    Snackbar(action = { data.visuals.actionLabel?.let { label -> IconAction(label, painterResource(R.drawable.ic_cancel_sale), data::performAction, tint = MaterialTheme.colorScheme.inversePrimary, text = "取消") } }) {
       Column {
         data.visuals.message.lines().filter { it.isNotBlank() }.forEach { line ->
           if (line.startsWith("整理番号")) Text(line, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
@@ -253,27 +271,31 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       Column(Modifier.fillMaxSize()) {
         // The bar stays on small/landscape screens; only the title shrinks so the icons remain reachable.
         // Test environment: the bar turns errorContainer and carries a badge so test sales are never mistaken for real ones.
+        // Title + badge take all free width so the actions sit at the end; the sync icon is always the last one,
+        // its glyph about 16dp from the edge. (A second weighted spacer split the free width and pushed it inward.)
         Row(Modifier.fillMaxWidth().background(if (extras.test) MaterialTheme.colorScheme.errorContainer else Color.Transparent)
-          .padding(start = 24.dp, end = 8.dp, top = if (compact) 4.dp else 12.dp, bottom = if (compact) 0.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
-          Text(labels[tab.coerceIn(0, 3)], Modifier.weight(1f, fill = false), style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (extras.test) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface)
-          if (extras.test) TestBadge(Modifier.padding(start = 10.dp))
-          Spacer(Modifier.weight(1f))
-          if (tab == 2) IconAction("CSVに書き出す", painterResource(R.drawable.ic_export_csv), onExport, enabled = enabled && sales.isNotEmpty())
+          .padding(start = 24.dp, end = 4.dp, top = if (compact) 4.dp else 12.dp, bottom = if (compact) 0.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
+          Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(labels[tab.coerceIn(0, 3)], Modifier.weight(1f, fill = false), style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge,
+              fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+              color = if (extras.test) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface)
+            // Tapping the badge offers the way back to production from any screen.
+            if (extras.test) TestBadge(Modifier.padding(start = 10.dp)) { backToProduction = true }
+          }
+          if (tab == 2) IconAction("CSVに書き出す", painterResource(R.drawable.ic_export_csv), onExport, enabled = enabled && sales.isNotEmpty(), text = "CSV")
           SyncButton(pending, syncing, extras) { focus.clearFocus(); sheet = true }
         }
         if (!ready) Column(Modifier.fillMaxSize().padding(24.dp), Arrangement.spacedBy(16.dp, Alignment.CenterVertically), Alignment.CenterHorizontally) {
           if (busy) TofuLoading()
           Text(if (busy) "保存データを読み込んでいます…" else "保存データを開けません。アプリを削除せず確認してください。")
-        } else when (tab) {
+        } else PullRefresh(refreshing, onRefresh) { when (tab) {
           // Exactly one product on sale switches the register to the single-product screen.
           0 -> products.filter { it.active }.let { onSale ->
             if (onSale.size == 1) SingleRegister(onSale.single(), extras.stocks[onSale.single().id], single, extras, enabled, onSingle, onAge, onGender, onGroup, onSingleConfirm)
             else Register(onSale, cart, cash, extras, enabled, compact, onCash, onQuantity, onExact, onCashSet, onCashAdd, onAge, onGender, onGroup, onCheckout)
           }
           1 -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { IconAction("商品を追加", rememberVectorPainter(Icons.Default.Add), { onEdit(null) }, enabled = enabled, filled = true, size = 56.dp) } }
+            item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { IconAction("商品を追加", rememberVectorPainter(Icons.Default.Add), { onEdit(null) }, enabled = enabled, filled = true, size = 56.dp, text = "商品を追加") } }
             if (products.isEmpty()) item { Empty("商品を登録してください") }
             items(products, key = { it.id }) { p ->
               Card(onClick = { onEdit(p) }, enabled = enabled, shape = RoundedCornerShape(24.dp)) {
@@ -293,8 +315,8 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
                     Icon(Icons.Default.Edit, "${p.name}を編集")
                   }
                   Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-                    IconAction("在庫を数えて設定", painterResource(R.drawable.ic_stock_count), { onStock(p, "set") }, enabled = enabled, filled = true)
-                    IconAction("入荷を追加", painterResource(R.drawable.ic_stock_add), { onStock(p, "add") }, enabled = enabled, filled = true)
+                    IconAction("在庫を数えて設定", painterResource(R.drawable.ic_stock_count), { onStock(p, "set") }, enabled = enabled, filled = true, text = "在庫を数える")
+                    IconAction("入荷を追加", painterResource(R.drawable.ic_stock_add), { onStock(p, "add") }, enabled = enabled, filled = true, text = "入荷")
                   }
                 }
               }
@@ -302,7 +324,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
           }
           2 -> History(sales, enabled, onCancel)
           else -> Closing(extras.drawer, extras.summary, enabled, onOpenDrawer, onCloseDrawer)
-        }
+        } }
       }
     }
   }
@@ -335,37 +357,43 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
       }
       if (held.conflicts > 0) Text("競合で保留中の会計 ${held.conflicts}件", color = MaterialTheme.colorScheme.error)
       Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconAction("今すぐ送信", painterResource(R.drawable.ic_sync_running), send, enabled = enabled && !syncing, filled = true, size = 64.dp)
+        IconAction("今すぐ送信", painterResource(R.drawable.ic_sync_running), send, enabled = enabled && !syncing, filled = true, size = 56.dp, text = "今すぐ送信")
         Spacer(Modifier.weight(1f))
-        IconAction("詳細設定", painterResource(R.drawable.ic_settings), advanced)
+        IconAction("詳細設定", painterResource(R.drawable.ic_settings), advanced, text = "詳細設定")
       }
     }
   }
 }
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun TestBadge(modifier: Modifier = Modifier) {
-  Surface(modifier, color = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError, shape = RoundedCornerShape(8.dp)) {
-    Text("テスト", Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1)
-  }
+@Composable private fun TestBadge(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+  val text: @Composable () -> Unit = { Text("テスト", Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1) }
+  if (onClick == null) Surface(modifier, color = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError, shape = RoundedCornerShape(8.dp), content = text)
+  else Surface(onClick, modifier.heightIn(min = 48.dp).semantics { contentDescription = "テスト環境。押すと本番に戻す" }, color = MaterialTheme.colorScheme.error,
+    contentColor = MaterialTheme.colorScheme.onError, shape = RoundedCornerShape(8.dp)) { Box(contentAlignment = Alignment.Center) { text() } }
 }
 @Composable private fun Advanced(extras: ScreenExtras, enabled: Boolean, canContinue: Boolean, back: () -> Unit,
   onSettings: () -> Unit, onImport: () -> Unit, onBackup: () -> Unit, onRestore: () -> Unit, onContinue: () -> Unit,
-  onEnvironment: (AppEnvironment) -> Unit, onTicketPrefix: (String) -> Unit) {
+  onEnvironment: (AppEnvironment) -> Unit, onTicketPrefix: (String) -> Unit, onResetTest: () -> Unit) {
+  var wipe by rememberSaveable { mutableStateOf(false) }
+  if (wipe) AlertDialog(onDismissRequest = { wipe = false }, title = { Text("テストデータを消去します") },
+    text = { Text("テストの会計・商品・写真を消して取り込み直します。") },
+    confirmButton = { ConfirmIcon("消去", enabled, destructive = true, text = "消去") { wipe = false; onResetTest() } },
+    dismissButton = { DismissIcon { wipe = false } })
   var confirm by rememberSaveable { mutableStateOf(false) }
   var prefix by rememberSaveable(extras.ticketPrefix) { mutableStateOf(extras.ticketPrefix) }
   val target = if (extras.test) AppEnvironment.PRODUCTION else AppEnvironment.TEST
   if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text(if (extras.test) "本番環境に戻します" else "テスト環境に切り替えます") },
     text = { Text(if (extras.test) "入力中のカートは破棄されます。" else "テストの売上は本番に入りません。") },
-    confirmButton = { ConfirmIcon("切り替える", enabled) { confirm = false; onEnvironment(target) } },
+    confirmButton = { ConfirmIcon("切り替える", enabled, text = "切り替える") { confirm = false; onEnvironment(target) } },
     dismissButton = { DismissIcon { confirm = false } })
   Scaffold(topBar = { TopAppBar(title = { Text("詳細設定") }, navigationIcon = { IconAction("戻る", rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowBack), back) }) }) { insets ->
     LazyColumn(Modifier.fillMaxSize().padding(insets), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        IconAction("接続設定（URL・トークン）", rememberVectorPainter(Icons.Default.Build), onSettings, enabled = enabled, filled = true, size = 56.dp)
-        IconAction("同期設定ファイルを読み込む", painterResource(R.drawable.ic_file_import), onImport, enabled = enabled, filled = true, size = 56.dp)
-        IconAction("商品をバックアップ", painterResource(R.drawable.ic_backup), onBackup, enabled = enabled, filled = true, size = 56.dp)
-        IconAction("クラウドから復元", painterResource(R.drawable.ic_restore), onRestore, enabled = enabled, filled = true, size = 56.dp)
-        if (canContinue) IconAction("売上の続きを復元", rememberVectorPainter(Icons.Default.PlayArrow), onContinue, enabled = enabled, filled = true, size = 56.dp)
+      item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconAction("接続設定（URL・トークン）", rememberVectorPainter(Icons.Default.Build), onSettings, enabled = enabled, filled = true, text = "接続設定")
+        IconAction("同期設定ファイルを読み込む", painterResource(R.drawable.ic_file_import), onImport, enabled = enabled, filled = true, text = "設定ファイル")
+        IconAction("商品をバックアップ", painterResource(R.drawable.ic_backup), onBackup, enabled = enabled, filled = true, text = "バックアップ")
+        IconAction("クラウドから復元", painterResource(R.drawable.ic_restore), onRestore, enabled = enabled, filled = true, text = "復元")
+        if (canContinue) IconAction("売上の続きを復元", rememberVectorPainter(Icons.Default.PlayArrow), onContinue, enabled = enabled, filled = true, text = "続きを復元")
       } }
       item { Info("この端末", "端末名: ${extras.deviceLabel}\n端末ID: ${extras.deviceID}") }
       item { Text("フォント: LINE Seed JP（SIL OFL 1.1）", Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -376,7 +404,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(prefix, { prefix = it.take(2) }, Modifier.weight(1f), singleLine = true, enabled = enabled, label = { Text("英大文字1〜2文字") },
               isError = !Tickets.validPrefix(clean), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters))
-            ConfirmIcon("接頭辞を保存", enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix) { onTicketPrefix(clean) }
+            ConfirmIcon("接頭辞を保存", enabled && Tickets.validPrefix(clean) && clean != extras.ticketPrefix, text = "保存") { onTicketPrefix(clean) }
           }
         }
       } }
@@ -385,8 +413,10 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
           Row(verticalAlignment = Alignment.CenterVertically) {
             Text("環境: ${extras.environment.label}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
             if (extras.test) TestBadge(Modifier.padding(end = 8.dp))
-            IconAction(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える", painterResource(R.drawable.ic_swap), { confirm = true }, enabled = enabled, filled = true)
+            IconAction(if (extras.test) "本番環境に戻す" else "テスト環境に切り替える", painterResource(R.drawable.ic_swap), { confirm = true }, enabled = enabled, filled = true, text = "環境切り替え")
           }
+          if (extras.test) IconAction("テストデータを消去", rememberVectorPainter(Icons.Default.Delete), { wipe = true }, enabled = enabled,
+            tint = MaterialTheme.colorScheme.error, text = "テストデータを消去")
         }
       } }
     }
@@ -400,6 +430,15 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
     seen = epoch
     if (still) list.scrollToItem(0) else list.animateScrollToItem(0)
   }
+}
+/** Pull down to sync once and reload; the indicator is the bouncing tofu mark. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun PullRefresh(refreshing: Boolean, onRefresh: () -> Unit, content: @Composable () -> Unit) {
+  val state = rememberPullToRefreshState()
+  PullToRefreshBox(refreshing, onRefresh, Modifier.fillMaxSize(), state = state, indicator = {
+    val fraction = if (refreshing) 1f else state.distanceFraction.coerceIn(0f, 1f)
+    if (fraction > 0f) TofuLoading(Modifier.align(Alignment.TopCenter).padding(top = 8.dp).graphicsLayer { alpha = fraction; translationY = (fraction - 1f) * 48.dp.toPx() }, size = 44.dp)
+  }) { content() }
 }
 /** True when system animations are off; scrolling then jumps instead of animating. */
 @Composable private fun reducedMotion(): Boolean {
@@ -633,7 +672,7 @@ data class Held(val products: Int = 0, val stock: Int = 0, val sessions: Int = 0
               listOf(100L, 500L, 1000L).forEach { amount ->
                 FilledTonalButton({ focus.clearFocus(); onCashAdd(amount) }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = enabled, contentPadding = small) { Text("+" + NumberFormat.getIntegerInstance(Locale.JAPAN).format(amount), maxLines = 1) }
               }
-              Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { IconAction("預り金をクリア", rememberVectorPainter(Icons.Default.Clear), { focus.clearFocus(); onCash("") }, enabled = enabled && cash.isNotEmpty()) }
+              Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { IconAction("預り金をクリア", rememberVectorPainter(Icons.Default.Clear), { focus.clearFocus(); onCash("") }, enabled = enabled && cash.isNotEmpty(), text = "クリア") }
             }
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
               val change = if (total != null && received != null && received >= total) received - total else null
@@ -693,7 +732,7 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
         Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
           Text("釣銭準備金", style = MaterialTheme.typography.titleMedium)
           Text(yen(total), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-          IconAction("レジ開け", painterResource(R.drawable.ic_lock_open), { open(counts) }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 64.dp)
+          IconAction("レジ開け", painterResource(R.drawable.ic_lock_open), { open(counts) }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 56.dp, text = "レジ開け")
         }
       } }
     } else {
@@ -723,12 +762,12 @@ private fun parseCounts(text: String): Map<String, Int> = Cash.DENOMINATIONS.zip
           Text("実際の合計 ${yen(total)}\n理論値 ${yen(expected)}")
           Text("差額 ${difference(total - expected)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
             color = if (total == expected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.error)
-          IconAction("レジ締め", rememberVectorPainter(Icons.Default.Lock), { confirm = true }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 64.dp)
+          IconAction("レジ締め", rememberVectorPainter(Icons.Default.Lock), { confirm = true }, Modifier.align(Alignment.End), enabled = enabled, filled = true, size = 56.dp, text = "レジ締め")
         }
       } }
       if (confirm) item { AlertDialog(onDismissRequest = { confirm = false }, title = { Text("レジを締めますか？") },
         text = { Text("実際の合計 ${yen(total)}\n理論値 ${yen(expected)}\n差額 ${difference(total - expected)}\n締めた後は変更できません。") },
-        confirmButton = { ConfirmIcon("締める", enabled, destructive = true) { confirm = false; close(counts) } },
+        confirmButton = { ConfirmIcon("締める", enabled, destructive = true, text = "締める") { confirm = false; close(counts) } },
         dismissButton = { DismissIcon { confirm = false } }) }
     }
   }
@@ -760,7 +799,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         sale.lines.forEach { Text("${it.name} × ${it.quantity}　${yen(it.price * it.quantity)}") }
         Text("預り ${yen(sale.received)} · 釣銭 ${yen(sale.change)}", style = MaterialTheme.typography.bodySmall)
         sale.cancellationReason?.let { Text("取消理由: $it") }
-        if (sale.cancelledAt == null) IconAction("全額取消・返金記録", painterResource(R.drawable.ic_cancel_sale), { cancel(sale) }, Modifier.align(Alignment.End), enabled = enabled, tint = MaterialTheme.colorScheme.error)
+        if (sale.cancelledAt == null) IconAction("全額取消・返金記録", painterResource(R.drawable.ic_cancel_sale), { cancel(sale) }, Modifier.align(Alignment.End), enabled = enabled, tint = MaterialTheme.colorScheme.error, text = "取消")
       }
     } }
   }
@@ -798,15 +837,15 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         ProductPhoto(image, imageGeneration, 72.dp, 16.dp)
         Column(Modifier.weight(1f)) {
           Row {
-            IconAction("写真を選ぶ", painterResource(R.drawable.ic_photo), { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !busy)
-            if (image != null) IconAction("写真を外す", rememberVectorPainter(Icons.Default.Delete), { image = null }, enabled = !busy, tint = MaterialTheme.colorScheme.error)
+            IconAction("写真を選ぶ", painterResource(R.drawable.ic_photo), { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !busy, text = "写真")
+            if (image != null) IconAction("写真を外す", rememberVectorPainter(Icons.Default.Delete), { image = null }, enabled = !busy, tint = MaterialTheme.colorScheme.error, text = "外す")
           }
         }
       }
       Row(verticalAlignment = Alignment.CenterVertically) { Text("販売中", Modifier.weight(1f)); Switch(active, { active = it }, enabled = !busy) }
       Row(verticalAlignment = Alignment.CenterVertically) { Text("在庫0で販売を止める", Modifier.weight(1f)); Switch(stop, { stop = it }, enabled = !busy) }
     }
-  }, confirmButton = { ConfirmIcon("保存", !busy && name.isNotBlank() && amount != null) { if (amount != null) save(name, amount, active, stop, image) } },
+  }, confirmButton = { ConfirmIcon("保存", !busy && name.isNotBlank() && amount != null, text = "保存") { if (amount != null) save(name, amount, active, stop, image) } },
     dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun StockDialog(product: Product, kind: String, current: Long?, busy: Boolean, onDismiss: () -> Unit, save: (Long, String) -> Unit) {
@@ -820,7 +859,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = quantity.isNotEmpty() && value == null)
       OutlinedTextField(reason, { reason = it }, label = { Text("メモ（任意）") }, enabled = !busy, singleLine = true)
     }
-  }, confirmButton = { ConfirmIcon("記録", !busy && value != null) { if (value != null) save(value, reason) } },
+  }, confirmButton = { ConfirmIcon("記録", !busy && value != null, text = "記録") { if (value != null) save(value, reason) } },
     dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun CheckoutDialog(checkout: Checkout, busy: Boolean, onDismiss: () -> Unit, confirm: () -> Unit) {
@@ -837,7 +876,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       Text("お釣り ${yen(sale.change)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
       Customer.describe(sale.customerAge, sale.customerGender, sale.customerGroup)?.let { Text("客層 $it", style = MaterialTheme.typography.bodyMedium) }
     }
-  }, confirmButton = { ConfirmIcon("次のお客様", onClick = next) })
+  }, confirmButton = { ConfirmIcon("次のお客様", text = "次へ", onClick = next) })
 }
 @Composable fun CancelDialog(sale: Sale, busy: Boolean, onDismiss: () -> Unit, cancel: (String) -> Unit) {
   var reason by rememberSaveable(sale.id) { mutableStateOf("") }
@@ -851,7 +890,7 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
         Text(if (sale.total == 0L) "0円会計の取消を確認した" else "全額返金を完了した")
       }
     }
-  }, confirmButton = { ConfirmIcon("取消を記録", !busy && reason.isNotBlank() && refunded, destructive = true) { cancel(reason) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
+  }, confirmButton = { ConfirmIcon("取消を記録", !busy && reason.isNotBlank() && refunded, destructive = true, text = "取消") { cancel(reason) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ConnectionDialog(initialUrl: String, busy: Boolean, onDismiss: () -> Unit, save: (String, String) -> Unit) {
   var url by rememberSaveable(initialUrl) { mutableStateOf(initialUrl) }
@@ -862,10 +901,10 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
       OutlinedTextField(url, { url = it }, label = { Text("https://…workers.dev") }, enabled = !busy, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
       OutlinedTextField(token, { token = it }, label = { Text("端末用トークン") }, supportingText = { Text("空欄なら変更なし") }, enabled = !busy, singleLine = true, visualTransformation = PasswordVisualTransformation())
     }
-  }, confirmButton = { ConfirmIcon("保存", !busy && url.isNotBlank()) { save(url, token) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
+  }, confirmButton = { ConfirmIcon("保存", !busy && url.isNotBlank(), text = "保存") { save(url, token) } }, dismissButton = { DismissIcon(enabled = !busy, onClick = onDismiss) })
 }
 @Composable fun ErrorDialog(message: String, dismiss: () -> Unit) {
-  AlertDialog(onDismissRequest = dismiss, title = { Text("確認してください") }, text = { Text(message) }, confirmButton = { DismissIcon("閉じる", onClick = dismiss) })
+  AlertDialog(onDismissRequest = dismiss, title = { Text("確認してください") }, text = { Text(message) }, confirmButton = { DismissIcon("閉じる", text = "閉じる", onClick = dismiss) })
 }
 
 @Composable fun CatalogDialog(catalogs: List<Catalog>, hasMore: Boolean, loading: Boolean, more: () -> Unit, dismiss: () -> Unit, select: (Catalog?) -> Unit) {
@@ -873,12 +912,12 @@ private fun difference(amount: Long) = if (amount > 0) "+${yen(amount)}" else if
     Column(Modifier.heightIn(max=400.dp).verticalScroll(rememberScrollState()), verticalArrangement=Arrangement.spacedBy(8.dp)) {
       OutlinedButton({ select(null) }, Modifier.fillMaxWidth()) { Text("売上のみ復元") }
       catalogs.forEach { c -> OutlinedButton({ select(c) }, Modifier.fillMaxWidth(), enabled = !loading) { Text("${jst(c.receivedAt)} · 商品${c.productCount}件") } }
-      if (hasMore) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { IconAction("さらに表示", rememberVectorPainter(Icons.Default.KeyboardArrowDown), more, enabled = !loading) }
+      if (hasMore) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { IconAction("さらに表示", rememberVectorPainter(Icons.Default.KeyboardArrowDown), more, enabled = !loading, text = "さらに表示") }
     }
   }, confirmButton={ DismissIcon(onClick = dismiss) })
 }
 @Composable fun RestoreConfirmDialog(catalog: Catalog?, continuation: Boolean, dismiss: () -> Unit, restore: () -> Unit) {
   AlertDialog(onDismissRequest=dismiss, title={ Text(if (continuation) "売上の続きを復元" else "クラウドから復元") },
     text={ Text((catalog?.let { "${jst(it.receivedAt)} の商品${it.productCount}件と、" } ?: "") + "売上を最大50件取り込みます。") },
-    confirmButton={ ConfirmIcon("復元する", destructive = true, onClick = restore) }, dismissButton={ DismissIcon(onClick = dismiss) })
+    confirmButton={ ConfirmIcon("復元する", destructive = true, text = "復元", onClick = restore) }, dismissButton={ DismissIcon(onClick = dismiss) })
 }

@@ -217,6 +217,18 @@ final class V4Tests: XCTestCase {
         XCTAssertTrue(try production.sales().isEmpty); XCTAssertEqual(try production.syncGate().failures, 0)
         XCTAssertNoThrow(try production.bindSyncTarget("https://tofu-pos-v3-sync.gapul.workers.dev/v1/sync"))
         XCTAssertNotEqual(production.deviceID, test.deviceID)
+        let productionImages = try ProductImages(directory: dir.appendingPathComponent(AppEnvironment.production.imageFolder))
+        let testImages = try ProductImages(directory: dir.appendingPathComponent(AppEnvironment.test.imageFolder))
+        let photo = try productionImages.save(Data([0xFF, 0xD8, 0xFF, 1])); try testImages.save(Data([0xFF, 0xD8, 0xFF, 1]))
+        _ = try production.checkout(id: "p", lines: [tofu], received: 1000)
+        XCTAssertThrowsError(try AppEnvironment.production.eraseLocalData(in: dir), "production is never erased")
+        try AppEnvironment.test.eraseLocalData(in: dir)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent(AppEnvironment.test.databaseFile).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent(AppEnvironment.test.imageFolder).path))
+        XCTAssertTrue(productionImages.exists(photo)); XCTAssertEqual(try production.sales().count, 1)
+        let fresh = try SQLiteStore(path: dir.appendingPathComponent(AppEnvironment.test.databaseFile).path)
+        XCTAssertTrue(try fresh.sales().isEmpty); XCTAssertEqual(try fresh.feedAfter(), 0); XCTAssertEqual(try fresh.syncGate().failures, 0)
+        XCTAssertEqual(try SQLiteStore(path: dir.appendingPathComponent(AppEnvironment.production.databaseFile).path).sales().count, 1)
     }
     func testTicketNumbers() throws {
         let store = try SQLiteStore(path: ":memory:")

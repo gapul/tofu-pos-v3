@@ -69,13 +69,15 @@ final class CloudSyncController: ObservableObject {
     /// Online-first: automatic cycles (after sales and edits, on activation, every 60s for the feed,
     /// after a retryable failure) run only while the scene is active. One cycle at a time; the persisted
     /// backoff decides the timing.
-    var active = false { didSet { if active && !stopped { requestAutoSync() } else { autoTask?.cancel(); autoTask = nil } } }
+    var active = false { didSet { if active && !stopped { requestAutoSync(); fetchMissingImagesNow() } else { autoTask?.cancel(); autoTask = nil } } }
     /// Set when the environment is switched away: this controller never starts another cycle.
     private var stopped = false
     func shutdown() { stopped = true; active = false }
     let environment: AppEnvironment
     /// Asks the model to switch environments (confirmed in the settings screen, refused while syncing).
     var onSwitchEnvironment: ((AppEnvironment) -> Void)?
+    /// Test environment only: asks the model to erase and re-pull the test data (confirmed in RootView).
+    var onEraseTestData: (() -> Void)?
     private var autoTask: Task<Void, Never>?
     private var again = false
     /// After 401/403 every automatic trigger stops (persisted) until settings are saved or a manual run.
@@ -223,6 +225,41 @@ final class CloudSyncController: ObservableObject {
             message = error.localizedDescription; return nil
         }
     }
+    /// Downloads up to 10 missing product photos. Never fails the caller; stops at the first error.
+    private func fetchImages(_ session: URLSession, connection: SyncConnection) async throws -> Int {
+        guard let images else { return 0 }
+        var fetched = 0
+        for hash in try store.productImageHashes().sorted() where !images.exists(hash) {
+            guard fetched < 10,
+                  let data = try? await send(session, path: "/v1/images/\(hash)", connection: connection, body: nil, limit: ProductImages.maxBytes),
+                  (try? images.save(data, expected: hash)) != nil else { break }
+            try store.markImageUploaded(hash); fetched += 1
+        }
+        return fetched
+    }
+    private var fetchingImages = false
+    /// On returning to the foreground: fetch missing photos outside the sync cycle and its gate (a launch
+    /// behind the lock screen can leave them missing until then). Read-only GETs; one at a time.
+    func fetchMissingImagesNow() {
+        guard configured, !stopped, !authBlocked, !fetchingImages, images != nil else { return }
+        fetchingImages = true
+        Task {
+            defer { fetchingImages = false }
+            guard let connection = try? ConnectionKeychain.current(environment) else { return }
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.waitsForConnectivity = false
+            configuration.timeoutIntervalForRequest = 15; configuration.timeoutIntervalForResource = 25
+            let session = URLSession(configuration: configuration, delegate: NoSyncRedirect(), delegateQueue: nil)
+            defer { session.invalidateAndCancel() }
+            if ((try? await fetchImages(session, connection: connection)) ?? 0) > 0 { didChange?() }
+        }
+    }
+    /// Pull to refresh: one manual cycle when allowed now; while waiting or syncing it only lets the screen reload.
+    func pullRefresh() async {
+        guard configured, !stopped, !isSyncing else { return }
+        if let gate = try? store.syncGate(), Date().timeIntervalSince1970 < gate.next { return }
+        await run(manual: true)
+    }
     func run() async { await run(manual: true) }
     func run(manual: Bool) async {
         guard !isSyncing else { again = true; return }
@@ -355,17 +392,8 @@ final class CloudSyncController: ObservableObject {
                 if applied.orders + applied.cancellations + applied.products > 0 { changed = true }
                 hasMore = page.has_more; pages += 1
             }
-            // Missing photos of products are fetched best-effort (10 per cycle); a failure waits for the next cycle.
-            if let images {
-                var fetched = 0
-                for hash in try store.productImageHashes().sorted() where !images.exists(hash) {
-                    guard fetched < 10 else { break }
-                    fetched += 1
-                    guard let data = try? await send(session, path: "/v1/images/\(hash)", connection: connection, body: nil, limit: ProductImages.maxBytes),
-                          (try? images.save(data, expected: hash)) != nil else { break }
-                    try store.markImageUploaded(hash); changed = true
-                }
-            }
+            // Missing photos of products are fetched best-effort (10 per cycle); a failure waits for the next try.
+            if try await fetchImages(session, connection: connection) > 0 { changed = true }
             if fedOrders + fedProducts > 0 { notes.append("取り込み: 会計\(fedOrders)件・商品\(fedProducts)件") }
             let next = Date().timeIntervalSince1970 + (orderConflicts == 0 ? 5 : 300)
             try store.setSyncGate(next: next, failures: 0); nextAllowedAt = Date(timeIntervalSince1970: next)
@@ -406,7 +434,6 @@ struct CloudSyncView: View {
     @State private var selectedCatalog: Catalog?
     @State private var continuing = false
     @State private var confirmRestore = false
-    @State private var switchTarget: AppEnvironment?
     @State private var prefix = ""
     @FocusState private var focused: Bool
     private func catalogDate(_ value: String) -> String {
@@ -418,9 +445,15 @@ struct CloudSyncView: View {
     var body: some View {
         Form {
             Section("環境") {
-                Picker("環境", selection: Binding(get: { controller.environment }, set: { if $0 != controller.environment { switchTarget = $0 } })) {
+                // The confirmation is shown by RootView after this sheet closes (alerts inside nested sheets were unreliable).
+                Picker("環境", selection: Binding(get: { controller.environment }, set: { if $0 != controller.environment { controller.onSwitchEnvironment?($0) } })) {
                     ForEach(AppEnvironment.allCases) { Text($0.label).tag($0) }
-                }.pickerStyle(.segmented).disabled(controller.isSyncing)
+                }.pickerStyle(.segmented)
+            }
+            if controller.environment == .test {
+                Section {
+                    IconButton("テストデータを消去", .symbol("trash"), text: "データ消去", role: .destructive) { controller.onEraseTestData?() }
+                }
             }
             Section("この端末") {
                 LabeledContent("端末名", value: controller.deviceLabel)
@@ -429,7 +462,7 @@ struct CloudSyncView: View {
                     Spacer()
                     TextField("なし", text: $prefix).textInputAutocapitalization(.characters).autocorrectionDisabled()
                         .multilineTextAlignment(.trailing).frame(width: 60).focused($focused)
-                    IconButton("接頭辞を保存", .symbol("checkmark")) {
+                    IconButton("接頭辞を保存", .symbol("checkmark"), text: "保存") {
                         focused = false
                         do { try controller.setTicketPrefix(prefix.uppercased()); prefix = controller.ticketPrefix; failure = nil }
                         catch { failure = error.localizedDescription }
@@ -439,9 +472,9 @@ struct CloudSyncView: View {
             }
             Section("バックアップ・復元") {
                 HStack(spacing: 16) {
-                    IconButton("商品をバックアップ", .symbol("icloud.and.arrow.up")) { focused = false; Task { await controller.backupProducts() } }
-                    IconButton("クラウドから復元", .symbol("icloud.and.arrow.down")) { focused = false; Task { if await controller.listBackups() { choosingCatalogs = true } } }
-                    if controller.canContinueRestore { IconButton("売上の続きを復元", .symbol("arrow.down.to.line.circle")) { continuing = true; confirmRestore = true } }
+                    IconButton("商品をバックアップ", .symbol("icloud.and.arrow.up"), text: "バックアップ") { focused = false; Task { await controller.backupProducts() } }
+                    IconButton("クラウドから復元", .symbol("icloud.and.arrow.down"), text: "復元") { focused = false; Task { if await controller.listBackups() { choosingCatalogs = true } } }
+                    if controller.canContinueRestore { IconButton("売上の続きを復元", .symbol("arrow.down.to.line.circle"), text: "続きを復元") { continuing = true; confirmRestore = true } }
                     Spacer()
                 }
             }.disabled(controller.isSyncing || !controller.configured)
@@ -449,11 +482,11 @@ struct CloudSyncView: View {
                 TextField("https://…workers.dev", text: $url).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL).focused($focused)
                 SecureField("端末用トークン（空欄なら変更なし）", text: $token).focused($focused)
                 HStack(spacing: 16) {
-                    IconButton("接続設定を保存", .symbol("checkmark")) {
+                    IconButton("接続設定を保存", .symbol("checkmark"), text: "保存") {
                         do { focused = false; try controller.configure(url: url, token: token); token = ""; failure = nil }
                         catch { failure = error.localizedDescription }
                     }
-                    IconButton("設定ファイルを読み込む", .symbol("square.and.arrow.down")) { focused = false; importing = true }
+                    IconButton("設定ファイルを読み込む", .symbol("square.and.arrow.down"), text: "ファイル読込") { focused = false; importing = true }
                     Spacer()
                 }
                 if let failure { Text(failure).foregroundStyle(.red) }
@@ -468,7 +501,7 @@ struct CloudSyncView: View {
                             Button("\(catalogDate(catalog.received_at)) · 商品\(catalog.product_count)件") { selectedCatalog = catalog; continuing = false; chosen = true; choosingCatalogs = false }
                         }
                         if let before = controller.catalogNext {
-                            IconButton("さらに表示", .symbol("ellipsis.circle")) { Task { _ = await controller.listBackups(before: before) } }
+                            IconButton("さらに表示", .symbol("ellipsis.circle"), text: "さらに表示") { Task { _ = await controller.listBackups(before: before) } }
                         }
                     }.disabled(controller.isSyncing).navigationTitle("バックアップを選択")
                         .toolbar { ToolbarItem(placement: .cancellationAction) { IconButton("戻る", .symbol("xmark")) { choosingCatalogs = false } } }
@@ -478,17 +511,10 @@ struct CloudSyncView: View {
                 Button("復元する") { Task { await controller.restore(catalog: selectedCatalog?.id, continuation: continuing) } }
                 Button("戻る", role: .cancel) { }
             } message: { Text("端末のデータは消さずに取り込みます。") }
-            .alert("環境の切り替え", isPresented: Binding(get: { switchTarget != nil }, set: { if !$0 { switchTarget = nil } })) {
-                Button(switchTarget == .test ? "テストに切り替える" : "本番に戻す", role: .destructive) {
-                    if let target = switchTarget, !controller.isSyncing { controller.onSwitchEnvironment?(target) }
-                    switchTarget = nil
-                }
-                Button("戻る", role: .cancel) { switchTarget = nil }
-            } message: { Text(switchTarget?.switchPrompt ?? "") }
             .onAppear { url = controller.serverURL; prefix = controller.ticketPrefix }
             .onDisappear { focused = false }
             .scrollDismissesKeyboard(.interactively)
-            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { focused = false } } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down"), text: "完了") { focused = false } } }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 do { try controller.importConnection(result.get()); url = controller.serverURL; token = ""; failure = nil }
                 catch { failure = error.localizedDescription }

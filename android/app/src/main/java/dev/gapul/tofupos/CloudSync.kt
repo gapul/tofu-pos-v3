@@ -228,6 +228,28 @@ class CloudSync(private val credentials: SyncCredentials, private val worker: Ex
       } catch (error: Exception) { finish(Result.failure(error)) }
     }
   }
+  /**
+   * On return to the foreground: fetch photos referenced by products but missing locally, outside the sync cycle.
+   * Shares the network thread (so it queues behind a running cycle), skips while token-halted, never touches the gate.
+   */
+  fun fetchMissingImages(done: (Int) -> Unit) {
+    val directory = imageDirectory ?: return
+    if (halted) return
+    worker.execute {
+      val connection = runCatching { credentials.load() }.getOrNull() ?: return@execute
+      val endpoint = runCatching { SyncRules.endpoint(connection.url) }.getOrNull() ?: return@execute
+      val missing = runCatching { store().referencedImages() }.getOrDefault(emptySet()).filter { !ProductImages.file(directory, it).isFile }.take(ProductImages.DOWNLOADS_PER_CYCLE)
+      if (missing.isEmpty()) return@execute
+      network.execute {
+        var fetched = 0
+        missing.forEach { hash ->
+          if (ProductImages.file(directory, hash).isFile) return@forEach
+          runCatching { ProductImages.save(directory, hash, request(connection, endpoint.resolve("/v1/images/$hash").toURL(), null, ProductImages.MAX_BYTES, null)); fetched++ }
+        }
+        if (fetched > 0) done(fetched)
+      }
+    }
+  }
   private class Cycle(val outcome: SyncOutcome, val conflicts: Int, val more: Boolean)
   private fun <T> db(block: (POSStore) -> T): T = try { CompletableFuture.supplyAsync({ block(store()) }, worker).get() }
     catch (error: ExecutionException) { throw error.cause ?: error }

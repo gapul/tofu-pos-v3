@@ -68,42 +68,69 @@ class POSApplication : Application() {
   fun foreground(visible: Boolean) {
     foreground = visible
     main.removeCallbacks(periodic)
-    if (visible) { requestSync(); main.postDelayed(periodic, 60_000) } else main.removeCallbacks(scheduled)
+    if (visible) {
+      requestSync(); main.postDelayed(periodic, 60_000)
+      cloud.fetchMissingImages { main.post { imageGeneration++ } }
+    } else main.removeCallbacks(scheduled)
   }
   fun requestSync() = main.post { sync(null) }
+  // A switch requested while a cloud operation runs waits for it; idle() then performs it.
+  private var pendingSwitch: Pair<AppEnvironment, (Result<Unit>) -> Unit>? = null
   /**
-   * Switches production/test. Stops scheduled syncs, closes the current database on the worker, then the next access
-   * opens the other environment's store and sync. Refused while a cloud operation runs.
+   * Switches production/test: stops scheduled syncs, closes the current database on the worker, and the next access
+   * opens the other environment's store and sync. Returns false when it has to wait for a running sync.
    */
   @android.annotation.SuppressLint("UseKtx") // core-ktx is not a dependency
-  fun switchEnvironment(target: AppEnvironment, done: (Result<Unit>) -> Unit) {
-    if (cloud.running.get() || syncRunning) { done(Result.failure(IllegalStateException("同期中は切り替えできません"))); return }
+  fun switchEnvironment(target: AppEnvironment, done: (Result<Unit>) -> Unit): Boolean {
     main.removeCallbacks(scheduled); main.removeCallbacks(periodic); again = false
+    if (cloud.running.get() || syncRunning) { pendingSwitch = target to done; return false }
+    rebuild(done) {
+      check(getSharedPreferences(AppEnvironment.PREFERENCES, MODE_PRIVATE).edit().putString(AppEnvironment.PREFERENCE_KEY, target.key).commit()) { "環境を保存できません" }
+      target
+    }
+    return true
+  }
+  /** Test environment only: deletes the test database and photos (production is never touched), then re-imports from the test cloud. */
+  fun resetTestData(done: (Result<Unit>) -> Unit) {
+    if (currentEnvironment != AppEnvironment.TEST) { done(Result.failure(IllegalStateException("テスト環境のときだけ消去できます"))); return }
+    if (cloud.running.get() || syncRunning) { done(Result.failure(IllegalStateException("同期中は消去できません"))); return }
+    main.removeCallbacks(scheduled); main.removeCallbacks(periodic); again = false
+    rebuild(done) {
+      synchronized(this) { currentStore?.close(); currentStore = null; currentCloud = null }
+      check(AppEnvironment.TEST.database != AppEnvironment.PRODUCTION.database && AppEnvironment.TEST.imageFolder != AppEnvironment.PRODUCTION.imageFolder)
+      deleteDatabase(AppEnvironment.TEST.database)
+      java.io.File(filesDir, AppEnvironment.TEST.imageFolder).deleteRecursively()
+      AppEnvironment.TEST
+    }
+  }
+  /** Closes the current store on the worker; the next access opens [prepare]'s environment from scratch. */
+  private fun rebuild(done: (Result<Unit>) -> Unit, prepare: () -> AppEnvironment) {
     worker.execute {
       val result = runCatching {
-        check(getSharedPreferences(AppEnvironment.PREFERENCES, MODE_PRIVATE).edit().putString(AppEnvironment.PREFERENCE_KEY, target.key).commit()) { "環境を保存できません" }
+        val target = prepare()
         synchronized(this) { currentStore?.close(); currentStore = null; currentCloud = null; currentEnvironment = target }
       }
       main.post {
         environment = currentEnvironment
-        pendingSync = 0; syncMessage = ""; syncFailed = false; lastSentAt = null; lastFeedAt = null; imageGeneration++
+        pendingSync = 0; syncMessage = ""; syncFailed = false; lastSentAt = null; lastFeedAt = null; imageGeneration++; restoreGeneration++
         if (foreground) { requestSync(); main.postDelayed(periodic, 60_000) }
         done(result)
       }
     }
   }
   /** [onError] is set for a manual run; automatic runs only update the status text. */
-  fun sync(onError: ((Throwable) -> Unit)?) {
+  /** [onDone] runs on the main thread once this request ends, whether it ran, was skipped or failed. */
+  fun sync(onError: ((Throwable) -> Unit)?, onDone: () -> Unit = {}) {
     main.removeCallbacks(scheduled)
     // After 401/403 only a manual send (or saving settings) may contact the cloud again.
-    if (onError == null && cloud.halted) return
-    if (cloud.running.get()) { again = true; return }
+    if (onError == null && cloud.halted) { onDone(); return }
+    if (cloud.running.get()) { again = true; onDone(); return }
     worker.execute {
       if (runCatching { cloud.connection() }.getOrNull() == null) {
-        main.post { onError?.invoke(IllegalStateException("先に同期設定をしてください")) }; return@execute
+        main.post { onError?.invoke(IllegalStateException("先に同期設定をしてください")); onDone() }; return@execute
       }
       main.post {
-        if (cloud.running.get()) { again = true; return@post }
+        if (cloud.running.get()) { again = true; onDone(); return@post }
         syncRunning = true
         cloud.run(manual = onError != null) { result -> main.post {
           syncRunning = cloud.running.get(); syncMessage = cloud.lastMessage
@@ -118,12 +145,14 @@ class POSApplication : Application() {
             if (!syncMessage.startsWith("待機中")) syncFailed = true
           })
           idle(cloud.autoRetryAt)
+          onDone()
         } }
       }
     }
   }
   /** Called when any cloud operation ends, so a sale recorded meanwhile is not left waiting. */
   fun idle(retryAt: Double? = null) {
+    pendingSwitch?.let { (target, done) -> if (!cloud.running.get()) { pendingSwitch = null; switchEnvironment(target, done); return } }
     if (again) { again = false; requestSync(); return }
     if (retryAt != null && foreground) main.postDelayed(scheduled, ((retryAt - System.currentTimeMillis() / 1000.0) * 1000).toLong().coerceAtLeast(1000))
   }
@@ -138,6 +167,7 @@ class MainActivity : ComponentActivity() {
   private var drawer by mutableStateOf<DrawerSession?>(null)
   private var advanced by mutableStateOf(false)
   private var single by mutableStateOf(SingleState())
+  private var refreshing by mutableStateOf(false)
   private val snackbar = SnackbarHostState()
   private var scope: CoroutineScope? = null
   private var held by mutableStateOf(Held())
@@ -222,7 +252,7 @@ class MainActivity : ComponentActivity() {
           onContinue = { restoreChoice = RestoreChoice(null,true) },
           advanced = advanced, onAdvanced = { advanced = it },
           single = single, onSingle = { single = it }, onSingleConfirm = ::confirmSingle, snackbar = snackbar,
-          onEnvironment = ::switchEnvironment
+          onEnvironment = ::switchEnvironment, onResetTest = ::resetTestData, refreshing = refreshing, onRefresh = ::refresh
         )
         productEditor?.let { editor ->
           ProductDialog(editor.product, busy, editor.picked, editor.token, app.imageGeneration, onPick = ::importPhoto, onDismiss = { productEditor = null }) { name, price, active, stop, image ->
@@ -372,12 +402,30 @@ class MainActivity : ComponentActivity() {
   }) { hash -> productEditor = productEditor?.let { it.copy(picked = hash, token = it.token + 1) } }
   /** Drops every piece of screen state (cart, dialogs, loaded rows) and reloads from the other environment's database. */
   private fun switchEnvironment(target: AppEnvironment) {
-    if (busy || syncRunning || app.cloud.running.get()) { failure(IllegalStateException("同期・保存中は切り替えできません")); return }
+    if (busy) { failure(IllegalStateException("保存中です。少し待ってから切り替えてください")); return }
     busy = true
-    app.switchEnvironment(target) { result ->
+    val now = app.switchEnvironment(target) { result ->
       if (isDestroyed) return@switchEnvironment
       busy = false
       result.onFailure(::failure)
+      resetScreen()
+      Toast.makeText(this, "${app.environment.label}環境に切り替えました", Toast.LENGTH_SHORT).show()
+    }
+    if (!now) Toast.makeText(this, "同期の完了後に切り替えます", Toast.LENGTH_SHORT).show()
+  }
+  private fun resetTestData() {
+    if (busy || syncRunning || app.cloud.running.get()) { failure(IllegalStateException("同期・保存中は消去できません")); return }
+    busy = true
+    app.resetTestData { result ->
+      if (isDestroyed) return@resetTestData
+      busy = false
+      result.onFailure(::failure)
+      resetScreen()
+      Toast.makeText(this, "テストデータを消去しました", Toast.LENGTH_SHORT).show()
+    }
+  }
+  /** Drops every piece of screen state (cart, dialogs, loaded rows) and reloads from the current environment's database. */
+  private fun resetScreen() {
       snackbar.currentSnackbarData?.dismiss()
       cart.clear(); cash = ""; age = null; gender = null; group = null; customerEpoch++; ticketPrefix = ""; single = SingleState(); commandID = UUID.randomUUID().toString()
       productEditor = null; stockEdit = null; cancelSale = null; confirmation = null; savedSale = null; settings = null
@@ -385,8 +433,6 @@ class MainActivity : ComponentActivity() {
       products = emptyList(); sales = emptyList(); pendingQuantities = emptyMap(); drawer = null; held = Held(); deviceID = ""
       tab = 0; ready = false; syncMessage = app.syncMessage
       load()
-      Toast.makeText(this, "${app.environment.label}環境に切り替えました", Toast.LENGTH_SHORT).show()
-    }
   }
   private fun stockOf(product: Product) = Cash.displayedStock(product.cloudStock, pendingQuantities[product.id] ?: 0)
   private val deviceLabel get() = CodePoints.deviceLabel(android.os.Build.MODEL)
@@ -403,7 +449,20 @@ class MainActivity : ComponentActivity() {
 
   private fun sync() {
     if (syncRunning) return
-    app.sync { if (!isDestroyed) failure(it) }
+    app.sync({ if (!isDestroyed) failure(it) })
+  }
+  /** Pull to refresh: one manual cycle, or only a reload while waiting out the backoff or already syncing. */
+  private fun refresh() {
+    if (refreshing) return
+    refreshing = true
+    app.worker.execute {
+      val waiting = runCatching { app.store.syncGate().first > System.currentTimeMillis() / 1000.0 }.getOrDefault(true) || app.cloud.running.get()
+      runOnUiThread {
+        if (isDestroyed) return@runOnUiThread
+        if (waiting || syncRunning) { refreshing = false; load() }
+        else app.sync({ if (!isDestroyed) failure(it) }) { refreshing = false; load() }
+      }
+    }
   }
   private fun <T> cloudAction(task: ((Result<T>) -> Unit) -> Unit, success: (T) -> Unit) {
     if (syncRunning) return

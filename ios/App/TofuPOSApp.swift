@@ -44,7 +44,8 @@ final class RegisterModel: ObservableObject {
             if let images, let keep = try? store.imageHashesInUse() { images.cleanup(keep: keep) }
             let controller = CloudSyncController(store: store, images: images, environment: environment)
             controller.didChange = { [weak self] in self?.refresh() }
-            controller.onSwitchEnvironment = { [weak self] in self?.switchEnvironment(to: $0) }
+            controller.onSwitchEnvironment = { [weak self] in self?.requestSwitch(to: $0) }
+            controller.onEraseTestData = { [weak self] in self?.requestEraseTestData() }
             sync = controller
             try reload(); ready = true
             controller.active = sceneActive
@@ -52,9 +53,64 @@ final class RegisterModel: ObservableObject {
     }
     func setActive(_ active: Bool) { sceneActive = active; sync?.active = active }
     /// Stops the current controller's timers, drops screen state and reopens with the other environment.
+    @Published var showingSyncSheet = false
+    /// Environment switch waiting for confirmation (alert in RootView, outside every sheet).
+    @Published var confirmSwitch: AppEnvironment?
+    @Published private(set) var switching = false
+    private var queuedSwitch: AppEnvironment?
+    @Published var confirmErase = false
+    private var queuedErase = false
+    func requestEraseTestData() {
+        guard environment == .test, !switching else { return }
+        if showingSyncSheet { queuedErase = true; showingSyncSheet = false } else { confirmErase = true }
+    }
+    /// Test only: stop syncing, close the DB, delete the test DB and photos, reopen empty and pull again.
+    func eraseTestData() {
+        guard environment == .test, !switching else { return }
+        switching = true
+        var current = sync
+        current?.shutdown()
+        Task { @MainActor in
+            while current?.isSyncing == true { try? await Task.sleep(nanoseconds: 200_000_000) }
+            current = nil  // release the old store so its SQLite connection closes before the file goes
+            sync = nil; store = nil; images = nil; ready = false
+            products = []; sales = []; stock = [:]; session = nil; sessionSummary = nil; lastClosed = nil
+            do {
+                let directory = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                try AppEnvironment.test.eraseLocalData(in: directory)
+            } catch { self.error = error.localizedDescription }
+            switching = false
+            reset += 1
+            open()
+        }
+    }
+    /// Bumped on erase so the tab view (and every screen's state) is rebuilt.
+    @Published private(set) var reset = 0
+    /// From the test badge or the settings picker. If the sync sheet is open it closes first and the
+    /// confirmation follows in `syncSheetDismissed`.
+    func requestSwitch(to target: AppEnvironment) {
+        guard target != environment, !switching else { return }
+        if showingSyncSheet { queuedSwitch = target; showingSyncSheet = false } else { confirmSwitch = target }
+    }
+    func syncSheetDismissed() {
+        if let target = queuedSwitch { queuedSwitch = nil; confirmSwitch = target }
+        if queuedErase { queuedErase = false; confirmErase = true }
+    }
+    /// Confirmed: stop new cycles, let a running one finish, then switch.
+    func confirmSwitching(to target: AppEnvironment) {
+        guard !switching else { return }
+        switching = true
+        let current = sync
+        current?.shutdown()
+        Task { @MainActor in
+            while current?.isSyncing == true { try? await Task.sleep(nanoseconds: 200_000_000) }
+            switching = false
+            switchEnvironment(to: target)
+        }
+    }
     func switchEnvironment(to target: AppEnvironment) {
         guard target != environment else { return }
-        guard sync?.isSyncing != true else { error = "同期中は切り替えできません。少し待ってからやり直してください"; return }
+        guard sync?.isSyncing != true else { confirmSwitching(to: target); return }
         sync?.shutdown(); sync = nil; store = nil; images = nil; ready = false
         products = []; sales = []; stock = [:]; session = nil; sessionSummary = nil; lastClosed = nil; error = nil
         environment = target
@@ -90,6 +146,11 @@ final class RegisterModel: ObservableObject {
     }
     func cancel(_ id: String, reason: String) throws { try database().cancel(id: id, reason: reason); try reload(); sync?.requestAutoSync() }
     func refresh() { do { try reload() } catch { self.error = error.localizedDescription } }
+    /// Pull to refresh on the main screens: the same cycle as 「今すぐ送信」 (when allowed), then a reload.
+    func pullToRefresh() async {
+        await sync?.pullRefresh()
+        refresh()
+    }
     private func database() throws -> SQLiteStore {
         guard let store else { throw POSFailure.invalid("保存データを開けません") }; return store
     }
@@ -124,15 +185,29 @@ struct RootView: View {
                     .toolbarBackground(.visible, for: .tabBar)
                 }
                 // A new identity per environment discards carts, sheets and other screen state.
-                .id(model.environment)
+                .id("\(model.environment.rawValue)-\(model.reset)")
             } else {
                 VStack(spacing: 20) {
                     Text("データを開けません").font(.title); Text(model.error ?? "起動に失敗しました")
-                    if model.environment == .test { IconButton("本番環境に戻す", .symbol("arrow.uturn.backward.circle")) { model.switchEnvironment(to: .production) } }
+                    if model.environment == .test { IconButton("本番環境に戻す", .symbol("arrow.uturn.backward.circle"), text: "本番に戻す") { model.switchEnvironment(to: .production) } }
                 }
                     .padding().frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.tofuBackground)
             }
         }
+        .sheet(isPresented: $model.showingSyncSheet, onDismiss: { model.syncSheetDismissed() }) {
+            if let sync = model.sync { SyncSheet(controller: sync) }
+        }
+        .alert("環境の切り替え", isPresented: Binding(get: { model.confirmSwitch != nil }, set: { if !$0 { model.confirmSwitch = nil } }),
+               presenting: model.confirmSwitch) { target in
+            // `presenting` hands the target to the action, so dismissing the alert cannot clear it first.
+            Button(target == .test ? "テストに切り替える" : "本番に戻す", role: .destructive) { model.confirmSwitching(to: target) }
+            Button("戻る", role: .cancel) {}
+        } message: { target in Text(target.switchPrompt) }
+        .alert("テストデータを消去", isPresented: $model.confirmErase) {
+            Button("消去する", role: .destructive) { model.eraseTestData() }
+            Button("戻る", role: .cancel) {}
+        } message: { Text("この端末のテストデータを消して取り込み直します（本番は消えません）。") }
+        .overlay { if model.switching { TofuLoading(size: 56).padding(24).background(RoundedRectangle(cornerRadius: 16).fill(Color.tofuCard)) } }
         .environment(\.isTestEnvironment, model.environment == .test)
         .onAppear { model.setActive(scenePhase == .active); MacWindow.configure() }
         .onChange(of: scenePhase) { phase in model.setActive(phase == .active) }
@@ -208,13 +283,14 @@ struct RegisterView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .refreshable { await model.pullToRefresh() }
             .navigationTitle("TOS")
             .tofuSurface(fullWidth: true)
             .syncToolbar(model)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down")) { receivedFocused = false }
+                    IconButton("キーボードを閉じる", .symbol("keyboard.chevron.compact.down"), text: "完了") { receivedFocused = false }
                 }
             }
             .onDisappear { receivedFocused = false }
@@ -293,7 +369,7 @@ struct RegisterView: View {
                 Button("+100") { addReceived(100) }
                 Button("+500") { addReceived(500) }
                 Button("+1,000") { addReceived(1000) }
-                IconButton("預り金をクリア", .symbol("xmark.circle")) { receivedFocused = false; received = "" }
+                IconButton("預り金をクリア", .symbol("xmark.circle"), text: "クリア") { receivedFocused = false; received = "" }
             }.buttonStyle(.bordered)
             if let total, let cash, cash >= total {
                 Text("お釣り　¥\(Yen.format(cash - total))").font(.title2.bold())
@@ -379,7 +455,8 @@ struct ProductsView: View {
                         }.frame(minHeight: 48)
                     }
                 }.tofuRows()
-            }.navigationTitle("商品")
+            }.refreshable { await model.pullToRefresh() }
+                .navigationTitle("商品")
                 .tofuSurface()
                 .syncToolbar(model)
                 .toolbar { ToolbarItem(placement: .primaryAction) { IconButton("商品を追加", .symbol("plus")) { editing = nil; showing = true } } }
@@ -412,9 +489,11 @@ struct ProductEditor: View {
                             if processing { TofuLoading() }
                         }
                         HStack(spacing: 16) {
-                            PhotosPicker(selection: $pickerItem, matching: .images) { IconImage(icon: .asset("IconPhoto")).frame(minWidth: 44, minHeight: 44) }
+                            PhotosPicker(selection: $pickerItem, matching: .images) {
+                                Label { Text("写真を選ぶ") } icon: { IconImage(icon: .asset("IconPhoto"), size: 20) }.labelStyle(.titleAndIcon).frame(minHeight: 44)
+                            }
                                 .buttonStyle(.borderless).disabled(processing).accessibilityLabel("写真を選ぶ").help("写真を選ぶ")
-                            if imageHash != nil { IconButton("写真を外す", .symbol("xmark.circle"), role: .destructive) { imageHash = nil } }
+                            if imageHash != nil { IconButton("写真を外す", .symbol("xmark.circle"), text: "写真を外す", role: .destructive) { imageHash = nil } }
                             Spacer()
                         }
                     }
@@ -430,8 +509,8 @@ struct ProductEditor: View {
                             Text(model.stock[product.id].map(StockMath.label) ?? "在庫は通信後に表示します")
                             TextField("数量", text: $quantity).keyboardType(.numberPad)
                             HStack(spacing: 16) {
-                                IconButton("在庫を数えて設定", .asset("IconStockCount")) { adjust(product, kind: "set") }
-                                IconButton("入荷を追加", .asset("IconStockAdd")) { adjust(product, kind: "add") }
+                                IconButton("在庫を数えて設定", .asset("IconStockCount"), text: "在庫を設定") { adjust(product, kind: "set") }
+                                IconButton("入荷を追加", .asset("IconStockAdd"), text: "入荷") { adjust(product, kind: "add") }
                                 Spacer()
                             }
                             if let notice { Text(notice).font(.footnote) }
@@ -515,7 +594,7 @@ struct DrawerView: View {
                             LabeledContent("売上", value: "¥\(Yen.format(summary?.salesTotal ?? 0))（\(summary?.orderCount ?? 0)件）")
                             LabeledContent("取消・返金", value: "¥\(Yen.format(summary?.cancelTotal ?? 0))")
                             LabeledContent("現金在高（理論値）", value: "¥\(Yen.format(summary?.expected ?? session.floatTotal))").font(.headline)
-                            IconButton("レジ締め", .symbol("lock")) { closing = session }
+                            IconButton("レジ締め", .symbol("lock"), text: "レジ締め") { closing = session }
                         }
                         Section("客層別の件数") {
                             ForEach(CustomerAge.allCases) { age in
@@ -535,7 +614,7 @@ struct DrawerView: View {
                     } else {
                         Section("レジ開け（釣銭準備金の枚数）") {
                             DenominationEditor(counts: $counts)
-                            IconButton("レジを開ける", .symbol("lock.open")) {
+                            IconButton("レジを開ける", .symbol("lock.open"), text: "レジ開け") {
                                 do { try model.openDrawer(counts); counts = [:] } catch { model.error = error.localizedDescription }
                             }
                         }
@@ -549,7 +628,8 @@ struct DrawerView: View {
                         }
                     }
                 }.tofuRows()
-            }.navigationTitle("締め")
+            }.refreshable { await model.pullToRefresh() }
+                .navigationTitle("締め")
                 .tofuSurface()
                 .syncToolbar(model)
                 .scrollDismissesKeyboard(.interactively)
@@ -579,7 +659,7 @@ struct DrawerCloseView: View {
                         LabeledContent("理論値", value: "¥\(Yen.format(expected))")
                         LabeledContent("差額", value: difference(counted - expected)).foregroundColor(counted == expected ? .primary : .red)
                         if let failure { Text(failure).foregroundStyle(.red) }
-                        IconButton("締めを確定", .symbol("checkmark.circle")) { confirming = true }
+                        IconButton("締めを確定", .symbol("checkmark.circle"), text: "締める") { confirming = true }
                     }
                 }.tofuRows()
             }.navigationTitle("レジ締め")
@@ -623,16 +703,17 @@ struct HistoryView: View {
                             ForEach(sale.lines) { line in Text("\(line.name) × \(line.quantity)　¥\(line.price * Int64(line.quantity))") }
                             Text("預り ¥\(sale.received) ／ 釣銭 ¥\(sale.change)")
                             if let reason = sale.cancellationReason { Text("取消理由: \(reason)") }
-                            if sale.cancelledAt == nil { IconButton("全額取消・返金記録", .asset("IconCancelSale"), role: .destructive) { cancelling = sale } }
+                            if sale.cancelledAt == nil { IconButton("全額取消・返金記録", .asset("IconCancelSale"), text: "全額取消", role: .destructive) { cancelling = sale } }
                         }
                     }
                 }.tofuRows()
-            }.navigationTitle("履歴・売上")
+            }.refreshable { await model.pullToRefresh() }
+                .navigationTitle("履歴・売上")
                 .tofuSurface()
                 .syncToolbar(model)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        IconButton("全件をCSVに書き出す", .asset("IconExportCSV")) { document = CSVDocument(text: SalesCSV.make(model.sales, ticket: true)); exporting = true }
+                        IconButton("全件をCSVに書き出す", .asset("IconExportCSV"), text: "CSV出力") { document = CSVDocument(text: SalesCSV.make(model.sales, ticket: true)); exporting = true }
                             .disabled(model.sales.isEmpty)
                     }
                 }
@@ -659,7 +740,7 @@ struct CancellationView: View {
                     TextField("取消理由", text: $reason)
                     Toggle(sale.total == 0 ? "0円会計の取消を確認した" : "全額返金を完了した", isOn: $refunded)
                     if let failure { Text(failure).foregroundStyle(.red) }
-                    IconButton("取消を記録", .symbol("checkmark.circle"), role: .destructive) {
+                    IconButton("取消を記録", .symbol("checkmark.circle"), text: "取消を記録", role: .destructive) {
                         do { try model.cancel(sale.id, reason: reason); dismiss() }
                         catch { failure = error.localizedDescription }
                     }.disabled(!refunded || reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
