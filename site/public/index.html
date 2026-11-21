@@ -97,20 +97,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal .mh{background:var(--bar);color:#fff;padding:4px 10px;font-weight:bold}
 .modal .mb{padding:16px}
 .modal .mf{text-align:center;padding:0 0 16px}
-/* sign-in (TOFAS's own account screen; nothing is sent anywhere) */
-.signin{display:grid;place-items:start center;padding:40px 16px 60px}
-.card{width:min(460px,100%);background:#fff;border:1px solid #8fb0d6;box-shadow:0 2px 0 #b9c9df}
-.card .ch{background:linear-gradient(#5fa3dd,var(--bar) 55%,#3f87c9);color:#fff;font-weight:bold;padding:6px 12px}
-.card .cb{padding:18px 20px}
-.card label{display:block;font-size:12px;margin:12px 0 4px}
-.card input{width:100%;padding:6px 8px;border:1px solid #8c8c8c;border-radius:2px;font:inherit;background:#fffef6}
-.card .note{font-size:11px;color:#666;border-top:1px dashed #ccc;margin-top:16px;padding-top:10px}
-.card .acts{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
-.step{display:flex;gap:6px;font-size:11px;color:#777;margin:0 0 14px}.step b{color:var(--bar-dark)}
-.tapfu{display:block;margin:18px auto 8px;width:120px;height:120px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.tapfu svg{width:100%;height:100%}.tapfu:focus:not(:focus-visible){outline:none}
-.tapfu.squish{animation:sq .35s cubic-bezier(.3,1.6,.5,1)}@keyframes sq{40%{transform:scale(1.15,.8)}70%{transform:scale(.95,1.06)}}
-.dots{text-align:center;font-size:18px;letter-spacing:6px;color:#bbb}.dots .on{color:var(--miso)}
 /* student info: heading row + column-oriented tables, like the real thing */
 .stu{display:flex;gap:16px;align-items:flex-start}.stu .tables{flex:1;min-width:0}
 .sec{background:linear-gradient(#f4f8fd,#dfe9f6);border:1px solid var(--line);border-bottom:0;padding:4px 10px;font-weight:bold;margin-top:14px}
@@ -165,15 +151,12 @@ body.sp .title{border-left:0;background:none;padding:0;font-size:150%}
 body.sp table{font-size:14px}
 body.sp .stu{flex-direction:column-reverse;align-items:center}
 .rowt th{width:7.5em;text-align:left!important}.rowt td{text-align:left!important}
-body.sp .card{box-shadow:none;border:0}body.sp .signin{padding:10px 5px 30px}
-body.sp .card .ch{background:#4694d1}
-body.sp .card input{border-radius:0;font-size:16px;padding:10px}
 .sp-timer{font-variant-numeric:tabular-nums}
 body.sp .notice-list button{background:none!important;padding:0!important;text-align:left}
 body.sp .pl-h{border-radius:0;background:#4694d1;box-shadow:none;height:32px}
 body.sp .pl-h i{display:none}
 body.sp .box{border-radius:0}
-body.sp .tapfu{background:none!important}
+
 [hidden]{display:none!important}
 @media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap,.stu{flex-direction:column-reverse;align-items:center}.idcard{margin-bottom:6px}.ph .who{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.blink,.marquee span{animation:none}.marquee span{padding-left:0}}
@@ -222,29 +205,6 @@ body.sp .tapfu{background:none!important}
       <ul class="links" id="links"></ul>
     </div>
   </div>
-  <div class="foot" data-copy="footer"></div>
-</section>
-
-<!-- Sign-in (parody; inputs are never sent or stored) -->
-<section id="signin" hidden>
-  <div class="signin"><div class="card">
-    <div class="ch" data-p="login_title"></div>
-    <div class="cb" id="pwStep">
-      <div class="step"><b>① ID・合言葉</b>▸<span>② 多要素認証</span>▸<span>③ 完了</span></div>
-      <label for="tid" data-p="login_id_label"></label><input id="tid" autocomplete="off" spellcheck="false">
-      <label for="tpw" data-p="login_pw_label"></label><input id="tpw" autocomplete="off" spellcheck="false">
-      <div class="acts"><a href="#" id="forgot" data-p="login_forgot"></a><button class="gbtn big" id="signinBtn">サインイン</button></div>
-      <p class="note" data-p="login_note"></p>
-    </div>
-    <div class="cb" id="mfaStep" hidden>
-      <div class="step"><span>① ID・合言葉</span>▸<b>② 多要素認証</b>▸<span>③ 完了</span></div>
-      <b data-p="mfa_title"></b>
-      <p data-p="mfa_body"></p>
-      <button class="tapfu" id="tapfu" aria-label="豆腐を押す"><svg viewBox="0 0 60 66"><path d="M30 2 2 18v30l28 16 28-16V18z" fill="#fff" stroke="#635954" stroke-width="1.5"/><path d="M30 34v30l28-16V18z" fill="#FFE8A9"/><path d="M2 18 30 34 58 18 30 2z" fill="#8a4b1f" opacity=".9"/><g fill="#2e2018"><ellipse cx="22" cy="17" rx="1" ry="1.8"/><ellipse cx="33" cy="12" rx="1" ry="1.8"/><ellipse cx="38" cy="21" rx="1" ry="1.8"/><ellipse cx="28" cy="24" rx="1" ry="1.8"/></g></svg></button>
-      <div class="dots" id="dots" aria-live="polite"><span>●</span><span>●</span><span>●</span></div>
-      <p class="info" id="mfaDone" hidden data-p="mfa_done"></p>
-    </div>
-  </div></div>
   <div class="foot" data-copy="footer"></div>
 </section>
 
@@ -355,7 +315,6 @@ function fillCopy() {
   $("noticeAll").replaceChildren(...copy.notices.map(n => { const tr = item(n); tr.append(el("td", {}, n.from)); return tr; }));
   const P = copy.personal, st = P.student;
   document.querySelectorAll("[data-p]").forEach(n => { n.textContent = P[n.dataset.p] ?? ""; });
-  $("tid").placeholder = P.login_id_placeholder; $("tpw").placeholder = P.login_pw_placeholder;
   document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = st[n.dataset.ps] ?? ""; });
   document.querySelectorAll("[data-pg]").forEach(n => { n.textContent = P.grades_summary[n.dataset.pg] ?? ""; });
   // Column-oriented tables: one label row and one value row per section.
@@ -426,25 +385,12 @@ function show(name) {
   current = name;
   history.replaceState(null, "", "#" + name);
 }
-// Sign-in → MFA (tap the tofu three times) → portal. Inputs stay in the page and are cleared on leave.
-function signin() { $("login").hidden = true; $("signin").hidden = false; $("pwStep").hidden = false; $("mfaStep").hidden = true; $("tid").focus(); window.scrollTo(0, 0); }
-let taps = 0;
-$("signinBtn").onclick = () => { taps = 0; paintDots(); $("mfaDone").hidden = true; $("pwStep").hidden = true; $("mfaStep").hidden = false; $("tapfu").focus(); };
-["tid", "tpw"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("signinBtn").click(); }));
-$("forgot").onclick = e => { e.preventDefault(); modal(copy.personal.login_note, "合言葉の再加熱手続"); };
-function paintDots() { $("dots").querySelectorAll("span").forEach((d, i) => d.classList.toggle("on", i < taps)); }
-$("tapfu").onclick = () => {
-  if (taps >= 3) return;
-  const b = $("tapfu"); b.classList.remove("squish"); void b.offsetWidth; b.classList.add("squish");
-  taps++; paintDots();
-  if (taps === 3) { $("mfaDone").hidden = false; setTimeout(() => enter(), 1400); }
-};
 function enter(tab = "home") {
-  $("login").hidden = true; $("signin").hidden = true; $("portal").hidden = false; $("tid").value = $("tpw").value = "";
+  $("login").hidden = true; $("portal").hidden = false;
   const t = jstNow(); $("lastLogin").textContent = "前回ログイン：" + t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes());
   show(tab); poke(); window.scrollTo(0, 0);
 }
-function leave() { $("portal").hidden = true; $("signin").hidden = true; $("login").hidden = false; $("tid").value = $("tpw").value = ""; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
+function leave() { $("portal").hidden = true; $("login").hidden = false; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
 // Ten idle minutes end the "session", like the real thing.
 let deadline = 0, current = "home";
 function poke() { clearTimeout(idle); if (!$("portal").hidden) { deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); } }
@@ -452,7 +398,7 @@ function poke() { clearTimeout(idle); if (!$("portal").hidden) { deadline = Date
 
 $("tabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { role: "tab", type: "button", "data-tab": k }); if (k === "home") b.append(el("span", { class: "ic" })); b.append(label); b.onclick = () => show(k); return b; }));
 document.addEventListener("click", e => { const a = e.target.closest("[data-goto]"); if (!a) return; e.preventDefault(); $("portal").hidden ? enter(a.dataset.goto) : show(a.dataset.goto); });
-$("enter").onclick = signin;
+$("enter").onclick = () => enter();
 $("logout").onclick = leave;
 // White line icons for the smart menus.
 const ICON = {
@@ -464,7 +410,7 @@ const ICON = {
 const svg = k => { const d = document.createElement("div"); d.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + "</svg>"; return d.firstChild; };
 $("spTabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { type: "button", "data-tab": k }, svg(k), label); b.onclick = () => show(k); return b; }));
 const SYS = [["pc", "PC版", () => setMode("pc")], ["globe", "English", () => act.english()], ["timer", "10:00", () => modal("残り時間が0になると、自動でログアウトします。操作すると10分に戻ります。", "タイマー")],
-  ["key", "合言葉", () => modal(copy.personal.login_note, "合言葉の変更")], ["logout", "ログアウト", () => leave()], ["gear", "設定", () => modal("設定できる項目はありません。豆腐は焼き加減を選べません。", "設定")]];
+  ["key", "合言葉", () => modal("合言葉はありません。ログインはボタンを押すだけです。", "合言葉の変更")], ["logout", "ログアウト", () => leave()], ["gear", "設定", () => modal("設定できる項目はありません。豆腐は焼き加減を選べません。", "設定")]];
 $("spSys").replaceChildren(...SYS.map(([k, label, fn], i) => { const b = el("button", { type: "button", class: i === 5 ? "dark" : "" }, svg(k), el("span", k === "timer" ? { class: "sp-timer", id: "spTimer" } : {}, label)); b.onclick = fn; return b; }));
 setInterval(() => { const left = Math.max(0, deadline - Date.now()), m = Math.floor(left / 60e3), sec = Math.floor(left / 1e3) % 60; $("spTimer").textContent = m + ":" + pad(sec); }, 1000);
 // Mode: remembered per viewer; first visit follows the screen width.
@@ -477,7 +423,7 @@ function setMode(mode) {
 const act = {
   english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"),
   mode: () => setMode(document.body.classList.contains("sp") ? "pc" : "sp"),
-  enter: () => signin(),
+  enter: () => enter(),
 };
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; e.preventDefault(); act[b.dataset.act](); });
 let saved = null; try { saved = localStorage.getItem("tofas-mode"); } catch {}
