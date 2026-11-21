@@ -119,6 +119,61 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .idcard img{width:200px;height:240px;object-fit:cover;border:1px solid var(--line);background:#eee;display:block}
 .idcard small{display:block;font-size:11px;color:#555;margin-top:4px;text-align:left}
 .hanko{position:absolute;right:-8px;top:170px;width:74px;height:74px;border:3px solid #d8352a;border-radius:50%;color:#d8352a;display:grid;place-items:center;font:bold 13px/1.1 serif;transform:rotate(-14deg);background:rgba(255,255,255,.55);text-align:center}
+/* スマホ版: a separate look, not just a narrow PC page */
+.sp-only{display:none}
+body.sp .pc-only{display:none!important}
+body.sp .sp-only{display:block}
+body.sp{font-size:15px;color:#333;word-break:break-all}
+body.sp .frame{border:0;max-width:none}
+body.sp .strip{height:2px;background:var(--bar)}body.sp .strip *{display:none}
+body.sp button,body.sp .gbtn{background:#ccc;border:0;border-radius:0;padding:10px;font-size:100%;box-shadow:none}
+body.sp .gbtn:hover{background:#ddd}
+body.sp .gbtn.tri::before{border-left-color:#333}
+body.sp .hero{flex-direction:column;gap:0;padding:12px 5px 0}
+body.sp .logo{width:min(300px,80%)}
+body.sp .side{display:none}
+.sp-title{margin:8px 5px;padding:4px 10px;border-radius:10px;background:#a6bfe3;font:bold 15px "Courier New",Courier,monospace;text-align:center}
+.sp-panel{background:#a6bfe3;margin:10px 5px;padding:24px 10px;text-align:center}
+.sp-panel .row{display:flex;justify-content:center;gap:14px;margin-bottom:30px}
+.sp-panel .gbtn.big{font-size:20px;padding:12px 40px}
+body.sp .cols{display:block;padding:0 5px}
+body.sp .cols>div{background:#a6bfe3;padding:16px 4px 4px;margin-bottom:10px}
+body.sp .cols>div:last-child{background:transparent;padding:6px}
+body.sp .cols .pl-h{display:none}
+body.sp .links{background:#a6bfe3;padding:20px 20px 20px 60px;margin:0}
+body.sp .live-inline{background:#fff;border:0}
+body.sp .foot{border-top:0;text-align:center}
+/* smart portal: user bar, flat system menu, 4-column icon tabs, dark crumbs */
+.sp-user{background:#ccc;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:13px}
+.sp-user i{width:28px;height:28px;background:#555;display:grid;place-items:center;flex:none}
+.sp-sys{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0}
+.sp-sys button,.sp-tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;color:#fff;background:#4694d1!important;font-size:11px!important;padding:8px 2px!important;min-width:0}
+.sp-sys button:hover,.sp-tabs button:hover{background:#3a85c0!important}
+.sp-sys button.dark{background:#555!important}
+.sp-sys svg{width:24px;height:24px}
+.sp-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:5px}
+.sp-tabs svg{width:40px;height:40px}
+.sp-tabs button[aria-current=true]{outline:3px solid #f0a020;outline-offset:-3px}
+body.sp .crumb{padding:5px 10px}
+body.sp .crumb::before{content:none}
+.crumb .bc{display:inline-block;background:#555;color:#fff;padding:8px 20px;margin:0 6px 4px 0;font-size:13px}
+.crumb .bc::after{content:" >"}
+body.sp .view{padding:6px 5px 24px}
+body.sp .grid{display:block}body.sp .grid>div{margin-bottom:10px}
+body.sp .marquee{display:none}
+body.sp .title{border-left:0;background:none;padding:0;font-size:150%}
+body.sp table{font-size:14px}
+body.sp .stu{flex-direction:column-reverse;align-items:center}
+.rowt th{width:7.5em;text-align:left!important}.rowt td{text-align:left!important}
+body.sp .card{box-shadow:none;border:0}body.sp .signin{padding:10px 5px 30px}
+body.sp .card .ch{background:#4694d1}
+body.sp .card input{border-radius:0;font-size:16px;padding:10px}
+.sp-timer{font-variant-numeric:tabular-nums}
+body.sp .notice-list button{background:none!important;padding:0!important;text-align:left}
+body.sp .pl-h{border-radius:0;background:#4694d1;box-shadow:none;height:32px}
+body.sp .pl-h i{display:none}
+body.sp .box{border-radius:0}
+body.sp .tapfu{background:none!important}
 [hidden]{display:none!important}
 @media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap,.stu{flex-direction:column-reverse;align-items:center}.idcard{margin-bottom:6px}.ph .who{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.blink,.marquee span{animation:none}.marquee span{padding-left:0}}
@@ -142,9 +197,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </svg>
     </div>
     <div class="side">
-      <div class="row"><button class="gbtn tri" id="english">English</button><button class="gbtn tri" id="sp">スマホ版</button></div>
+      <div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">スマホ版</button></div>
       <button class="gbtn big" id="enter">ログイン</button>
     </div>
+  </div>
+  <div class="sp-only">
+    <div class="sp-title">TOFAS（Tofu Academic affairs System)</div>
+    <div class="sp-panel"><div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">PC版</button></div>
+      <button class="gbtn big" data-act="enter">ログイン</button></div>
   </div>
   <div class="cols">
     <div>
@@ -190,11 +250,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <!-- Portal (after "login") -->
 <section id="portal" hidden>
-  <div class="ph">
+  <div class="ph pc-only">
     <svg class="mini" viewBox="0 0 440 170" aria-label="TOFAS"><text x="0" y="135" style="font:900 130px 'M PLUS Rounded 1c',sans-serif;fill:#fbf1d9;stroke:#8a4b1f;stroke-width:14px;paint-order:stroke;stroke-linejoin:round">TOFAS</text></svg>
     <div class="who"><span>ようこそ <b data-ps="name"></b> さん　<small class="muted">学籍番号 <span data-ps="id"></span></small></span><small id="lastLogin"></small><button class="gbtn" id="logout">ログアウト</button></div>
   </div>
-  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="tabs pc-only" role="tablist" id="tabs"></div>
+  <div class="sp-only">
+    <div class="sp-user"><i><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></i><span><b data-ps="name"></b> さん</span></div>
+    <div class="sp-sys" id="spSys"></div>
+    <div class="sp-tabs" id="spTabs"></div>
+  </div>
   <div class="crumb" id="crumb"></div>
   <div class="view" id="view-home">
     <div class="marquee"><span id="marquee"></span></div>
@@ -250,7 +315,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="title">掲示板</div>
     <table class="notice-list"><thead><tr><th>分類</th><th>件名</th><th>発信元</th></tr></thead><tbody id="noticeAll"></tbody></table>
   </div>
-  <div class="foot" data-copy="footer"></div>
+  <div class="foot"><span data-copy="footer"></span><br><a href="#" data-act="mode" id="modeLink">スマホ版</a></div>
 </section>
 </div>
 
@@ -300,11 +365,19 @@ function fillCopy() {
     ["連絡先情報", [["現住所", "address"], ["電話番号", "phone"], ["メールアドレス", "email"]]],
     ["保証人情報", [["保証人氏名", "guardian"], ["続柄", "guardian_relation"], ["保証人住所", "guardian_address"]]],
     ["その他", [["所属サークル", "club"], ["奨学金", "scholarship"], ["健康診断", "health"], ["備考", "notes"]]]];
-  $("stuTables").replaceChildren(...SECTIONS.flatMap(([h, cols]) => [el("div", { class: "sec" }, h),
-    el("table", {}, el("tr", {}, ...cols.map(([l]) => el("th", {}, l))), el("tr", {}, ...cols.map(([, k]) => el("td", {}, st[k] ?? ""))))]));
+  STUDENT = [SECTIONS, st]; renderStudent();
   $("marquee").textContent = copy.notices.map(n => "【" + n.category + "】" + n.title).join("　　◆　　");
 }
 
+// PC: label row + value row per section. スマホ: one row per item.
+let STUDENT = null;
+function renderStudent() {
+  if (!STUDENT) return;
+  const [SECTIONS, st] = STUDENT, sp = document.body.classList.contains("sp");
+  $("stuTables").replaceChildren(...SECTIONS.flatMap(([h, cols]) => [el("div", { class: "sec" }, h), sp
+    ? el("table", { class: "rowt" }, ...cols.map(([l, k]) => el("tr", {}, el("th", {}, l), el("td", {}, st[k] ?? ""))))
+    : el("table", {}, el("tr", {}, ...cols.map(([l]) => el("th", {}, l))), el("tr", {}, ...cols.map(([, k]) => el("td", {}, st[k] ?? ""))))]));
+}
 function grade(ratio) {
   const g = copy.grade_labels, i = Math.min(g.length - 1, Math.floor(ratio * g.length));
   return g[Math.max(0, i)];
@@ -345,7 +418,12 @@ async function load() {
 function show(name) {
   TABS.forEach(([k]) => { $("view-" + k).hidden = k !== name; });
   $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
-  $("crumb").textContent = "ホーム" + (name === "home" ? "" : " ＞ " + TABS.find(t => t[0] === name)[1]);
+  const label = TABS.find(t => t[0] === name)[1];
+  $("crumb").replaceChildren(document.body.classList.contains("sp")
+    ? el("span", {}, Object.assign(el("a", { href: "#", class: "bc", "data-goto": "home" }, "ホーム")), ...(name === "home" ? [] : [el("span", { class: "bc" }, label)]))
+    : "ホーム" + (name === "home" ? "" : " ＞ " + label));
+  $("spTabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-current", String(b.dataset.tab === name)));
+  current = name;
   history.replaceState(null, "", "#" + name);
 }
 // Sign-in → MFA (tap the tofu three times) → portal. Inputs stay in the page and are cleared on leave.
@@ -368,15 +446,42 @@ function enter(tab = "home") {
 }
 function leave() { $("portal").hidden = true; $("signin").hidden = true; $("login").hidden = false; $("tid").value = $("tpw").value = ""; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
 // Ten idle minutes end the "session", like the real thing.
-function poke() { clearTimeout(idle); if (!$("portal").hidden) idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); }
+let deadline = 0, current = "home";
+function poke() { clearTimeout(idle); if (!$("portal").hidden) { deadline = Date.now() + 10 * 60e3; idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); } }
 ["click", "keydown", "scroll", "touchstart"].forEach(e => addEventListener(e, poke, { passive: true }));
 
 $("tabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { role: "tab", type: "button", "data-tab": k }); if (k === "home") b.append(el("span", { class: "ic" })); b.append(label); b.onclick = () => show(k); return b; }));
 document.addEventListener("click", e => { const a = e.target.closest("[data-goto]"); if (!a) return; e.preventDefault(); $("portal").hidden ? enter(a.dataset.goto) : show(a.dataset.goto); });
 $("enter").onclick = signin;
 $("logout").onclick = leave;
-$("english").onclick = () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English");
-$("sp").onclick = () => modal("スマホ版は、この画面をスマホで開くことで提供しています。", "スマホ版");
+// White line icons for the smart menus.
+const ICON = {
+  home: '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>', register: '<path d="M5 19l1-4 9-9 3 3-9 9zM14 7l3 3"/>', grades: '<path d="M5 20V10M10 20V5M15 20v-8M20 20V8"/>',
+  syllabus: '<path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM17 20h2V6"/>', timetable: '<path d="M4 5h16v15H4zM4 10h16M9 5v15M14 5v15"/>', student: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  notices: '<path d="M12 3v4M7 7h10l-1 7H8zM12 14v7"/>', pc: '<path d="M3 5h18v11H3zM8 20h8M12 16v4"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 3h6"/>', key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>', logout: '<path d="M10 4H4v16h6M14 8l4 4-4 4M18 12H9"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/>'
+};
+const svg = k => { const d = document.createElement("div"); d.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + "</svg>"; return d.firstChild; };
+$("spTabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { type: "button", "data-tab": k }, svg(k), label); b.onclick = () => show(k); return b; }));
+const SYS = [["pc", "PC版", () => setMode("pc")], ["globe", "English", () => act.english()], ["timer", "10:00", () => modal("残り時間が0になると、自動でログアウトします。操作すると10分に戻ります。", "タイマー")],
+  ["key", "合言葉", () => modal(copy.personal.login_note, "合言葉の変更")], ["logout", "ログアウト", () => leave()], ["gear", "設定", () => modal("設定できる項目はありません。豆腐は焼き加減を選べません。", "設定")]];
+$("spSys").replaceChildren(...SYS.map(([k, label, fn], i) => { const b = el("button", { type: "button", class: i === 5 ? "dark" : "" }, svg(k), el("span", k === "timer" ? { class: "sp-timer", id: "spTimer" } : {}, label)); b.onclick = fn; return b; }));
+setInterval(() => { const left = Math.max(0, deadline - Date.now()), m = Math.floor(left / 60e3), sec = Math.floor(left / 1e3) % 60; $("spTimer").textContent = m + ":" + pad(sec); }, 1000);
+// Mode: remembered per viewer; first visit follows the screen width.
+function setMode(mode) {
+  document.body.classList.toggle("sp", mode === "sp");
+  try { localStorage.setItem("tofas-mode", mode); } catch {}
+  $("modeLink").textContent = mode === "sp" ? "PC版" : "スマホ版";
+  renderStudent(); if (!$("portal").hidden) show(current);
+}
+const act = {
+  english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"),
+  mode: () => setMode(document.body.classList.contains("sp") ? "pc" : "sp"),
+  enter: () => signin(),
+};
+document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; e.preventDefault(); act[b.dataset.act](); });
+let saved = null; try { saved = localStorage.getItem("tofas-mode"); } catch {}
+setMode(saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc"));
 $("register").onclick = () => { $("regErr").textContent = $("pick").checked ? copy.register_error : "科目が選択されていません。選択欄にチェックを入れてから［登録］を押してください。"; $("regErr").hidden = false; };
 setInterval(() => { const t = jstNow(); $("clock").textContent = t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds()) + " JST"; }, 1000);
 
