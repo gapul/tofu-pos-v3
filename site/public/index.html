@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TOFAS - Are you Tofu?</title>
+<title>UTOS - Are you Tofu?</title>
 <meta name="description" content="豆腐田楽の模擬店 Are you Tofu? の販売状況をリアルタイムで公示する、学務システム風のパロディサイト。">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,13 +207,13 @@ body.sp .f{overflow-x:auto;padding:4px}
 
 <!-- ===== Login page (the public top page, PC and smart) ===== -->
 <section id="login">
-  <div class="strip"><span class="tab">TOFAS（Tofu Academic affairs System）</span></div>
+  <div class="strip"><span class="tab">UTOS（Unofficial Tofu Operation System）</span></div>
   <div class="lg-wrap">
     <div class="hero">
-      <div class="biglogo" aria-label="TOFAS">
+      <div class="biglogo" aria-label="UTOS">
         <svg viewBox="0 0 440 300" aria-hidden="true">
           <g class="seed"><ellipse cx="40" cy="70" rx="4" ry="8" transform="rotate(25 40 70)"/><ellipse cx="190" cy="40" rx="4" ry="8" transform="rotate(-30 190 40)"/><ellipse cx="420" cy="80" rx="4" ry="8" transform="rotate(40 420 80)"/><ellipse cx="120" cy="268" rx="4" ry="8" transform="rotate(-60 120 268)"/><ellipse cx="340" cy="270" rx="4" ry="8" transform="rotate(15 340 270)"/></g>
-          <text class="chunky" transform="translate(8 205) rotate(-6)">T</text><text class="chunky" transform="translate(92 228) rotate(4)">O</text><text class="chunky" transform="translate(198 178) rotate(-8)">F</text><text class="chunky" transform="translate(268 222) rotate(8)">A</text><text class="chunky" transform="translate(352 196) rotate(-3)">S</text>
+          <text class="chunky" transform="translate(14 205) rotate(-6)">U</text><text class="chunky" transform="translate(120 180) rotate(5)">T</text><text class="chunky" transform="translate(208 226) rotate(-7)">O</text><text class="chunky" transform="translate(320 196) rotate(6)">S</text>
         </svg>
       </div>
       <div class="side">
@@ -222,7 +222,7 @@ body.sp .f{overflow-x:auto;padding:4px}
       </div>
     </div>
     <div class="sp-only">
-      <div class="sp-title">TOFAS（Tofu Academic affairs System)</div>
+      <div class="sp-title">UTOS（Unofficial Tofu Operation System)</div>
       <div class="sp-panel"><div class="row"><button class="gbtn tri" data-act="english">English</button><button class="gbtn tri" data-act="mode">PC版</button></div>
         <button class="gbtn big" data-act="enter">ログイン</button></div>
     </div>
@@ -248,7 +248,7 @@ body.sp .f{overflow-x:auto;padding:4px}
   <!-- PC chrome -->
   <div class="pc-only">
     <div class="hd">
-      <div class="logo"><svg viewBox="0 0 600 240" aria-label="TOFAS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">TOFAS</text></svg><div class="t">Tofu<br>Academic affairs<br>System</div></div>
+      <div class="logo"><svg viewBox="0 0 490 240" aria-label="UTOS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">UTOS</text></svg><div class="t">Unofficial<br>Tofu Operation<br>System</div></div>
       <div class="sys" id="sys"></div>
     </div>
     <div class="tabbar" id="tabbar"></div>
@@ -264,7 +264,7 @@ body.sp .f{overflow-x:auto;padding:4px}
   </div>
   <!-- Smart chrome -->
   <div class="sp-only">
-    <div class="sp-hd"><div class="logo"><svg viewBox="0 0 600 240" aria-label="TOFAS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">TOFAS</text></svg></div>
+    <div class="sp-hd"><div class="logo"><svg viewBox="0 0 490 240" aria-label="UTOS"><text class="chunky" x="10" y="190" style="font-size:190px;stroke-width:18px">UTOS</text></svg></div>
       <div class="sp-user"><i><img src="img/portal_user_smart.png" alt="" style="width:16px;height:16px"></i><span data-ps="name"></span></div></div>
     <div class="sp-sys" id="spSys"></div>
     <div class="sp-crumbs" id="spCrumbs"></div>
@@ -278,7 +278,7 @@ body.sp .f{overflow-x:auto;padding:4px}
   </div>
 </section>
 
-<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mdh"><div class="mh" id="mdh">TOFAS</div><div class="mb" id="mdb"></div><div class="mf"><button class="gbtn" id="mok">OK</button></div></div></div>
+<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mdh"><div class="mh" id="mdh">UTOS</div><div class="mb" id="mdb"></div><div class="mf"><button class="gbtn" id="mok">OK</button></div></div></div>
 
 <script>
 "use strict";
@@ -294,7 +294,7 @@ function el(tag, attrs = {}, ...kids) {
   n.append(...kids.flat().filter(k => k != null).map(k => k instanceof Node ? k : document.createTextNode(String(k))));
   return n;
 }
-function modal(text, title = "TOFAS") { $("mdh").textContent = title; $("mdb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
+function modal(text, title = "UTOS") { $("mdh").textContent = title; $("mdb").textContent = text; $("modal").hidden = false; $("mok").focus(); }
 $("mok").onclick = () => { $("modal").hidden = true; };
 
 // ---------- icons: colourful 48px for the PC tabs, white line icons for the smart tiles ----------
@@ -484,7 +484,7 @@ function gradesPage() {
   const sumHead = ["修得単位数", "対象単位数", "GPA", "平均\n成績順位率"], semHead = ["年度・学期", "GPA\n(学期)", "平均\n成績順位率", "対象単位数", "計算日"];
   const today = jst();
   return wrapPortlet(fbar("個人成績参照"), el("div", { class: "f" },
-    el("p", { style: "margin:16px 0 4px 610px" }, "TOFAS"),
+    el("p", { style: "margin:16px 0 4px 610px" }, "UTOS"),
     el("table", { class: "ss" }, el("tr", {}, el("th", { style: "width:100px" }, "学生氏名"), el("td", { style: "width:360px" }, S.name), el("th", { style: "width:100px" }, "学籍番号"), el("td", { style: "width:100px" }, S.id)),
       el("tr", {}, el("th", {}, "学生所属"), el("td", {}, S.faculty), el("th", {}, "学年"), el("td", {}, S.year))),
     el("p", { style: "font-weight:bold;margin:56px 0 10px" }, "■" + S.faculty + "（本年度入学 学籍番号" + S.id + "）"),
@@ -629,12 +629,12 @@ setInterval(() => { if (!$("portal").hidden) paintChrome(); }, 30e3);
 // Mode: remembered per viewer; the first visit follows the screen width.
 function setMode(mode) {
   document.body.classList.toggle("sp", mode === "sp");
-  try { localStorage.setItem("tofas-mode", mode); } catch {}
+  try { localStorage.setItem("utos-mode", mode); } catch {}
   if (!$("portal").hidden) { if (mode === "sp" && state.page === "home") state.page = "spHome"; if (mode === "pc" && (!state.page || state.page === "spHome")) state.page = "home"; state.spMenu = null; render(); }
 }
 const act = { english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b) { e.preventDefault(); act[b.dataset.act](); } const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); if ($("portal").hidden) enter(); go(g.dataset.goto); } });
-let saved = null; try { saved = localStorage.getItem("tofas-mode"); } catch {}
+let saved = null; try { saved = localStorage.getItem("utos-mode"); } catch {}
 document.body.classList.toggle("sp", (saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc")) === "sp");
 
 fetch("copy.json").then(r => r.json()).then(c => {
