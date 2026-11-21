@@ -16,3 +16,4 @@ node_modules/
 # Build-time sync connection (device token). Never commit.
 android/app/src/*/assets/sync-default*.json
 ios/Config/sync-default*.json
+cloudflare-download/public/

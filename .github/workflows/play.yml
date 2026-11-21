@@ -46,6 +46,13 @@ jobs:
           cp android/app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/TOS-android-$code.aab"
           cp android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/TOS-android-$code.apk"
           bash scripts/release-attach.sh android "$RUNNER_TEMP/TOS-android-$code.aab" "$RUNNER_TEMP/TOS-android-$code.apk"
+      - name: Publish APK to the download page
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          code=$(cat "$RUNNER_TEMP/version-code")
+          bash scripts/download-publish.sh "$RUNNER_TEMP/TOS-android-$code.apk" "$code"
       - name: Remove signing materials
         if: always()
         run: rm -f "$RUNNER_TEMP/upload.jks" "$RUNNER_TEMP/signing.properties" "$RUNNER_TEMP/play-key.pem" android/app/src/release/assets/sync-default*.json "$RUNNER_TEMP"/TOS-android-*
