@@ -97,8 +97,30 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal .mh{background:var(--bar);color:#fff;padding:4px 10px;font-weight:bold}
 .modal .mb{padding:16px}
 .modal .mf{text-align:center;padding:0 0 16px}
+/* sign-in (TOFAS's own account screen; nothing is sent anywhere) */
+.signin{display:grid;place-items:start center;padding:40px 16px 60px}
+.card{width:min(460px,100%);background:#fff;border:1px solid #8fb0d6;box-shadow:0 2px 0 #b9c9df}
+.card .ch{background:linear-gradient(#5fa3dd,var(--bar) 55%,#3f87c9);color:#fff;font-weight:bold;padding:6px 12px}
+.card .cb{padding:18px 20px}
+.card label{display:block;font-size:12px;margin:12px 0 4px}
+.card input{width:100%;padding:6px 8px;border:1px solid #8c8c8c;border-radius:2px;font:inherit;background:#fffef6}
+.card .note{font-size:11px;color:#666;border-top:1px dashed #ccc;margin-top:16px;padding-top:10px}
+.card .acts{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+.step{display:flex;gap:6px;font-size:11px;color:#777;margin:0 0 14px}.step b{color:var(--bar-dark)}
+.tapfu{display:block;margin:18px auto 8px;width:120px;height:120px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tapfu svg{width:100%;height:100%}.tapfu:focus:not(:focus-visible){outline:none}
+.tapfu.squish{animation:sq .35s cubic-bezier(.3,1.6,.5,1)}@keyframes sq{40%{transform:scale(1.15,.8)}70%{transform:scale(.95,1.06)}}
+.dots{text-align:center;font-size:18px;letter-spacing:6px;color:#bbb}.dots .on{color:var(--miso)}
+/* student info: heading row + column-oriented tables, like the real thing */
+.stu{display:flex;gap:16px;align-items:flex-start}.stu .tables{flex:1;min-width:0}
+.sec{background:linear-gradient(#f4f8fd,#dfe9f6);border:1px solid var(--line);border-bottom:0;padding:4px 10px;font-weight:bold;margin-top:14px}
+.colt{overflow-x:auto}.colt table th{text-align:center}.colt table td{text-align:center;min-width:8em}
+.idcard{flex:none;width:200px;text-align:center;position:relative}
+.idcard img{width:200px;height:240px;object-fit:cover;border:1px solid var(--line);background:#eee;display:block}
+.idcard small{display:block;font-size:11px;color:#555;margin-top:4px;text-align:left}
+.hanko{position:absolute;right:-8px;top:170px;width:74px;height:74px;border:3px solid #d8352a;border-radius:50%;color:#d8352a;display:grid;place-items:center;font:bold 13px/1.1 serif;transform:rotate(-14deg);background:rgba(255,255,255,.55);text-align:center}
 [hidden]{display:none!important}
-@media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap{flex-direction:column-reverse;align-items:center}.ph .who{margin-left:0}}
+@media (max-width:640px){.hero{padding:16px}.cols{padding:0 16px 24px}.links{padding-left:20px}.view{padding:6px 10px 24px}.sylwrap,.stu{flex-direction:column-reverse;align-items:center}.idcard{margin-bottom:6px}.ph .who{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.blink,.marquee span{animation:none}.marquee span{padding-left:0}}
 </style>
 </head>
@@ -143,11 +165,34 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="foot" data-copy="footer"></div>
 </section>
 
+<!-- Sign-in (parody; inputs are never sent or stored) -->
+<section id="signin" hidden>
+  <div class="signin"><div class="card">
+    <div class="ch" data-p="login_title"></div>
+    <div class="cb" id="pwStep">
+      <div class="step"><b>① ID・合言葉</b>▸<span>② 多要素認証</span>▸<span>③ 完了</span></div>
+      <label for="tid" data-p="login_id_label"></label><input id="tid" autocomplete="off" spellcheck="false">
+      <label for="tpw" data-p="login_pw_label"></label><input id="tpw" autocomplete="off" spellcheck="false">
+      <div class="acts"><a href="#" id="forgot" data-p="login_forgot"></a><button class="gbtn big" id="signinBtn">サインイン</button></div>
+      <p class="note" data-p="login_note"></p>
+    </div>
+    <div class="cb" id="mfaStep" hidden>
+      <div class="step"><span>① ID・合言葉</span>▸<b>② 多要素認証</b>▸<span>③ 完了</span></div>
+      <b data-p="mfa_title"></b>
+      <p data-p="mfa_body"></p>
+      <button class="tapfu" id="tapfu" aria-label="豆腐を押す"><svg viewBox="0 0 60 66"><path d="M30 2 2 18v30l28 16 28-16V18z" fill="#fff" stroke="#635954" stroke-width="1.5"/><path d="M30 34v30l28-16V18z" fill="#FFE8A9"/><path d="M2 18 30 34 58 18 30 2z" fill="#8a4b1f" opacity=".9"/><g fill="#2e2018"><ellipse cx="22" cy="17" rx="1" ry="1.8"/><ellipse cx="33" cy="12" rx="1" ry="1.8"/><ellipse cx="38" cy="21" rx="1" ry="1.8"/><ellipse cx="28" cy="24" rx="1" ry="1.8"/></g></svg></button>
+      <div class="dots" id="dots" aria-live="polite"><span>●</span><span>●</span><span>●</span></div>
+      <p class="info" id="mfaDone" hidden data-p="mfa_done"></p>
+    </div>
+  </div></div>
+  <div class="foot" data-copy="footer"></div>
+</section>
+
 <!-- Portal (after "login") -->
 <section id="portal" hidden>
   <div class="ph">
     <svg class="mini" viewBox="0 0 440 170" aria-label="TOFAS"><text x="0" y="135" style="font:900 130px 'M PLUS Rounded 1c',sans-serif;fill:#fbf1d9;stroke:#8a4b1f;stroke-width:14px;paint-order:stroke;stroke-linejoin:round">TOFAS</text></svg>
-    <div class="who"><span>ようこそ <b data-copy="welcome"></b> さん</span><small id="lastLogin"></small><button class="gbtn" id="logout">ログアウト</button></div>
+    <div class="who"><span>ようこそ <b data-ps="name"></b> さん　<small class="muted">学籍番号 <span data-ps="id"></span></small></span><small id="lastLogin"></small><button class="gbtn" id="logout">ログアウト</button></div>
   </div>
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="crumb" id="crumb"></div>
@@ -174,6 +219,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="view" id="view-grades" hidden>
     <div class="title">成績照会</div>
     <div class="info" data-copy="grades_note"></div>
+    <table class="syl" style="margin-bottom:14px"><tbody>
+      <tr><th>学生所属</th><td data-pg="affiliation"></td><th>学年</th><td data-pg="year"></td></tr>
+      <tr><th>修得単位数</th><td><span data-live="sold">—</span> 本</td><th>対象単位数</th><td><span data-live="total">—</span> 本</td></tr>
+      <tr><th>GPA</th><td data-live="sales">—</td><th>平均成績順位率</th><td data-live="ratio">—</td></tr>
+    </tbody></table>
     <table><thead><tr><th>科目名</th><th class="num">取得単位（販売数）</th><th class="num">残り在庫</th><th>評語</th><th>所見</th></tr></thead>
       <tbody><tr><td>豆腐田楽</td><td class="num" data-live="sold">—</td><td class="num" data-live="stock">—</td><td><b id="gradeLabel">—</b></td><td id="gradeComment">—</td></tr></tbody></table>
     <p style="margin:14px 0 4px">GPA（Gross Profit Amount）</p>
@@ -190,6 +240,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <table class="tt"><thead><tr><th>時限</th><th>時間</th><th>本日（<span id="today"></span>）</th></tr></thead><tbody id="tt"></tbody></table>
     <p class="muted">各時限に会計された件数（1時間ごとの集計を時限に割り振った概算）。現在の時限は橙の枠。</p>
   </div>
+  <div class="view" id="view-student" hidden>
+    <div class="title">学生情報参照</div>
+    <div class="info" data-p="info_notice"></div>
+    <div class="stu"><div class="tables colt" id="stuTables"></div>
+      <div class="idcard"><img id="idphoto" alt="証明写真"><span class="hanko">本人<br>確認済</span><small data-p="photo_caption"></small></div></div>
+  </div>
   <div class="view" id="view-notices" hidden>
     <div class="title">掲示板</div>
     <table class="notice-list"><thead><tr><th>分類</th><th>件名</th><th>発信元</th></tr></thead><tbody id="noticeAll"></tbody></table>
@@ -204,7 +260,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 "use strict";
 const API = "https://tofu-pos-v3-sync.gapul.workers.dev";
 const $ = id => document.getElementById(id);
-const TABS = [["home", "ホーム"], ["register", "履修登録"], ["grades", "成績"], ["syllabus", "シラバス"], ["timetable", "時間割"], ["notices", "掲示"]];
+const TABS = [["home", "ホーム"], ["register", "履修登録"], ["grades", "成績"], ["syllabus", "シラバス"], ["timetable", "時間割"], ["student", "学生情報"], ["notices", "掲示"]];
 // Komaba periods, used to bucket today's hourly sales into 時限.
 const PERIODS = [["1限", 8, 30, 10, 15], ["2限", 10, 25, 12, 10], ["昼休み", 12, 10, 13, 0], ["3限", 13, 0, 14, 45], ["4限", 14, 55, 16, 40], ["5限", 16, 50, 18, 35], ["6限", 18, 45, 20, 30]];
 let copy = null, live = null, idle = null;
@@ -232,6 +288,20 @@ function fillCopy() {
   };
   $("noticeTop").replaceChildren(...copy.notices.slice(0, 3).map(item));
   $("noticeAll").replaceChildren(...copy.notices.map(n => { const tr = item(n); tr.append(el("td", {}, n.from)); return tr; }));
+  const P = copy.personal, st = P.student;
+  document.querySelectorAll("[data-p]").forEach(n => { n.textContent = P[n.dataset.p] ?? ""; });
+  $("tid").placeholder = P.login_id_placeholder; $("tpw").placeholder = P.login_pw_placeholder;
+  document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = st[n.dataset.ps] ?? ""; });
+  document.querySelectorAll("[data-pg]").forEach(n => { n.textContent = P.grades_summary[n.dataset.pg] ?? ""; });
+  // Column-oriented tables: one label row and one value row per section.
+  const SECTIONS = [["学生基本情報", [["学籍番号", "id"], ["氏名", "name"], ["氏名（カナ）", "kana"], ["氏名（英字）", "roman"], ["学籍状態", "status"]]],
+    ["所属情報", [["所属", "faculty"], ["学年", "year"], ["入学年度", "admission"], ["クラス", "class"], ["指導教員", "advisor"]]],
+    ["個人情報", [["生年月日", "birthday"], ["性別", "gender"], ["国籍", "nationality"]]],
+    ["連絡先情報", [["現住所", "address"], ["電話番号", "phone"], ["メールアドレス", "email"]]],
+    ["保証人情報", [["保証人氏名", "guardian"], ["続柄", "guardian_relation"], ["保証人住所", "guardian_address"]]],
+    ["その他", [["所属サークル", "club"], ["奨学金", "scholarship"], ["健康診断", "health"], ["備考", "notes"]]]];
+  $("stuTables").replaceChildren(...SECTIONS.flatMap(([h, cols]) => [el("div", { class: "sec" }, h),
+    el("table", {}, el("tr", {}, ...cols.map(([l]) => el("th", {}, l))), el("tr", {}, ...cols.map(([, k]) => el("td", {}, st[k] ?? ""))))]));
   $("marquee").textContent = copy.notices.map(n => "【" + n.category + "】" + n.title).join("　　◆　　");
 }
 
@@ -244,7 +314,7 @@ function renderLive() {
   const p = live.stock.find(x => x.active) ?? live.stock[0], sold = live.by_product.reduce((a, x) => a + x.quantity, 0);
   const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0), ratio = total ? sold / total : 0;
   const t = jstNow(), updated = pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + ":" + pad(t.getUTCSeconds());
-  const vals = { sold: num(sold), stock: stock == null ? "—" : num(stock), orders: num(live.totals.orders), sales: "¥" + num(live.totals.net_sales), ratio: Math.round(ratio * 100) + "%", updated };
+  const vals = { total: num(total), sold: num(sold), stock: stock == null ? "—" : num(stock), orders: num(live.totals.orders), sales: "¥" + num(live.totals.net_sales), ratio: Math.round(ratio * 100) + "%", updated };
   document.querySelectorAll("[data-live]").forEach(n => { n.textContent = vals[n.dataset.live]; });
   $("meter").style.width = Math.round(ratio * 100) + "%";
   const g = grade(ratio); $("gradeLabel").textContent = g.label; $("gradeComment").textContent = g.comment;
@@ -261,7 +331,7 @@ function renderLive() {
     return el("tr", {}, el("th", {}, name), el("td", { class: "muted" }, h1 + ":" + pad(m1) + "–" + h2 + ":" + pad(m2)),
       el("td", { class: (n ? "on" : "") + (now ? " now" : "") }, n ? "豆腐田楽　" + n + " 件" : "—"));
   }));
-  if (p && p.image_hash && $("photo").hidden) { $("photo").src = API + "/v1/images/" + p.image_hash; $("photo").hidden = false; }
+  if (p && p.image_hash && $("photo").hidden) { $("photo").src = $("idphoto").src = API + "/v1/images/" + p.image_hash; $("photo").hidden = false; }
 }
 async function load() {
   try {
@@ -278,19 +348,32 @@ function show(name) {
   $("crumb").textContent = "ホーム" + (name === "home" ? "" : " ＞ " + TABS.find(t => t[0] === name)[1]);
   history.replaceState(null, "", "#" + name);
 }
+// Sign-in → MFA (tap the tofu three times) → portal. Inputs stay in the page and are cleared on leave.
+function signin() { $("login").hidden = true; $("signin").hidden = false; $("pwStep").hidden = false; $("mfaStep").hidden = true; $("tid").focus(); window.scrollTo(0, 0); }
+let taps = 0;
+$("signinBtn").onclick = () => { taps = 0; paintDots(); $("mfaDone").hidden = true; $("pwStep").hidden = true; $("mfaStep").hidden = false; $("tapfu").focus(); };
+["tid", "tpw"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("signinBtn").click(); }));
+$("forgot").onclick = e => { e.preventDefault(); modal(copy.personal.login_note, "合言葉の再加熱手続"); };
+function paintDots() { $("dots").querySelectorAll("span").forEach((d, i) => d.classList.toggle("on", i < taps)); }
+$("tapfu").onclick = () => {
+  if (taps >= 3) return;
+  const b = $("tapfu"); b.classList.remove("squish"); void b.offsetWidth; b.classList.add("squish");
+  taps++; paintDots();
+  if (taps === 3) { $("mfaDone").hidden = false; setTimeout(() => enter(), 1400); }
+};
 function enter(tab = "home") {
-  $("login").hidden = true; $("portal").hidden = false;
+  $("login").hidden = true; $("signin").hidden = true; $("portal").hidden = false; $("tid").value = $("tpw").value = "";
   const t = jstNow(); $("lastLogin").textContent = "前回ログイン：" + t.getUTCFullYear() + "/" + pad(t.getUTCMonth() + 1) + "/" + pad(t.getUTCDate()) + " " + pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes());
   show(tab); poke(); window.scrollTo(0, 0);
 }
-function leave() { $("portal").hidden = true; $("login").hidden = false; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
+function leave() { $("portal").hidden = true; $("signin").hidden = true; $("login").hidden = false; $("tid").value = $("tpw").value = ""; history.replaceState(null, "", location.pathname); clearTimeout(idle); }
 // Ten idle minutes end the "session", like the real thing.
 function poke() { clearTimeout(idle); if (!$("portal").hidden) idle = setTimeout(() => { leave(); modal(copy.timeout, "セッションタイムアウト"); }, 10 * 60e3); }
 ["click", "keydown", "scroll", "touchstart"].forEach(e => addEventListener(e, poke, { passive: true }));
 
 $("tabs").replaceChildren(...TABS.map(([k, label]) => { const b = el("button", { role: "tab", type: "button", "data-tab": k }); if (k === "home") b.append(el("span", { class: "ic" })); b.append(label); b.onclick = () => show(k); return b; }));
 document.addEventListener("click", e => { const a = e.target.closest("[data-goto]"); if (!a) return; e.preventDefault(); $("portal").hidden ? enter(a.dataset.goto) : show(a.dataset.goto); });
-$("enter").onclick = () => enter();
+$("enter").onclick = signin;
 $("logout").onclick = leave;
 $("english").onclick = () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English");
 $("sp").onclick = () => modal("スマホ版は、この画面をスマホで開くことで提供しています。", "スマホ版");
