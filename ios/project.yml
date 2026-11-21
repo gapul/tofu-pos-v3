@@ -24,7 +24,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.gapul.tofupos.v3
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: '0.4.0'
-        CURRENT_PROJECT_VERSION: '15'
+        CURRENT_PROJECT_VERSION: '16'
         INFOPLIST_KEY_CFBundleShortVersionString: '$(MARKETING_VERSION)'
         INFOPLIST_KEY_CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
         INFOPLIST_KEY_CFBundleDisplayName: TOS
