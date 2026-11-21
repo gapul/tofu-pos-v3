@@ -229,9 +229,9 @@ body.sp .f{overflow-x:auto;padding:4px}
         <div class="pl-b">
           <p data-copy="login_info"></p>
           <div class="live-inline">本日の豆腐田楽　販売数 <b data-live="sold">—</b> 本　／　残り在庫 <b data-live="stock">—</b> 本</div>
-          <h3 data-copy="cert_title"></h3>
+          <h3>企画紹介</h3>
           <div id="certBody"></div>
-          <p class="red" data-copy="cert_warning"></p>
+          <p class="red" id="priceLine"></p>
         </div>
       </div>
       <div><div class="pl-h"><i>i</i>Link</div><ul class="links" id="links"></ul></div>
@@ -257,7 +257,7 @@ body.sp .f{overflow-x:auto;padding:4px}
       </div>
       <div class="main" id="main"></div>
     </div>
-    <div class="ft">Copyright(c) 2001- Are you Tofu? All rights reserved.</div>
+    <div class="ft"><span data-copy="footer"></span></div>
   </div>
   <!-- Smart chrome -->
   <div class="sp-only">
@@ -271,7 +271,7 @@ body.sp .f{overflow-x:auto;padding:4px}
       <div class="sp-panel2 sp-fav"><div class="h">よく使うメニュー</div><div class="b"><ul class="mlist" id="spFav"></ul></div></div>
     </div>
     <div class="sp-crumbs" id="spCrumbs2"></div>
-    <div class="sp-ft">Copyright(c) 2001- Are you Tofu? All rights reserved.</div>
+    <div class="sp-ft"><span data-copy="footer"></span></div>
   </div>
 </section>
 
@@ -352,28 +352,23 @@ const SMALL = {
 };
 const icon = (set, k, vb) => svgOf(vb, set[k] ?? "");
 
-// ---------- menu structure (names follow the real portal) ----------
+// ---------- menu structure (portal layout, real content) ----------
 const TABS = [
-  ["home", "HOME", [["お知らせ", "home"], ["FAQ", "faq"]]],
-  ["student", "学生情報", [["保護者等の連絡先の変更について", "hogosha"], ["学生情報参照", "student"], ["現住所等変更入力", "jusho"], ["メール受信設定", "mail"]]],
-  ["rishu", "履修", [["お知らせ", "rishu_oshirase"], ["履修登録", "register"]]],
-  ["seiseki", "成績･定期試験", [["個人成績参照", "grades"]]],
-  ["kyuho", "休補・スケジュール", [["スケジュール管理", "schedule"], ["休講・補講・教室変更参照", "kyuko"], ["授業曜日振替え参照", "furikae"], ["カレンダー連携", "calendar"]]],
-  ["syllabus", "シラバス", [["シラバスフリーワード検索（シラバス参照）", "syllabus"]]],
-  ["enquete", "アンケート", [["アンケート回答・集計結果参照", "enquete"]]],
-  ["keiji", "掲示", [["新着掲示", "board"], ["掲示板", "board"]]],
-  ["jugyoryo", "授業料債権", [["授業料債権参照", "jugyoryo"]]],
-  ["kaigai", "海外派遣", [["海外派遣", "kaigai"]]],
-  ["sonota", "その他", [["ダウンロードセンター", "sonota"]]],
-  ["lms", "LMS", [["LMS", "lms"]]],
-  ["ugip", "UGIP", [["UGIP", "ugip"]]],
-  ["cert", "証明書発行サービス", [["証明書発行サービス", "cert"]]],
+  ["home", "HOME", [["お知らせ", "home"], ["関連リンク", "links"]]],
+  ["student", "団体情報", [["企画・団体情報参照", "org"]]],
+  ["rishu", "販売時間割", [["本日の販売時間割", "register"]]],
+  ["seiseki", "販売分析", [["販売実績参照", "analysis"]]],
+  ["kyuho", "日程・スケジュール", [["営業日程", "schedule"], ["日別販売参照", "kyuko"]]],
+  ["syllabus", "商品情報", [["商品情報参照", "product"]]],
+  ["enquete", "客層分析", [["客層分析参照", "kyakuso"]]],
+  ["keiji", "掲示", [["掲示板", "board"]]],
+  ["sonota", "リンク", [["関連リンク", "links"]]],
 ];
-const SP_TILES = ["home", "student", "rishu", "seiseki", "kyuho", "syllabus", "enquete", "keiji", "jugyoryo", "sonota", "cert"];
-const SP_LABEL = { seiseki: "成績", kyuho: "休補・スケジュール" };
-const FAV = [["学生情報参照", "student", "person"], ["現住所等変更入力", "jusho", "person"], ["個人成績参照", "grades", "find"], ["MYスケジュール", "schedule", "book"],
-  ["休講・補講・教室変更参照", "kyuko", "find"], ["シラバスフリーワード検索（シラバス参照）", "syllabus", "find"], ["新着掲示", "board", "board"]];
-const PAGE_ICON = { student: "person", hogosha: "info", jusho: "person", mail: "doc", register: "pen", grades: "find", kyuko: "find", schedule: "book", syllabus: "find", board: "board", home: "info", faq: "faq" };
+const SP_TILES = TABS.map(t => t[0]);
+const SP_LABEL = { kyuho: "日程" };
+const FAV = [["企画・団体情報参照", "org", "person"], ["販売実績参照", "analysis", "find"], ["客層分析参照", "kyakuso", "find"], ["本日の販売時間割", "register", "pen"],
+  ["日別販売参照", "kyuko", "find"], ["商品情報参照", "product", "find"], ["掲示板", "board", "board"]];
+const PAGE_ICON = { org: "person", register: "pen", analysis: "find", kyakuso: "find", schedule: "book", kyuko: "find", product: "find", board: "board", home: "info", links: "doc" };
 const tabOf = page => TABS.find(t => t[2].some(m => m[1] === page)) ?? TABS[0];
 const titleOf = page => tabOf(page)[2].find(m => m[1] === page)?.[0] ?? page;
 
@@ -381,183 +376,163 @@ const titleOf = page => tabOf(page)[2].find(m => m[1] === page)?.[0] ?? page;
 const PERIODS = [["1限", 8, 30, 10, 15], ["2限", 10, 25, 12, 10], ["3限", 13, 0, 14, 45], ["4限", 14, 55, 16, 40], ["5限", 16, 50, 18, 35], ["6限", 18, 45, 20, 30]];
 // Hourly buckets only: an hour counts toward the period that contains most of it (the lunch hour goes to 2限).
 const periodOf = h => { const m = h * 60 + 30; let best = 0; PERIODS.forEach(([, h1, m1], i) => { if (m >= h1 * 60 + m1 - 50) best = i; }); return best; };
-let copy = null, live = null, week = null, state = { tab: "home", page: "home", sub: null, menu: null };
-function stats() {
-  if (!live) return null;
-  const p = live.stock.find(x => x.active) ?? live.stock[0], sold = live.by_product.reduce((a, x) => a + x.quantity, 0);
-  const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0);
-  return { p, sold, stock, total, ratio: total ? sold / total : 0, orders: live.totals.orders, sales: live.totals.net_sales };
+let copy = null, live = null, week = null, days = {}, state = { tab: "home", page: "home", sub: null, menu: null };
+const unitPrice = d => { const p = d?.by_product?.[0]; return p && p.quantity ? p.sales / p.quantity : 500; };
+function summarize(d) {
+  if (!d) return null;
+  const p = d.stock.find(x => x.active) ?? d.stock[0], sold = d.by_product.reduce((a, x) => a + x.quantity, 0);
+  const stock = p ? p.stock : null, total = sold + Math.max(0, stock ?? 0), t = d.totals;
+  return { p, sold, stock, total, ratio: total ? sold / total : 0, orders: t.orders, sales: t.net_sales, average: t.average, cancelled: t.cancelled_orders, perOrder: t.orders ? sold / t.orders : 0 };
 }
-async function getDay(date) { const r = await fetch(API + "/v1/dashboard?date=" + date, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+const stats = () => summarize(live);
+async function getDay(date) { const r = await fetch(API + "/v1/dashboard" + (date ? "?date=" + date : ""), { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function dayData(key) { if (key === "today") return live ?? (live = await getDay(ymd(jst()))); if (!days[key] || Date.now() - days[key].at > 60e3) days[key] = { at: Date.now(), d: await getDay(key === "all" ? null : key) }; return days[key].d; }
 async function load() {
-  try { live = await getDay(ymd(jst())); paintLive(); if (!$("portal").hidden && ["home", "register", "grades"].includes(state.page)) render(); } catch { /* keep the last numbers */ }
+  try { live = await getDay(ymd(jst())); paintLive(); if (!$("portal").hidden && ["home", "register", "analysis", "kyakuso"].includes(state.page)) render(); } catch { /* keep the last numbers */ }
 }
 function paintLive() {
   const s = stats(); if (!s) return;
   document.querySelectorAll("[data-live]").forEach(n => { n.textContent = { sold: num(s.sold), stock: s.stock == null ? "—" : num(s.stock) }[n.dataset.live] ?? ""; });
 }
 const photoUrl = () => { const s = stats(); return s?.p?.image_hash ? API + "/v1/images/" + s.p.image_hash : ""; };
+const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 + "%" : "—";
+const hhmm = iso => { if (!iso) return "—"; const t = jst(Date.parse(iso)); return pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()); };
+const bar = (v, max, color = "#4694d1") => el("span", { style: `display:inline-block;height:9px;vertical-align:middle;background:${color};width:${Math.max(2, Math.round(v / Math.max(1, max) * 160))}px` });
 
 // ---------- pages ----------
-const st = () => copy.personal.student, more = () => copy.more;
-const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal("ヘルプは店頭のスタッフが口頭で提供しています。", "Help") }, "Help"));
+const fbar = (title, ic = "find") => el("div", { class: "fbar" }, icon(SMALL, ic, "0 0 16 16"), title, el("span", { class: "help", onclick: () => modal("ご不明な点は店頭（" + copy.project.place + "）のスタッフにお尋ねください。", "Help") }, "Help"));
 const wrapPortlet = (head, ...body) => el("div", { class: "portlet" }, head, ...body);
-function infoPage(page) {
-  const text = more().pages[page] ?? copy.personal[page] ?? "";
-  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), titleOf(page)), el("div", { class: "info-text" }, text));
+const phead = title => el("div", { class: "ph" }, el("i", {}, "i"), title);
+const ext = (label, url) => el("a", { href: url, target: "_blank", rel: "noopener" }, label);
+// Period switcher shared by the analysis pages (festival days, today, all).
+function periodTabs() {
+  const opts = [["today", "本日"], ...copy.festival.days.map(([d, l]) => [d, l]), ["all", "全期間"]], cur = state.sub ?? "today";
+  return el("div", { class: "rs-tabs", style: "margin:4px 0 10px" }, ...opts.map(([k, l]) => el("span", { class: k === cur ? "sel" : null, style: "cursor:pointer;width:auto;padding:1px 14px", onclick: () => { state.sub = k; render(); } }, l)));
 }
 function homePage() {
   const s = stats(), t = jst();
   const hr = () => el("div", { class: "hr" }, "-".repeat(160));
-  const live = s ? [el("b", { class: "big" }, `本日（${t.getUTCMonth() + 1}月${t.getUTCDate()}日）の豆腐田楽は、${num(s.sold)}本が履修（販売）済み、残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`),
-    el("b", { class: "big" }, `会計${num(s.orders)}件、在庫消化率${Math.round(s.ratio * 100)}%。この表示は30秒ごとに自動で更新されます。`)] : [el("b", { class: "big" }, "販売状況を取得しています。")];
-  const items = copy.notices.slice(1).flatMap(n => [hr(), el("b", {}, n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]);
-  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "お知らせ"),
-    el("div", { class: "notice" }, el("div", { class: "nh" }, "[500]　【販売状況 / Sales】"), ...live,
-      el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, copy.notices[0].title), el("p", { class: "red", style: "font-size:14px;font-weight:bold" }, copy.notices[0].body),
-      ...items, hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　模擬店運営本部学務課`)),
-    el("div", { class: "pager" }, icon(SMALL, "find", "0 0 16 16"), "‹", el("a", { onclick: () => modal("これより前のお知らせはありません。", "前へ") }, "前へ")));
+  const liveLines = s ? [el("b", { class: "big" }, `本日（${t.getUTCMonth() + 1}月${t.getUTCDate()}日）の販売数は${num(s.sold)}本、残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`),
+    el("b", { class: "big" }, `会計${num(s.orders)}件・在庫消化率${Math.round(s.ratio * 100)}%（30秒ごとに自動更新）`)] : [el("b", { class: "big" }, "販売状況を取得しています。")];
+  const [first, ...rest] = copy.notices;
+  return wrapPortlet(phead("お知らせ"),
+    el("div", { class: "notice" }, el("div", { class: "nh" }, "[販売状況]　【Are you Tofu? / Sales】"), ...liveLines,
+      el("p", { class: "red", style: "font-size:15px;font-weight:bold;margin:20px 0 6px" }, first.title), el("p", { style: "font-size:13px" }, first.body),
+      ...rest.flatMap(n => [hr(), el("b", {}, "【" + n.category + "】" + n.title), el("div", { class: "ind" }, n.body), el("div", { class: "ind" }, "（" + n.from + "）")]),
+      hr(), el("div", { class: "sign" }, `${t.getUTCFullYear()}/${pad(t.getUTCMonth() + 1)}/${pad(t.getUTCDate())}　Are you Tofu?（dp9）`)));
 }
-function studentPage() {
-  const S = st(), M = more();
-  const SUBS = [["指導教員・クラス情報", "class"], ["学生個人属性", "attr"], ["出身校情報", "school"], ["連絡先情報", "contact"], ["卒留区分・TA/RA情報", "tara"], ["留学生情報", "ryugaku"], ["授業料免除・学費納入状況情報", "gakuhi"]];
-  const sub = state.sub ?? "class";
-  const links = el("div", { class: "gk-links" }, ...SUBS.map(([l, k]) => el("a", { class: k === sub ? "chk" : null, onclick: () => { state.sub = k; render(); } }, l)));
-  const kv = (caption, rows) => el("table", { class: "gk" }, el("caption", {}, caption), ...rows.map(r => el("tr", {}, ...r.flatMap(([k, v]) => [el("th", {}, k), el("td", {}, v ?? "")]))));
-  const grid = (caption, head, row) => el("table", { class: "gk wide" }, el("caption", {}, caption), el("tr", {}, ...head.map(h => el("th", {}, h))), el("tr", {}, ...row.map(v => el("td", {}, v ?? ""))));
-  const basic = kv("学生基本情報", [[["学籍番号", S.id], ["学生氏名", S.name]], [["学生氏名(カナ)", S.kana], ["英字氏名", S.roman]], [["所属", S.faculty], ["学年", S.year]], [["現況区分", M.genkyo], ["学生身分", M.mibun]], [["共通ID", M.kyotsu_id], ["", ""]]]);
-  const A = M.advisor_row, C = M.class_row;
-  const detail = {
-    class: [grid("教員情報", ["年度", "学期", "指導教員", "教員名", "所属", "役職"], [A.year, A.term, A.kind, A.name, A.dept, A.title]), grid("クラス情報", ["年度", "学期", "クラス名", "出席番号"], [C.year, C.term, C.class, C.no])],
-    attr: [kv("学生個人属性", [[["生年月日", S.birthday], ["性別", S.gender]], [["国籍", S.nationality], ["入学年度", S.admission]]])],
-    school: [kv("出身校情報", [[["出身校", M.school], ["卒業年月", M.school_grad]]])],
-    contact: [kv("連絡先情報", [[["現住所", S.address], ["電話番号", S.phone]], [["メールアドレス", S.email], ["", ""]]]), kv("保証人情報", [[["保証人氏名", S.guardian], ["続柄", S.guardian_relation]], [["保証人住所", S.guardian_address], ["", ""]]])],
-    tara: [kv("卒留区分・TA/RA情報", [[["状況", M.tara]]])], ryugaku: [kv("留学生情報", [[["状況", M.ryugaku]]])],
-    gakuhi: [kv("授業料免除・学費納入状況情報", [[["状況", M.gakuhi], ["奨学金", S.scholarship]]])],
+function linksPage() {
+  return wrapPortlet(phead("関連リンク"), el("div", { class: "f" }, el("table", { class: "syl list", style: "min-width:620px" },
+    el("tr", {}, el("th", {}, "名称"), el("th", {}, "URL")), ...copy.links.map(([l, u]) => el("tr", {}, el("td", {}, ext(l, u)), el("td", {}, u))))));
+}
+function orgPage() {
+  const P = copy.project, C = copy.circle, F = copy.festival;
+  const SUBS = [["企画情報", "project"], ["団体情報", "circle"], ["開催情報", "festival"]], sub = ["project", "circle", "festival"].includes(state.sub) ? state.sub : "project";
+  const links = el("div", { class: "gk-links", style: "grid-template-columns:repeat(3,1fr)" }, ...SUBS.map(([l, k]) => el("a", { class: k === sub ? "chk" : null, onclick: () => { state.sub = k; render(); } }, l)));
+  const kv = (caption, rows) => el("table", { class: "gk" }, el("caption", {}, caption), ...rows.map(r => el("tr", {}, ...r.flatMap(([k, v], i) => [el("th", {}, k), el("td", r.length === 1 ? { colspan: 3, style: "width:auto" } : {}, v ?? "")]))));
+  const body = {
+    project: [kv("企画情報", [[["企画名", P.name], ["団体名", P.org]], [["区分", P.category], ["場所", P.place]], [["時間", P.time], ["価格", P.price]], [["紹介", P.intro + "。" + P.intro2]], [["メニュー", P.menu]], [["企画ページ", ext(P.url, P.url)]]])],
+    circle: [kv("団体情報", [[["団体名", C.name], ["略称", C.short]], [["概要", C.about]], [["拠点", C.base]], [["コピー", C.copy]], [["公式サイト", ext(C.url, C.url)]]])],
+    festival: [kv("開催情報", [[["名称", F.name], ["テーマ", F.theme]], ...F.days.map(([, l, h]) => [["会期", l], ["時間", h]]), [["会場", F.venue], ["アクセス", F.access]], [["公式サイト", ext(F.url, F.url)]]])],
   }[sub];
-  return wrapPortlet(fbar("学生情報参照／学籍情報", "person"), el("div", { class: "f" }, links,
-    el("div", { class: "gk-wrap" }, el("img", { class: "gk-photo", src: photoUrl(), alt: "証明写真" }), el("div", { class: "gk-stack" }, basic, ...detail))));
+  return wrapPortlet(fbar("企画・団体情報参照", "person"), el("div", { class: "f" }, links,
+    el("div", { class: "gk-wrap" }, el("img", { class: "gk-photo", src: photoUrl(), alt: "豆腐田楽の写真" }), el("div", { class: "gk-stack" }, ...body))));
 }
 function registerPage() {
-  const S = st(), syl = copy.syllabus, t = jst(), wd = (t.getUTCDay() + 6) % 7; // 0 = Monday
-  const per = [0, 0, 0, 0, 0, 0]; (live?.by_hour ?? []).forEach(h => { if (h.orders) per[periodOf(h.hour)] += h.orders; });
-  const count = per.filter(Boolean).length;
+  const P = copy.project, t = jst(), wd = (t.getUTCDay() + 6) % 7, price = unitPrice(live);
+  const per = [0, 0, 0, 0, 0, 0]; (live?.by_hour ?? []).forEach(h => { if (h.orders) per[periodOf(h.hour)] += h.sales / price; });
+  const s = stats();
   const head = el("table", { class: "rs rs-head" },
-    el("tr", {}, el("th", {}, "氏名"), el("td", { colspan: 3 }, S.name), el("th", {}, "学籍番号"), el("td", { style: "text-align:center" }, S.id)),
-    el("tr", {}, el("th", {}, "所属"), el("td", { colspan: 3 }, S.faculty), el("th", {}, "学年"), el("td", { style: "text-align:center" }, S.year)),
-    el("tr", {}, el("th", {}, "年度・学期"), el("td", { style: "text-align:center" }, t.getUTCFullYear() + "年度　学園祭"), el("th", {}, "履修登録期間"), el("td", { style: "text-align:center" }, "店頭にて随時"), el("th", {}, "件数"), el("td", { style: "text-align:center" }, count + "件")));
-  const days = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", ...(wd === 6 ? ["日曜日"] : [])];
-  const grid = el("table", { class: "rsk" }, el("tr", {}, el("th", {}, ""), ...days.map(d => el("th", {}, d))),
-    ...PERIODS.map(([name], i) => el("tr", {}, el("td", { class: "k" }, name), ...days.map((_, d) => d === wd && per[i]
-      ? el("td", { class: "c on" }, syl.code, el("br"), "豆腐田楽", el("br"), num(per[i]) + ".0", el("br"), "焼き場責任者")
-      : el("td", { class: "c" }, "未登録")))));
-  const etc = el("table", { class: "rs rs-etc" }, el("caption", {}, "集中講義など"), el("tr", {}, ...["曜日", "時限", "時間割コード", "科目", "単位数", "担当教員名"].map(h => el("th", {}, h))),
-    el("tr", {}, el("td", {}, "随時"), el("td", {}, "店頭"), el("td", {}, syl.code), el("td", {}, "豆腐田楽（1本500円）"), el("td", {}, "1.0"), el("td", {}, "焼き場責任者")));
-  return wrapPortlet(fbar("履修登録", "pen"), el("div", { class: "f" }, head, el("p", { class: "rs-note" }, "※" + copy.register_body),
-    el("div", { class: "rs-tabs" }, ...["S１", "S２", "学園祭", "A２", "W"].map(x => el("span", { class: x === "学園祭" ? "sel" : null }, x))), grid, etc,
-    el("p", { style: "margin-top:24px" }, el("button", { class: "ubtn", onclick: () => modal(copy.register_error, "履修科目控出力") }, "履修科目控出力"))));
+    el("tr", {}, el("th", {}, "企画名"), el("td", { colspan: 3 }, P.name), el("th", {}, "団体名"), el("td", { style: "text-align:center" }, P.org)),
+    el("tr", {}, el("th", {}, "場所"), el("td", { colspan: 3 }, P.place), el("th", {}, "価格"), el("td", { style: "text-align:center" }, "500円/1個")),
+    el("tr", {}, el("th", {}, "日付"), el("td", { style: "text-align:center" }, `${t.getUTCMonth() + 1}/${t.getUTCDate()}`), el("th", {}, "販売数"), el("td", { style: "text-align:center" }, num(s?.sold) + "本"), el("th", {}, "会計数"), el("td", { style: "text-align:center" }, num(s?.orders) + "件")));
+  const dayNames = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", ...(wd === 6 ? ["日曜日"] : [])];
+  const grid = el("table", { class: "rsk" }, el("tr", {}, el("th", {}, ""), ...dayNames.map(d => el("th", {}, d))),
+    ...PERIODS.map(([name, h1, m1, h2, m2], i) => el("tr", {}, el("td", { class: "k" }, name, el("br"), el("small", {}, `${h1}:${pad(m1)}`)), ...dayNames.map((_, d) => d === wd && per[i]
+      ? el("td", { class: "c on" }, "豆腐田楽", el("br"), num(Math.round(per[i])) + "本", el("br"), "¥" + num(Math.round(per[i] * price)), el("br"), P.place)
+      : el("td", { class: "c" }, d === wd ? "—" : "")))));
+  return wrapPortlet(fbar("本日の販売時間割", "pen"), el("div", { class: "f" }, head, el("p", { class: "rs-note" }, "※1時間ごとの集計を時限に割り振った概算です（30秒ごとに自動更新）。"),
+    el("div", { class: "rs-tabs" }, ...copy.festival.days.map(([d, l]) => el("span", { class: d === ymd(t) ? "sel" : null }, l))), grid));
 }
-function gradesPage() {
-  const S = st(), M = more(), s = stats();
-  if (state.sub !== "result") {
-    return wrapPortlet(fbar("個人成績参照／範囲・出力先指示"), el("div", { class: "f ss-sel" }, el("p", {}, el("span", { class: "q" }, "表示対象とする所属を選択して下さい")),
-      el("p", {}, el("label", {}, el("input", { type: "checkbox", id: "ssPick" }), " " + S.faculty + "（本年度入学 学籍番号" + S.id + "）")),
-      el("button", { class: "ubtn", onclick: () => { if (!$("ssPick").checked) return modal("所属を選択してください。", "個人成績参照"); state.sub = "result"; render(); } }, "画面に表示する"), " ",
-      el("button", { class: "ubtn", onclick: () => { $("ssPick").checked = false; } }, "クリア")));
-  }
-  const hours = (live?.by_hour ?? []).filter(h => h.orders), max = Math.max(1, ...hours.map(h => h.orders));
-  const label = n => { const g = copy.grade_labels; return g[Math.min(g.length - 1, Math.floor(n / max * g.length - 1e-9))]; };
-  const sumHead = ["修得単位数", "対象単位数", "GPA", "平均\n成績順位率"], semHead = ["年度・学期", "GPA\n(学期)", "平均\n成績順位率", "対象単位数", "計算日"];
-  const today = jst();
-  return wrapPortlet(fbar("個人成績参照"), el("div", { class: "f" },
-    el("p", { style: "margin:16px 0 4px 610px" }, "UTOS"),
-    el("table", { class: "ss" }, el("tr", {}, el("th", { style: "width:100px" }, "学生氏名"), el("td", { style: "width:360px" }, S.name), el("th", { style: "width:100px" }, "学籍番号"), el("td", { style: "width:100px" }, S.id)),
-      el("tr", {}, el("th", {}, "学生所属"), el("td", {}, S.faculty), el("th", {}, "学年"), el("td", {}, S.year))),
-    el("p", { style: "font-weight:bold;margin:56px 0 10px" }, "■" + S.faculty + "（本年度入学 学籍番号" + S.id + "）"),
-    el("div", { style: "display:flex;gap:8px;align-items:flex-start" },
-      el("table", { class: "ss" }, el("tr", {}, ...sumHead.map(h => el("th", { style: "white-space:pre-line" }, h))), el("tr", {}, ...[num(s?.sold), num(s?.total), "¥" + num(s?.sales), Math.round((s?.ratio ?? 0) * 100) + "%"].map(v => el("td", { style: "text-align:center" }, v)))),
-      el("table", { class: "ss" }, el("tr", {}, ...semHead.map(h => el("th", { style: "white-space:pre-line;width:82px" }, h))), el("tr", {}, el("td", { colspan: 5 }, `${today.getUTCFullYear()}年度 学園祭：GPA ¥${num(s?.sales)}（${today.getUTCMonth() + 1}/${today.getUTCDate()} 計算）`)))),
-    el("div", { class: "ss-notes" }, copy.grades_note + "\n\n【各項目の説明】\n" + M.grades_notes.map(x => "・ " + x).join("\n")),
-    el("table", { class: "ss" }, el("tr", {}, ...["No", "時間割コード", "開講科目名", "教員名", "履修\n年度", "学期", "単位数", "評語", "科目区分", "科目\nGP", "科目成績順位率", "履修者\n数", "合否"].map(h => el("th", { style: "white-space:pre-line" }, h))),
-      ...(hours.length ? hours : [{ hour: jst().getUTCHours(), orders: 0 }]).map((h, i) => { const g = label(h.orders); return el("tr", {},
-        el("td", { style: "text-align:center;width:40px" }, i + 1), el("td", {}, copy.syllabus.code), el("td", { style: "width:170px" }, `豆腐田楽（${h.hour}時台）`), el("td", {}, "焼き場責任者"),
-        el("td", { style: "text-align:center" }, today.getUTCFullYear()), el("td", { style: "text-align:center" }, "学園祭"), el("td", { style: "text-align:center" }, num(h.orders) + ".0"),
-        el("td", { style: "text-align:center" }, h.orders ? g.label.replace(/（.*）/, "") : "履修中"), el("td", {}, "[模擬店科目] [必修]"), el("td", { style: "text-align:center" }, "*"),
-        el("td", { style: "text-align:center" }, Math.round(h.orders / max * 100) + "%"), el("td", { style: "text-align:center" }, num(h.orders)), el("td", { style: "text-align:center" }, h.orders ? "合" : "")); }))));
+async function analysisPage() {
+  const key = state.sub ?? "today", d = await dayData(key), s = summarize(d), price = unitPrice(d);
+  const hours = (d.by_hour ?? []).filter(h => h.orders), maxS = Math.max(1, ...hours.map(h => h.sales)), peak = hours.reduce((a, h) => h.sales > (a?.sales ?? -1) ? h : a, null);
+  const lastTwo = hours.filter(h => key === "today" && h.hour < jst().getUTCHours()).slice(-2), rate = lastTwo.length ? lastTwo.reduce((a, h) => a + h.sales / price, 0) / lastTwo.length : 0;
+  const eta = key === "today" && rate > 0 && s.stock > 0 ? (() => { const t = jst(Date.now() + s.stock / rate * 3600e3); return pad(t.getUTCHours()) + ":" + pad(t.getUTCMinutes()) + " 頃"; })() : "—";
+  const th = l => el("th", { style: "white-space:pre-line" }, l), td = (v, c = "center") => el("td", { style: "text-align:" + c }, v);
+  const summary = el("table", { class: "ss" }, el("tr", {}, ...["販売数", "会計数", "純売上", "客単価", "1会計あたり\n本数", "取消", "残り在庫", "在庫\n消化率"].map(th)),
+    el("tr", {}, ...[num(s.sold) + "本", num(s.orders) + "件", "¥" + num(s.sales), "¥" + num(s.average), (Math.round(s.perOrder * 100) / 100).toFixed(2) + "本", num(s.cancelled) + "件", s.stock == null ? "—" : num(s.stock) + "本", Math.round(s.ratio * 100) + "%"].map(v => td(v))));
+  const pace = el("table", { class: "ss" }, el("tr", {}, ...["ピーク時間帯", "ピーク時の販売数", "直近2時間の\n平均販売数", "売り切れ見込み", "販売時間帯の数"].map(th)),
+    el("tr", {}, ...[peak ? peak.hour + "時台" : "—", peak ? num(Math.round(peak.sales / price)) + "本" : "—", key === "today" && rate ? (Math.round(rate * 10) / 10) + "本/時" : "—", eta, hours.length + "時間"].map(v => td(v))));
+  const hourly = el("table", { class: "ss" }, el("tr", {}, ...["No", "時間帯", "会計数", "販売数", "売上", "構成比", ""].map(th)),
+    ...(hours.length ? hours.map((h, i) => el("tr", {}, td(i + 1), td(h.hour + "時台"), td(num(h.orders) + "件"), td(num(Math.round(h.sales / price)) + "本"), td("¥" + num(h.sales), "right"), td(pct(h.sales, s.sales)), el("td", { style: "width:180px" }, bar(h.sales, maxS, "#99cc33"))))
+      : [el("tr", {}, el("td", { colspan: 7, style: "text-align:center" }, "データがありません"))]));
+  return wrapPortlet(fbar("販売実績参照"), el("div", { class: "f" }, periodTabs(),
+    el("p", { style: "font-weight:bold;margin:12px 0 6px" }, "■販売実績（" + (key === "today" ? "本日" : key === "all" ? "全期間" : key) + "）"), summary,
+    el("p", { style: "font-weight:bold;margin:18px 0 6px" }, "■販売ペース"), pace,
+    el("p", { style: "font-weight:bold;margin:18px 0 6px" }, "■時間帯別販売"), hourly,
+    el("p", { class: "muted", style: "margin-top:10px;font-size:11px" }, "販売数は売上を単価で割った値です。売り切れ見込みは、直近2時間の平均ペースが続いた場合の目安です。")));
+}
+async function kyakusoPage() {
+  const key = state.sub ?? "today", d = await dayData(key), total = d.totals.orders || 0;
+  const AGE = { child: "子ども", student: "学生", adult: "大人", senior: "シニア" }, GENDER = { male: "男性", female: "女性", other: "その他" };
+  const GROUP = { solo: "一人", friends: "友人", family: "家族", couple: "カップル", group: "グループ" };
+  const RELATION = { acquaintance: "知り合い", relative: "親族", member: "メンバー", tofu_fan: "豆腐狂", general: "一般人" };
+  const ages = [...Object.keys(AGE), null], genders = [...Object.keys(GENDER), null];
+  const cell = (a, g) => d.segments.filter(x => x.age === a && x.gender === g).reduce((n, x) => n + x.orders, 0);
+  const matrix = el("table", { class: "gk wide" }, el("caption", {}, "年代×性別（会計数）"), el("tr", {}, el("th", {}, "年代＼性別"), ...genders.map(g => el("th", {}, g ? GENDER[g] : "未設定")), el("th", {}, "計")),
+    ...ages.map(a => { const row = genders.map(g => cell(a, g)), sum = row.reduce((x, y) => x + y, 0); return el("tr", {}, el("th", {}, a ? AGE[a] : "未設定"), ...row.map(v => el("td", {}, v ? num(v) : "—")), el("td", {}, num(sum) + "（" + pct(sum, total) + "）")); }));
+  const share = (caption, rows, names) => { const max = Math.max(1, ...rows.map(r => r.orders)); return el("table", { class: "gk wide" }, el("caption", {}, caption),
+    el("tr", {}, ...["区分", "会計数", "売上", "構成比", ""].map(h => el("th", {}, h))),
+    ...(rows.length ? rows.map(r => el("tr", {}, el("td", {}, names[r.k] ?? "未設定"), el("td", {}, num(r.orders)), el("td", {}, "¥" + num(r.sales)), el("td", {}, pct(r.orders, total)), el("td", { style: "text-align:left;width:180px" }, bar(r.orders, max))))
+      : [el("tr", {}, el("td", { colspan: 5 }, "データがありません"))])); };
+  return wrapPortlet(fbar("客層分析参照", "find"), el("div", { class: "f" }, periodTabs(),
+    el("p", { style: "margin:6px 0 12px" }, `対象：会計${num(total)}件（客層の入力は任意のため「未設定」を含みます）`),
+    el("div", { class: "gk-stack", style: "margin-left:0" }, matrix,
+      share("集団", d.groups.map(g => ({ ...g, k: g.group })), GROUP), share("関係", d.relations.map(r => ({ ...r, k: r.relation })), RELATION))));
+}
+function schedulePage() {
+  const F = copy.festival, P = copy.project, today = ymd(jst());
+  return wrapPortlet(fbar("営業日程", "book"), el("div", { class: "f" },
+    el("table", { class: "rs rs-head", style: "width:700px" }, el("tr", {}, ...["日付", "開場時間", "場所", "状況"].map(h => el("th", {}, h))),
+      ...F.days.map(([d, l, h]) => el("tr", {}, el("td", { style: "text-align:center" }, l), el("td", { style: "text-align:center" }, h), el("td", { style: "text-align:center" }, P.place), el("td", { style: "text-align:center" + (d === today ? ";background:#ffcc99;font-weight:bold" : "") }, d < today ? "終了" : d === today ? "本日開催" : "開催予定")))),
+    el("p", { style: "margin-top:12px" }, F.name + "（テーマ「" + F.theme + "」）　" + F.venue + "　" + F.access), el("p", {}, "企画の時間：" + P.time)));
 }
 async function kyukoPage() {
   const t = jst(), monday = new Date(t.getTime() - ((t.getUTCDay() + 6) % 7) * 864e5);
-  const days = [...Array(7)].map((_, i) => new Date(monday.getTime() + i * 864e5)), W = "日月火水木金土";
-  if (!week || week.key !== ymd(monday)) {
-    week = { key: ymd(monday), data: {} };
-    await Promise.all(days.filter(d => d <= t).map(async d => { try { week.data[ymd(d)] = await getDay(ymd(d)); } catch {} }));
+  const weekDays = [...Array(7)].map((_, i) => new Date(monday.getTime() + i * 864e5)), W = "日月火水木金土";
+  if (!week || week.key !== ymd(monday) || Date.now() - week.at > 60e3) {
+    week = { key: ymd(monday), at: Date.now(), data: {} };
+    await Promise.all(weekDays.filter(d => d <= t).map(async d => { try { week.data[ymd(d)] = await getDay(ymd(d)); } catch {} }));
   }
-  const L = more().kyuko_legend, label = d => `${d.getUTCMonth() + 1}月${d.getUTCDate()}日 (${W[d.getUTCDay()]})`;
-  const dayRow = el("tr", {}, el("th", { class: "j" }, ""), ...days.map(d => el("th", {}, label(d))), el("th", { class: "j" }, ""));
-  const per = d => { const out = [0, 0, 0, 0, 0, 0]; (week.data[ymd(d)]?.by_hour ?? []).forEach(h => { if (h.orders) out[periodOf(h.hour)] += h.orders; }); return out; };
-  const counts = days.map(per);
-  return wrapPortlet(fbar("休講・補講・教室変更参照"), el("div", { class: "f" },
-    el("div", { class: "ky-cond" }, el("select", {}, el("option", {}, "コマ形式")), " で ", el("select", {}, el("option", {}, "販売情報のみ表示")), el("br"), el("button", { class: "ubtn", style: "margin-top:6px", onclick: () => { week = null; render(); } }, "表 示 す る")),
-    el("div", { class: "ky-legend" }, el("span", { style: "background:#f0f0f0" }, L.kaiko), el("span", { style: "background:#ffffcc" }, L.kyoshitsu), el("span", { style: "background:#ffcccc" }, L.kyuko), el("span", { style: "background:#ccffcc" }, L.hoko)),
-    el("div", { class: "ky-nav", style: "width:798px" }, el("span", {}, el("a", {}, "<<<月"), " ", el("a", {}, "<<週"), "　", el("a", {}, "<日")), el("b", {}, el("a", {}, "<<<"), " " + t.getUTCFullYear() + "年 ", el("a", {}, ">>>")), el("span", {}, el("a", {}, "日>"), "　", el("a", {}, "週>>"), "　", el("a", {}, "月>>>"))),
+  const label = d => `${d.getUTCMonth() + 1}月${d.getUTCDate()}日 (${W[d.getUTCDay()]})`;
+  const dayRow = el("tr", {}, el("th", { class: "j" }, ""), ...weekDays.map(d => el("th", {}, label(d))), el("th", { class: "j" }, ""));
+  const per = d => { const x = week.data[ymd(d)], price = unitPrice(x), out = [0, 0, 0, 0, 0, 0]; (x?.by_hour ?? []).forEach(h => { if (h.orders) out[periodOf(h.hour)] += h.sales / price; }); return out; };
+  const counts = weekDays.map(per);
+  return wrapPortlet(fbar("日別販売参照"), el("div", { class: "f" },
+    el("div", { class: "ky-legend" }, el("span", { style: "background:#ffcccc" }, "販売あり"), el("span", { style: "background:#ddd" }, "販売なし")),
     el("table", { class: "ky" }, dayRow, ...PERIODS.map(([name], i) => el("tr", {}, el("th", { class: "j" }, name),
-      ...days.map((d, di) => counts[di][i] ? el("td", { class: "kaiko" }, copy.syllabus.code, el("br"), "店頭", el("br"), "焼き場責任者", el("br"), "豆腐田楽 " + num(counts[di][i]) + "件", el("div", { style: "text-align:right;margin-top:4px" }, el("a", { onclick: () => go("syllabus", "detail") }, "詳細"))) : el("td", {})),
+      ...weekDays.map((d, di) => counts[di][i] ? el("td", { class: "kaiko" }, "豆腐田楽", el("br"), num(Math.round(counts[di][i])) + "本", el("br"), copy.project.place) : el("td", {})),
       el("th", { class: "j" }, name))), dayRow)));
 }
-function syllabusPage() {
-  const s = copy.syllabus;
-  if (state.sub === "detail") {
-    const rows = [["開講科目名\n／Course Title", s.title + "／Tofu Dengaku"], ["時間割コード\n／Course Code", s.code], ["共通科目コード\n／Common Course Code", "TOFU-DNGK500"], ["学部/大学院\n／Undergraduate or Graduate", "模擬店課程／Festival Stall"],
-      ["開講所属\n／Course Offered by", "大豆学部 田楽学科／Faculty of Soybean, Dept. of Dengaku"], ["曜限\n／Day, Period", "随時／Anytime"], ["開講区分(ﾀｰﾑ･ｾﾒｽﾀｰ)\n／Offering Period (Term or Semester)", s.term], ["単位数\n／Credits", s.credits],
-      ["学年\n／Year", "全学年／All years"], ["他学部履修\n／Cross-Departmental Enrollment", "可"], ["備考\n／Notes", s.notes], ["主担当教員\n／Lead Instructor", s.teacher], ["キャンパス\n／Campus", "模擬店"], ["教室\n／Classroom", "店頭"]];
-    const tab = state.menu ?? "basic";
-    const T = [["basic", "基本情報／Basic Information"], ["detail", "詳細情報／Detailed Information"], ["plan", "授業計画詳細情報／Class Schedule Details"]];
-    const body = {
-      basic: [el("div", { class: "sy-h2" }, "基本情報/Basic Information"), el("table", { class: "syl syd" }, ...rows.map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v))))],
-      detail: [el("div", { class: "sy-h2" }, "詳細情報/Detailed Information"), el("table", { class: "syl syd" }, ...[["授業の目標・概要\n／Course Objectives", s.goal], ["成績評価方法\n／Grading", s.evaluation], ["教科書\n／Textbooks", s.textbook], ["履修上の注意\n／Notes on Taking the Course", s.notes], ["キーワード\n／Keywords", s.keywords.join("、")]].map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v)))),
-        photoUrl() ? el("img", { src: photoUrl(), alt: "豆腐田楽の写真", style: "width:220px;margin-top:12px;border:1px solid #ccc" }) : null],
-      plan: [el("div", { class: "sy-h2" }, "授業計画詳細情報/Class Schedule Details"), el("table", { class: "syl syd" }, ...s.plan.map(p => { const [k, v] = p.split("："); return el("tr", {}, el("th", {}, k), el("td", {}, v ?? p)); }))],
-    }[tab];
-    return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／授業情報参照"), el("div", { class: "f" },
-      el("div", { class: "sy-h1" }, "授業情報／Class Information"),
-      el("p", { style: "margin:0 0 6px 390px" }, "<<　" + jst().getUTCFullYear() + "年度シラバス（ 最終更新日： 本日 ）　>>"),
-      el("div", { class: "sy-panel", style: "width:760px" }, el("div", { class: "sy-tabs" }, ...T.map(([k, l]) => el("span", { class: k === tab ? null : "off", onclick: () => { state.menu = k; render(); } }, l))), el("div", { style: "padding:0 16px" }, ...body)),
-      el("p", {}, el("button", { class: "ubtn", onclick: () => { state.sub = "list"; state.menu = null; render(); } }, "閉じる/Close"), " ", el("button", { class: "ubtn", onclick: () => modal(copy.register_error, "履修登録") }, "履修登録/Course registration"))));
-  }
-  if (state.sub === "list") {
-    const head = ["No.", "開講", "曜日・時限", "学部/大学院", "開講所属", "教室名", "時間割コード", "科目大区分", "開講科目名", "担当", "参照"];
-    return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／検索結果"), el("div", { class: "f" }, el("p", {}, el("b", {}, "1件目"), " から ", el("b", {}, "1件目"), "の検索結果を表示しています（全部で 1件あります）"),
-      el("table", { class: "syl list" }, el("tr", {}, ...head.map(h => el("th", {}, h))), el("tr", {}, ...["1", "学園祭", "随時", "模擬店課程", "大豆学部 田楽学科", "店頭", s.code, "模擬店科目", s.title, "焼き場責任者"].map(v => el("td", {}, v)),
-        el("td", {}, el("button", { class: "ubtn", onclick: () => { state.sub = "detail"; render(); } }, "参照")))),
-      el("p", {}, el("button", { class: "ubtn", onclick: () => { state.sub = null; render(); } }, "戻る"))));
-  }
-  const sel = (o = "指示なし") => el("select", {}, el("option", {}, o));
-  return wrapPortlet(fbar("シラバスフリーワード検索（シラバス参照）／条件入力画面"), el("div", { class: "f" }, el("div", { class: "sy-panel" }, el("div", { class: "sy-tabs" }, el("span", {}, "フリーワード検索")),
-    el("div", { class: "sy-form" }, el("b", {}, "詳細な条件で検索する場合は、学部／研究科を選択してください"),
-      el("table", {}, ...[["年度", el("input", { value: String(jst().getUTCFullYear()), size: 4 })], ["学部／研究科\n（開講学部）", sel()], ["学科／専攻\n（開講学部）", sel()], ["コース等\n（開講学部）", sel()], ["学期", sel()], ["開講区分", sel()]].map(([k, v], i) => el("tr", {}, el("td", { style: "white-space:pre-line;width:130px" + (i ? "" : ";color:#c0103c") }, k), el("td", {}, "："), el("td", {}, v)))),
-      el("p", { style: "margin-top:30px" }, "・フリーキーワード"), el("textarea", { rows: 4, style: "width:590px", id: "syKw", placeholder: "豆腐田楽" }),
-      el("div", {}, "複数のキーワードを指定する場合は、半角スペースで区切ってください。", el("br"), "指定したすべてのキーワードを含むシラバスが検索されます。"),
-      el("p", {}, "ソート順：", sel()), el("p", {}, "検索結果表示件数：", sel("100"), " 件"),
-      el("button", { class: "ubtn", onclick: () => { state.sub = "list"; render(); } }, "検索"), " ", el("button", { class: "ubtn", onclick: () => { $("syKw").value = ""; } }, "ク リ ア")))));
+function productPage() {
+  const P = copy.project, F = copy.festival;
+  const rows = [["商品名\n／Item", "豆腐田楽"], ["価格\n／Price", P.price], ["メニュー\n／Menu", P.menu], ["販売場所\n／Place", P.place], ["販売時間\n／Hours", P.time + "（" + F.days.map(([, l, h]) => l + " " + h).join("、") + "）"],
+    ["企画名\n／Project", P.name], ["団体名\n／Organization", P.org + "（" + copy.circle.name + "）"], ["紹介\n／Description", P.intro + "。" + P.intro2], ["購入方法\n／How to buy", "店頭のみ"]];
+  return wrapPortlet(fbar("商品情報参照"), el("div", { class: "f" }, el("div", { class: "sy-h1" }, "商品情報／Item Information"),
+    el("div", { style: "display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap" },
+      el("table", { class: "syl syd" }, ...rows.map(([k, v]) => el("tr", {}, el("th", { style: "white-space:pre-line" }, k), el("td", {}, v)))),
+      photoUrl() ? el("img", { src: photoUrl(), alt: "豆腐田楽の写真", style: "width:260px;border:1px solid #ccc" }) : null)));
 }
 function boardPage() {
-  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "掲示板"), el("div", { class: "f" },
+  return wrapPortlet(phead("掲示板"), el("div", { class: "f" },
     el("table", { class: "syl list", style: "width:100%" }, el("tr", {}, ...["分類", "件名", "発信元"].map(h => el("th", {}, h))),
       ...copy.notices.map(n => el("tr", {}, el("td", { style: "white-space:nowrap" }, n.category), el("td", {}, el("details", {}, el("summary", { style: "color:var(--link);cursor:pointer" }, n.title), el("div", { style: "padding:6px 0" }, n.body))), el("td", {}, n.from))))));
 }
-function certPage() {
-  return wrapPortlet(el("div", { class: "ph" }, el("i", {}, "i"), "証明書発行サービス"), el("div", { class: "info-text" }, el("b", {}, copy.cert_title), ...copy.cert_body.map(p => el("p", {}, p)), el("p", { class: "red" }, copy.cert_warning)));
-}
 async function pageNode(page) {
-  if (page === "home") return homePage();
-  if (page === "student") return studentPage();
-  if (page === "register") return registerPage();
-  if (page === "grades") return gradesPage();
-  if (page === "kyuko") return kyukoPage();
-  if (page === "syllabus") return syllabusPage();
-  if (page === "board") return boardPage();
-  if (page === "cert") return certPage();
-  return infoPage(page);
+  const PAGES = { home: homePage, links: linksPage, org: orgPage, register: registerPage, analysis: analysisPage, kyakuso: kyakusoPage, schedule: schedulePage, kyuko: kyukoPage, product: productPage, board: boardPage };
+  try { return await (PAGES[page] ?? homePage)(); }
+  catch { return wrapPortlet(phead(titleOf(page)), el("div", { class: "info-text" }, "データを取得できませんでした。しばらくしてから再度お試しください。")); }
 }
 
 // ---------- chrome ----------
@@ -566,12 +541,15 @@ let deadline = 0, idle = null;
 function go(page, sub = null) { state.page = page; state.tab = tabOf(page)[0]; state.sub = sub; state.menu = null; state.spMenu = null; render(); poke(); window.scrollTo(0, 0); }
 function openTab(id) { const t = TABS.find(x => x[0] === id); if (sp()) { state.tab = id; state.spMenu = id; state.page = null; render(); window.scrollTo(0, 0); return; } go(t[2][0][1]); }
 function paintChrome() {
-  const name = st().name, left = Math.max(0, Math.ceil((deadline - Date.now()) / 60e3));
-  $("sys").replaceChildren(...[["user", name, () => go("student")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
+  const name = "Are you Tofu?", left = Math.max(0, Math.ceil((deadline - Date.now()) / 60e3));
+  $("sys").replaceChildren(...[["user", name, () => go("org")], ["smart", "スマホ版", () => setMode("sp")], ["english", "English", () => act.english()], ["timer", `残り約${left}分`, () => poke()], ["logout", "ログアウト", () => leave()]]
     .map(([k, l, fn]) => el("button", { onclick: fn }, icon(SYS_ICON, k, "0 0 24 24"), l)));
   $("tabbar").replaceChildren(...TABS.map(([id, label]) => el("div", { class: "tabcell" + (id === state.tab ? " sel" : ""), onclick: () => openTab(id) }, icon(PC_ICON, id, "0 0 48 48"), label)));
   $("menubar").replaceChildren(...TABS.find(t => t[0] === state.tab)[2].map(([l, p]) => el("a", { class: p === state.page ? "cur" : null, onclick: () => go(p) }, icon(SMALL, PAGE_ICON[p] ?? "info", "0 0 16 16"), l)));
-  const news = () => [el("p", {}, "あなた宛の新着情報があります。"), ...more().news.map((n, i) => el("a", { onclick: () => go("board") }, icon(SMALL, ["board", "news", "book", "news"][i % 4], "0 0 16 16"), el("span", {}, n)))];
+  const s = stats(), last = live?.recent?.find(o => !o.cancelled), peak = (live?.by_hour ?? []).reduce((a, h) => h.sales > (a?.sales ?? 0) ? h : a, null);
+  const items = s ? [[`本日の販売数は${num(s.sold)}本です。`, "analysis", "board"], [`残り在庫は${s.stock == null ? "—" : num(s.stock)}本です。`, "analysis", "news"],
+    [`最新の会計は${hhmm(last?.created_at)}です。`, "register", "book"], [`本日のピークは${peak ? peak.hour + "時台" : "—"}です。`, "analysis", "news"]] : [["販売状況を取得しています。", "analysis", "news"]];
+  const news = () => [el("p", {}, "新着情報があります。"), ...items.map(([n, p, ic]) => el("a", { onclick: () => go(p) }, icon(SMALL, ic, "0 0 16 16"), el("span", {}, n)))];
   const fav = () => FAV.map(([l, p, ic]) => el("li", {}, icon(SMALL, ic, "0 0 16 16"), el("a", { onclick: () => go(p) }, l)));
   $("news").replaceChildren(...news()); $("fav").replaceChildren(...fav()); $("spNews").replaceChildren(...news()); $("spFav").replaceChildren(...fav());
   $("spSys").replaceChildren(...[["PC版", () => setMode("pc"), '<rect x="2" y="3" width="20" height="13" fill="#fff"/><path d="M8 21h8M12 16v5" stroke="#fff" stroke-width="2"/>'], ["English", () => act.english(), '<path d="M5 2h10l4 4v16H5z" fill="#fff"/>'],
@@ -618,7 +596,7 @@ function setMode(mode) {
   try { localStorage.setItem("utos-mode", mode); } catch {}
   if (!$("portal").hidden) { if (mode === "sp" && state.page === "home") state.page = "spHome"; if (mode === "pc" && (!state.page || state.page === "spHome")) state.page = "home"; state.spMenu = null; render(); }
 }
-const act = { english: () => modal("Are you Tofu? — This system is available in Japanese and in tofu only.", "English"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
+const act = { english: () => modal("Are you Tofu? — Tofu dengaku (miso-glazed, charcoal-grilled tofu), 500 yen each. At Center Court A1 during the 77th Komaba Festival, Nov 21–23.", "English"), mode: () => setMode(sp() ? "pc" : "sp"), enter: () => enter() };
 document.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b) { e.preventDefault(); act[b.dataset.act](); } const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); if ($("portal").hidden) enter(); go(g.dataset.goto); } });
 let saved = null; try { saved = localStorage.getItem("utos-mode"); } catch {}
 document.body.classList.toggle("sp", (saved || (matchMedia("(max-width: 700px)").matches ? "sp" : "pc")) === "sp");
@@ -626,9 +604,10 @@ document.body.classList.toggle("sp", (saved || (matchMedia("(max-width: 700px)")
 fetch("copy.json").then(r => r.json()).then(c => {
   copy = c;
   document.querySelectorAll("[data-copy]").forEach(n => { n.textContent = c[n.dataset.copy] ?? ""; });
-  document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = c.personal.student[n.dataset.ps] ?? ""; });
-  $("certBody").replaceChildren(...c.cert_body.map(p => el("p", {}, p)));
-  $("links").replaceChildren(...c.links.map((t, i) => el("li", {}, el("a", { href: "#", "data-goto": ["syllabus", "home", "syllabus", "register", "syllabus"][i] ?? "home" }, t))));
+  document.querySelectorAll("[data-ps]").forEach(n => { n.textContent = "Are you Tofu?"; });
+  $("certBody").replaceChildren(el("p", {}, c.project.intro + "。" + c.project.intro2), el("p", {}, c.project.menu), el("p", {}, "場所：" + c.project.place + "（" + c.festival.name + "・" + c.festival.venue + "）"));
+  $("priceLine").textContent = c.project.price + "　ご購入は店頭のみです。";
+  $("links").replaceChildren(...c.links.map(([t, u]) => el("li", {}, el("a", { href: u, target: "_blank", rel: "noopener" }, t))));
   load(); setInterval(() => { if (!document.hidden) load(); }, 30000);
 });
 </script>
