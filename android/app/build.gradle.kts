@@ -12,7 +12,8 @@ android {
     applicationId = "dev.gapul.tofupos.v3"
     minSdk = 26
     targetSdk = 35
-    versionCode = 8
+    // CI sets TOS_VERSION_CODE (1000 + run number) so every Play upload gets a new code.
+    versionCode = System.getenv("TOS_VERSION_CODE")?.toIntOrNull() ?: 8
     versionName = "0.4.0"
     testInstrumentationRunner = "android.test.InstrumentationTestRunner"
     // The legacy runner otherwise scans every Compose dependency for JUnit 3 tests.
@@ -21,7 +22,9 @@ android {
   }
   // Play upload key lives outside the repo (~/.config/tos-release/signing.properties). Without it,
   // release builds are left unsigned instead of failing, so CI and other machines still build.
-  val uploadSigning = File(System.getProperty("user.home"), ".config/tos-release/signing.properties")
+  // CI passes the same values through TOS_SIGNING_PROPERTIES.
+  val uploadSigning = System.getenv("TOS_SIGNING_PROPERTIES")?.let(::File)
+    ?: File(System.getProperty("user.home"), ".config/tos-release/signing.properties")
   signingConfigs {
     if (uploadSigning.isFile) create("upload") {
       val props = Properties().apply { uploadSigning.inputStream().use { load(it) } }

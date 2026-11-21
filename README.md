@@ -157,3 +157,12 @@ GitHub Actions ワークフロー `iOS TestFlight` により、TestFlight 向け
 - シークレットや本番同期トークンを含む署名済み IPA は、公開リリースやワークフローのアーティファクトへ絶対に保存・公開しないでください。
 - 初回のテスト参加および自動アップデートの有効化は、各端末の TestFlight アプリ上で行います。各ビルドの有効期限は 90 日です。
 - 署名プロファイルの有効期限は `2027-11-21` です。期限切れ前に証明書およびプロファイル関連のシークレットを差し替えてください。
+
+## Android Google Play テスト配信
+
+GitHub Actions ワークフロー `Android Play testing` が、`main` への push（`android/**`・`scripts/play-*`・`.github/workflows/play.yml` の変更）または手動実行で、AABをビルド・署名してGoogle Playのテストトラック（既定は `alpha`＝クローズドテスト、Variables の `PLAY_TRACK` で変更可）へアップロードします。
+
+- **versionCode**: `1000 + GITHUB_RUN_NUMBER × 10 + GITHUB_RUN_ATTEMPT`
+- **Secrets**: `ANDROID_KEYSTORE_BASE64`（アップロード鍵）, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_SYNC_DEFAULT_JSON`, `ANDROID_SYNC_DEFAULT_TEST_JSON`, `PLAY_SERVICE_ACCOUNT_JSON`
+- `PLAY_SERVICE_ACCOUNT_JSON` が未設定のあいだは、ビルドと署名だけ行いアップロードしません。
+- 事前にPlay Consoleでアプリを作成し、最初の1回はAABを手動でアップロードし（Play App Signingの登録）、サービスアカウントにリリース権限を付けておく必要があります。
